@@ -1,0 +1,105 @@
+import { bgcolors, fontWeights, textcolors, textSizes } from '../../theme'
+import Label from '../../component/Label'
+import TextInput from '../../component/TextInput'
+import { IoLockClosed, IoMailOutline } from 'react-icons/io5'
+import PasswordInput from '../../component/PasswordInput'
+import ButtonComponent from '../../component/Button'
+import { Link, useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
+import { useState, useEffect } from 'react'
+import { useDispatch, useSelector } from 'react-redux'
+import { loginUser } from '../../features/auth/authSlice'
+import { toast } from 'react-toastify'
+import 'react-toastify/dist/ReactToastify.css'
+
+const LoginPage = () => {
+  const { t, i18n } = useTranslation()
+  const dispatch = useDispatch()
+  const navigate = useNavigate()
+
+  const { isLoading, error, success } = useSelector((state) => state.auth)
+
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+
+  const changeLanguage = (lng) => {
+    i18n.changeLanguage(lng)
+  }
+
+  useEffect(() => {
+    if (success) {
+      // toast.success()
+      navigate('/admin-dashboard')
+    }
+    if (error) {
+      toast.error(error)
+    }
+  }, [success, error, navigate, t])
+
+  const handleLogin = () => {
+    dispatch(loginUser({ email, password }))
+  }
+
+  return (
+    <div className='flex flex-col justify-start items-center w-full'>
+      {/* Heading - centered */}
+      <div className='mb-1 text-center w-full max-w-sm'>
+        <h2 className={`${fontWeights.semibold} ${textSizes.title1}`}>
+          {t('login.welcome')}
+        </h2>
+        <p
+          className={`${textSizes.subtitle} ${textcolors.normaltext} ${fontWeights.normal}`}
+        >
+          {t('login.subtitle')}
+        </p>
+      </div>
+
+      <div className='flex flex-col gap-3 w-full p-1 items-start'>
+        <Label>{t('login.email')}</Label>
+        <TextInput
+          icon={<IoMailOutline size={20} color='#888888' />}
+          placeholder={t('login.email')}
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+        />
+      </div>
+      <div className='flex flex-col gap-3 w-full  p-1 items-start'>
+        <Label>{t('login.password')}</Label>
+        <PasswordInput
+          icon={<IoLockClosed size={20} color='#888888' />}
+          placeholder={t('login.password')}
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+        />
+      </div>
+      <div className='self-start p-1 mb-1 '>
+        <Link to={"/reset-password"}>
+        <ButtonComponent
+          children={t('login.forgot_password')}
+          className={`${fontWeights.semibold}`}
+        />
+        </Link>
+      </div>
+
+      <div className='p-1 w-full '>
+        <ButtonComponent
+          children={isLoading ? t('login.logging_in') : t('login.login_button')}
+          className={`${fontWeights.semibold} ${textcolors.white} ${textSizes.base} ${bgcolors.primary} w-full py-[8px] px-[16px]  flex items-center justify-center rounded-[100px]`}
+          onClick={handleLogin}
+          disabled={isLoading}
+        />
+      </div>
+      <div className='flex items-center justify-center mt-4'>
+        <p className={`${textSizes.base} ${textcolors.normaltext} mr-1`}>{t('login.no_account')}</p>
+        <Link to="/register">
+          <ButtonComponent
+            children={t('login.sign_up')}
+            className={`${fontWeights.semibold} ${textcolors.primary}`}
+          />
+        </Link>
+      </div>
+    </div>
+  )
+}
+
+export default LoginPage

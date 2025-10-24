@@ -1,25 +1,55 @@
-import logo from './logo.svg';
-import './App.css';
+import './App.css'
+import {
+  BrowserRouter as Router,
+  useLocation,
+  useRoutes
+} from 'react-router-dom'
+import { routes } from './route'
+import FloatingLanguageButton from './component/FloatingLanguageButton'
+import { Provider } from 'react-redux'
+import store from './app/store'
+import { ToastContainer } from 'react-toastify'
+import 'react-toastify/dist/ReactToastify.css'
 
-function App() {
-  return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
-  );
+function AppRoutes () {
+  const element = useRoutes(routes)
+  return element
 }
 
-export default App;
+function App () {
+  return (
+    <Provider store={store}>
+      <div className='font-sans'>
+        <Router>
+          <ToastContainer />
+          <MainApp />
+        </Router>
+      </div>
+    </Provider>
+  )
+}
+
+function MainApp () {
+  const location = useLocation()
+
+  // Hide the Floating Button on ALL dashboard-related routes
+  const dashboardPaths = [
+    '/admin-dashboard',
+    '/camera-setup',
+    '/add-camera',
+    '/roi-configuration'
+  ]
+
+  const hideFloatingButton = dashboardPaths.some(path =>
+    location.pathname.startsWith(path)
+  )
+
+  return (
+    <>
+      <AppRoutes />
+      {!hideFloatingButton && <FloatingLanguageButton />}
+    </>
+  )
+}
+
+export default App
