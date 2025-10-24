@@ -10,11 +10,10 @@ export const loginUser = createAsyncThunk(
         email,
         password
       })
-      
       return response
     } catch (error) {
-      if (error.response && error.response.message) {
-        return rejectWithValue(error.response.message)
+      if (error.response && error.response.data?.message) {
+        return rejectWithValue(error.response.data.message)
       }
       return rejectWithValue(error.message)
     }
@@ -27,19 +26,20 @@ const authSlice = createSlice({
     user: null,
     isLoading: false,
     error: null,
-    success: false,
+    success: false
   },
   reducers: {
     logout: state => {
       state.user = null
       state.success = false
       state.error = null
-      Cookies.remove('access_token') // Clear the token on logout
+      Cookies.remove('access_token')
+      localStorage.removeItem('tenant_id')
     }
   },
-  extraReducers: (builder) => {
+  extraReducers: builder => {
     builder
-      .addCase(loginUser.pending, (state) => {
+      .addCase(loginUser.pending, state => {
         state.isLoading = true
         state.error = null
       })
@@ -47,12 +47,16 @@ const authSlice = createSlice({
         state.isLoading = false
         state.success = true
         state.user = action.payload
+        console.log(state.user.data.data.tenant_id)
+        // // Save tenant_id to localStorage
+        // localStorage.setItem('tenant_id', action.payload.data.tenant_id)
+        localStorage.setItem('tenant_id', state.user.data.data.tenant_id)
       })
       .addCase(loginUser.rejected, (state, action) => {
         state.isLoading = false
         state.error = action.payload
       })
-  },
+  }
 })
 
 export const { logout } = authSlice.actions

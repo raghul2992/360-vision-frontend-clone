@@ -159,6 +159,8 @@ const roiSlice = createSlice({
         state.isLoading = false
         state.error = action.payload
         state.operationSuccess = false
+        // Add toast error for failed deletion
+        // toast.error(action.payload || 'Failed to delete ROI!'); // This should be handled in the component
       })
   }
 })

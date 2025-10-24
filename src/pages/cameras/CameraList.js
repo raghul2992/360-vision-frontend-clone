@@ -28,7 +28,7 @@ const CameraList = () => {
   const [statusFilter, setStatusFilter] = useState('')
   const [deletePopup, setDeletePopup] = useState({ isOpen: false, cameraId: null, cameraName: '' })
 
-  const tenantId = useSelector(state => state.auth?.user?.tenant_id || '1')
+  const tenantId = localStorage.getItem("tenant_id")
 
   useEffect(() => {
     dispatch(getCameras({ tenantId }))

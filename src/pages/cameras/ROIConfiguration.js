@@ -21,7 +21,8 @@ import {
   createRoi,
   getRois,
   updateRoi,
-  deleteRoi
+  deleteRoi,
+  clearRoiOperationSuccess // Import the action creator
 } from '../../features/cameras/roilistslice'
 import useImage from 'use-image'
 import { getCameraSnapshot } from '../../features/cameras/cameraApiSlice'
@@ -39,7 +40,8 @@ const ROIConfiguration = () => {
     rtsp_url,
     username,
     password,
-    roiToEdit // Add roiToEdit to destructuring
+    roiToEdit,
+    currentRoi_Id
   } = location.state || {}
   const tenantId = propTenantId || 1 // Default to 1 if not provided
 
@@ -49,7 +51,7 @@ const ROIConfiguration = () => {
   const [imageUrl, setImageUrl] = useState()
   // const [image] = useImage(`${process.env.REACT_APP_BASE_URL}${snapshot}`, 'anonymous')
   const [image] = useImage(
-    `https://media.istockphoto.com/id/517188688/photo/mountain-landscape.jpg?s=1024x1024&w=0&k=20&c=z8_rWaI8x4zApNEEG9DnWlGXyDIXe-OmsAyQ5fGPVV8=`,
+    `https://cdn.shopify.com/s/files/1/0648/5134/5473/files/798c3710-74b8-4c85-adf8-f0a371619a2c-Max.jpg?v=1744020342`,
     'anonymous'
   )
 
@@ -67,9 +69,9 @@ const ROIConfiguration = () => {
 
   useEffect(() => {
     console.log(`${process.env.REACT_APP_BASE_URL}${snapshot}`)
+    // console.log(roiToEdit)
   }, [])
 
-  // Notification states
   const [emailNotification, setEmailNotification] = useState(false)
   const [callNotification, setCallNotification] = useState(false)
   const [whatsappNotification, setWhatsappNotification] = useState(false)
@@ -80,7 +82,6 @@ const ROIConfiguration = () => {
   const [callRecipients, setCallRecipients] = useState([])
   const [whatsappRecipients, setWhatsappRecipients] = useState([])
 
-  // Detection sensitivity states
   const [personSensitivity, setPersonSensitivity] = useState(66)
   const [weaponSensitivity, setWeaponSensitivity] = useState(88)
   const [vehicleSensitivity, setVehicleSensitivity] = useState(90)
@@ -97,6 +98,9 @@ const ROIConfiguration = () => {
   // New states for specific detection configs
   const [idieDuration, setIdieDuration] = useState(3000)
   const [vehicleCount, setVehicleCount] = useState(3)
+
+  const searchParams = new URLSearchParams(location.search)
+  const cameraIdFromUrl = searchParams.get('cameraId')
 
   // Set the image URL from snapshot or snapshotResult
   // useEffect(() => {
@@ -131,13 +135,17 @@ const ROIConfiguration = () => {
 
   // Load ROIs when cameraId and tenantId are available
   useEffect(() => {
-    if (cameraId && tenantId) {
-      dispatch(getRois({ tenantId, cameraId }))
+    const effectiveCameraId = cameraId || cameraIdFromUrl
+
+    if (effectiveCameraId && tenantId) {
+      dispatch(getRois({ tenantId, cameraId: effectiveCameraId }))
     }
+
     if (roiToEdit) {
       handleEditRoi(roiToEdit)
+      console.log('ROI to edit loaded, currentRoiId:', roiToEdit.id)
     }
-  }, [dispatch, cameraId, tenantId, roiToEdit])
+  }, [dispatch, cameraId, cameraIdFromUrl, tenantId, roiToEdit])
 
   // Handle errors and success messages
   useEffect(() => {
@@ -145,8 +153,8 @@ const ROIConfiguration = () => {
       toast.error(error)
     }
     if (operationSuccess) {
-      toast.success('Operation successful!')
       dispatch(getRois({ tenantId, cameraId })) // Refresh ROIs
+      dispatch(clearRoiOperationSuccess()) // Clear success state after handling
     }
   }, [error, operationSuccess, dispatch, tenantId, cameraId])
 
@@ -259,13 +267,17 @@ const ROIConfiguration = () => {
       meta: {},
       camera_id: cameraId // Make sure to include camera_id
     }
-
+    console.log('handleSaveRoi called. currentRoiId:', currentRoiId)
     if (currentRoiId) {
       dispatch(updateRoi({ tenantId, cameraId, roiId: currentRoiId, roiData }))
+      toast.success('ROI updated successfully!')
+      navigate(`/add-camera?id=${cameraId}`)
     } else {
-      dispatch(createRoi({ tenantId, cameraId, roiData }))
+      dispatch(createRoi({ tenantId, cameraId, roiId: currentRoiId, roiData }))
+      toast.success('ROI created successfully!')
+      resetForm()
+      setCurrentRoiId(null) // Explicitly clear currentRoiId after creating a new ROI
     }
-    resetForm()
   }
 
   const handleEditRoi = roi => {
@@ -313,11 +325,12 @@ const ROIConfiguration = () => {
   const handleDeleteRoi = roiId => {
     if (window.confirm('Are you sure you want to delete this ROI?')) {
       dispatch(deleteRoi({ tenantId, cameraId, roiId }))
+      toast.success('ROI deleted successfully!')
     }
   }
 
   const resetForm = () => {
-    setCurrentRoiId(null)
+    // setCurrentRoiId(null) // Removed: currentRoiId should persist when editing
     setRoiName('')
     setDetectionType('ALL_DETECTION') // Changed default to match backend
     setAlertPriority('High')
@@ -510,7 +523,7 @@ const ROIConfiguration = () => {
             </button>
             <button
               onClick={() => {
-                resetForm()
+                setPoints([])
                 setIsDrawing(true)
               }}
               className='bg-[#3885CC] hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-full flex items-center gap-2 transition-colors'
@@ -520,39 +533,13 @@ const ROIConfiguration = () => {
             </button>
           </div>
 
-          {/* List of Configured ROIs */}
           {rois.length > 0 && (
             <div className='mt-6'>
               <h3 className='text-lg font-bold mb-3'>Configured ROIs</h3>
-              <div className='space-y-3'>
-                {rois.map(roi => (
-                  <div
-                    key={roi.id}
-                    className='flex items-center justify-between bg-gray-700 p-3 rounded-lg'
-                  >
-                    <span className='text-white'>{roi.name}</span>
-                    <div className='flex gap-2'>
-                      <button
-                        onClick={() => handleEditRoi(roi)}
-                        className='text-blue-400 hover:text-blue-600 transition-colors'
-                      >
-                        <IoPencil size={20} />
-                      </button>
-                      <button
-                        onClick={() => handleDeleteRoi(roi.id)}
-                        className='text-red-400 hover:text-red-600 transition-colors'
-                      >
-                        <IoTrash size={20} />
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
             </div>
           )}
 
           <div className='mt-3 space-y-4'>
-            {/* ROI Name - Full Width */}
             <div>
               <label className='block text-sm text-gray-400 mb-2'>
                 ROI Name*
@@ -566,7 +553,6 @@ const ROIConfiguration = () => {
               />
             </div>
 
-            {/* Detection Type and Alert Priority - Side by Side */}
             <div className='grid grid-cols-2 gap-4'>
               <div>
                 <label className='block text-sm text-gray-400 mb-2'>
@@ -605,7 +591,6 @@ const ROIConfiguration = () => {
         </div>
       </div>
 
-      {/* Detection Sensitive Section */}
       <div className='bg-[#30313F] rounded-lg p-6 mb-6'>
         <h2 className='text-xl font-bold mb-6'>Detection Sensitive</h2>
         <div className='grid grid-cols-2 gap-x-12 gap-y-6'>
@@ -792,7 +777,6 @@ const ROIConfiguration = () => {
         </div>
       </div>
 
-      {/* Notifications Section */}
       <div className='bg-[#30313F] rounded-lg p-6 mb-6'>
         <h2 className='text-xl font-bold mb-6'>Notifications</h2>
         <div className='grid grid-cols-3 gap-6'>
@@ -866,7 +850,6 @@ const ROIConfiguration = () => {
             </div>
           </div>
 
-          {/* Call Notification */}
           <div className='bg-gray-900 rounded-lg p-4 border border-gray-700'>
             <div className='flex items-center justify-between mb-4'>
               <div className='flex items-center gap-2'>
@@ -1022,7 +1005,7 @@ const ROIConfiguration = () => {
             onClick={handleSaveRoi}
             className='bg-[#3885CC] text-sm text-white font-semibold py-2 px-6 rounded-full transition-colors hover:bg-blue-600'
           >
-            {currentRoiId ? 'Update' : 'Save'} ROI
+            {roiToEdit ? 'Update' : 'Save'} ROI
           </button>
         </div>
       </div>
@@ -1030,4 +1013,4 @@ const ROIConfiguration = () => {
   )
 }
 
-export default ROIConfiguration;
+export default ROIConfiguration

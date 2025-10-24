@@ -47,9 +47,7 @@ const AddCamera = () => {
   )
 
   // Get tenant_id from auth state - Update this based on your auth implementation
-  const tenantId = useSelector(
-    state => state.auth?.user?.tenant_id || state.auth?.tenantId || '1'
-  )
+  const tenantId = localStorage.getItem("tenant_id")
 
   // Component State
   const [cameraName, setCameraName] = useState('')
@@ -60,6 +58,8 @@ const AddCamera = () => {
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [isTestingConnection, setIsTestingConnection] = useState(false)
+  const [showConfirm, setShowConfirm] = useState(false)
+  const [selectedRoiId, setSelectedRoiId] = useState(null)
 
   // Fetch locations on component mount
   useEffect(() => {
@@ -102,6 +102,26 @@ const AddCamera = () => {
       toast.error(error)
     }
   }, [])
+
+  // Format detection type for display
+  const formatDetectionType = type => {
+    const typeMap = {
+      ALL_DETECTION: 'All Detection',
+      PERSON_DETECTION: 'Person Detection',
+      VEHICLE_DETECTION: 'Vehicle Detection',
+      MOTION_DETECTION: 'Motion Detection',
+      WEAPON_DETECTION: 'Weapon Detection',
+      FIRE_DETECTION: 'Fire Detection',
+      IDIE_VEHICLE: 'IDIE Vehicle'
+    }
+    return typeMap[type] || type
+  }
+
+  // Format alert priority for display
+  const formatAlertPriority = priority => {
+    if (!priority) return 'Medium'
+    return priority.charAt(0).toUpperCase() + priority.slice(1).toLowerCase()
+  }
 
   // Validation
   const validateForm = () => {
@@ -194,30 +214,26 @@ const AddCamera = () => {
   }
 
   const handleAddRoi = () => {
-    // if (!cameraId) {
-    //   toast.warn(
-    //     t('addCamera.saveCameraFirst') ||
-    //       'Please save the camera first to add an ROI.'
-    //   )
-    //   return
-    // }
+    const toastId = toast.loading('Retrieving snapshot...')
+
     dispatch(
       getCameraSnapshot({
         tenantId,
-        cameraId: parseInt(cameraId), // optional — will only be added if truthy
-        rtsp_url:
-          'rtsp://sst:vision25@agrisalstarshine2lx.ddns-intelbras.com.br:40080/cam/realmonitor?channel=1&subtype=0',
+        cameraId: parseInt(cameraId),
+        rtsp_url: rtspUrl,
         username: '',
         password: ''
       })
     )
       .unwrap()
       .then(result => {
-        toast.success(
-          t('addCamera.snapshotSuccess') || 'Snapshot retrieved successfully!'
-        )
+        toast.dismiss(toastId)
+
+        // Update toast to success
+        toast.success('Snapshot retrieved successfully!', { id: toastId })
+
         console.log(result)
-        // return;
+
         navigate('/roi-configuration', {
           state: {
             snapshot: result.data.frame_url,
@@ -227,39 +243,86 @@ const AddCamera = () => {
         })
       })
       .catch(err => {
+        toast.dismiss(toastId)
+
+        // Update toast to error
         toast.error(
-          err || t('addCamera.snapshotError') || 'Failed to get snapshot.'
+          err || t('addCamera.snapshotError') || 'Failed to get snapshot.',
+          { id: toastId }
         )
       })
   }
 
   const handleEditRoi = roi => {
+    console.log(roi.name)
+    // return;
     navigate('/roi-configuration', {
       state: {
         snapshot: roi.frame_url, // Assuming roi object has frame_url
         cameraId: parseInt(cameraId),
         tenantId,
-        roiToEdit: roi // Pass the entire ROI object for editing
+        roiToEdit: roi, // Pass the entire ROI object for editing
+        currentRoi_Id: roi.roi_id
       }
     })
   }
 
   const handleDeleteRoi = roiId => {
-    if (window.confirm('Are you sure you want to delete this ROI?')) {
-      dispatch(deleteRoi({ tenantId, cameraId: parseInt(cameraId), roiId }))
-        .unwrap()
-        .then(() => {
-          toast.success('ROI deleted successfully!')
-          dispatch(getRois({ tenantId, cameraId: parseInt(cameraId) })) // Refresh ROIs
-        })
-        .catch(err => {
-          toast.error(err || 'Failed to delete ROI.')
-        })
-    }
+    setSelectedRoiId(roiId)
+    setShowConfirm(true)
+  }
+
+  const confirmDelete = () => {
+    if (!selectedRoiId) return
+    dispatch(
+      deleteRoi({
+        tenantId,
+        cameraId: parseInt(cameraId),
+        roiId: selectedRoiId
+      })
+    )
+      .unwrap()
+      .then(() => {
+        toast.success('ROI deleted successfully!')
+        dispatch(getRois({ tenantId, cameraId: parseInt(cameraId) }))
+      })
+      .catch(err => {
+        toast.error(err || 'Failed to delete ROI.')
+      })
+      .finally(() => {
+        setShowConfirm(false)
+        setSelectedRoiId(null)
+      })
   }
 
   return (
     <div className={`p-8 ${bgcolors.dark} text-white min-h-screen`}>
+      {showConfirm && (
+        <div className='fixed inset-0 flex items-center justify-center bg-black/60 z-50'>
+          <div className='bg-[#2A2B36] rounded-xl p-6 w-[90%] max-w-sm border border-gray-700 shadow-lg text-center'>
+            <h3 className='text-lg font-semibold text-white mb-3'>
+              Confirm Deletion
+            </h3>
+            <p className='text-gray-300 mb-6'>
+              Are you sure you want to delete this ROI?
+            </p>
+            <div className='flex justify-center gap-4'>
+              <button
+                onClick={confirmDelete}
+                className='bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-md'
+              >
+                Delete
+              </button>
+              <button
+                onClick={() => setShowConfirm(false)}
+                className='bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-md'
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       <div className='flex justify-between items-center mb-8'>
         <div>
           <h1 className='text-3xl font-bold'>
@@ -528,57 +591,61 @@ const AddCamera = () => {
                         {roi.name}
                       </td>
                       <td className='py-4 px-4 text-sm text-gray-300'>
-                        {roi.detectionType}
+                        {formatDetectionType(roi.detection_type)}
                       </td>
                       <td className='py-4 px-4 text-sm'>
                         <span
                           className={`px-3 py-1 rounded-full text-xs font-medium ${
-                            roi.priority === 'High'
+                            roi.alert_priority === 'high'
                               ? 'bg-red-500/20 text-red-400'
-                              : roi.priority === 'Medium'
+                              : roi.alert_priority === 'medium'
                               ? 'bg-yellow-500/20 text-yellow-400'
                               : 'bg-green-500/20 text-green-400'
                           }`}
                         >
-                          {roi.priority}
+                          {formatAlertPriority(roi.alert_priority)}
                         </span>
                       </td>
-                      <td className='py-4 px-4'>
-                        <label className='relative inline-flex items-center cursor-pointer'>
-                          <input
-                            type='checkbox'
-                            className='sr-only peer'
-                            defaultChecked={roi.status}
-                          />
-                          <div className="w-11 h-6 bg-gray-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-500"></div>
-                        </label>
+                      <td className='py-4 px-4 text-sm'>
+                        <span
+                          className={`px-3 py-1 rounded-full text-xs font-medium ${
+                            roi.status === 'active'
+                              ? 'bg-green-500/20 text-green-400'
+                              : 'bg-red-500/20 text-red-400'
+                          }`}
+                        >
+                          {roi.status === 'active' ? 'Active' : 'Inactive'}
+                        </span>
                       </td>
                       <td className='py-4 px-4'>
                         <div className='flex items-center gap-3'>
                           <button
                             className={`p-1.5 rounded ${
-                              roi.notifications?.email
+                              roi.notification_config?.email?.enabled
                                 ? 'bg-blue-500/20 text-blue-400'
                                 : 'bg-gray-700 text-gray-500'
                             }`}
+                            title='Email Notifications'
                           >
                             <IoMailOutline size={16} />
                           </button>
                           <button
                             className={`p-1.5 rounded ${
-                              roi.notifications?.call
+                              roi.notification_config?.call?.enabled
                                 ? 'bg-green-500/20 text-green-400'
                                 : 'bg-gray-700 text-gray-500'
                             }`}
+                            title='Call Notifications'
                           >
                             <IoCallOutline size={16} />
                           </button>
                           <button
                             className={`p-1.5 rounded ${
-                              roi.notifications?.sms
+                              roi.notification_config?.whatsapp?.enabled
                                 ? 'bg-purple-500/20 text-purple-400'
                                 : 'bg-gray-700 text-gray-500'
                             }`}
+                            title='WhatsApp Notifications'
                           >
                             <IoChatbubbleOutline size={16} />
                           </button>
@@ -593,9 +660,9 @@ const AddCamera = () => {
                             <IoPencil size={12} />
                             <p>Edit</p>
                           </button>
-                          <button className='p-2 rounded-lg text-gray-400 hover:text-white transition-all'>
+                          {/* <button className='p-2 rounded-lg text-gray-400 hover:text-white transition-all'>
                             <IoEye size={14} />
-                          </button>
+                          </button> */}
                           <button
                             onClick={() => handleDeleteRoi(roi.id)}
                             className='p-2 rounded-lg text-gray-400 hover:text-red-500 transition-all'

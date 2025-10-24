@@ -29,9 +29,10 @@ const CameraGrid = () => {
     cameraName: ''
   })
 
-  const tenantId = 1;
+  const tenantId = localStorage.getItem("tenant_id")
 
   useEffect(() => {
+    console.log(localStorage.getItem("tenant_id"))
     dispatch(getCameras({ tenantId }))
   }, [dispatch, tenantId])
 
@@ -306,7 +307,7 @@ const CameraGrid = () => {
             {/* Footer actions */}
             <div className='flex justify-between items-center pt-4 border-t border-gray-700/50 mt-auto'>
               <Link
-                to={`/roi-configuration?cameraId=${camera.id}`}
+                to={`/roi-configuration?cameraId=${camera.rois[0]?.id}`}
                 className='flex items-center'
               >
                 <button className='flex items-center gap-1.5 text-gray-400 hover:text-white transition-colors text-sm'>

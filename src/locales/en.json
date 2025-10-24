@@ -53,7 +53,7 @@
     "cameraNamePlaceholder": "e.g., Camera 01 | Petrobras Gas Station - South Zone",
     "cameraNameDescription": "Give your camera a descriptive name",
     "locationLabel": "Location",
-    "locationPlaceholder": "e.g., Entrance, Fuel Pumps, Store",
+    "locationPlaceholder": "e.g., Select your location",
     "locationDescription": "Give your camera a descriptive name",
     "rtspUrlLabel": "RTSP URL",
     "rtspUrlPlaceholder": "rtsp://Camera-IP-address:port/Stream",

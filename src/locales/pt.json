@@ -53,7 +53,7 @@
     "cameraNamePlaceholder": "ex., Câmera 01 | Posto Petrobras - Zona Sul",
     "cameraNameDescription": "Dê um nome descritivo à sua câmera",
     "locationLabel": "Localização",
-    "locationPlaceholder": "ex., Entrada, Bombas de Combustível, Loja",
+    "locationPlaceholder": "ex., Selecione sua localização",
     "locationDescription": "Dê um nome descritivo à sua câmera",
     "rtspUrlLabel": "URL RTSP",
     "rtspUrlPlaceholder": "rtsp://endereço-IP-da-câmera:porta/Stream",
