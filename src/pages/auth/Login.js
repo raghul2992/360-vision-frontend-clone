@@ -29,7 +29,8 @@ const LoginPage = () => {
   useEffect(() => {
     if (success) {
       // toast.success()
-      navigate('/admin-dashboard')
+      // navigate('/admin-dashboard')
+      navigate('/camera')
     }
     if (error) {
       toast.error(error)

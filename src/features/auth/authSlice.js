@@ -2,6 +2,7 @@ import { createSlice, createAsyncThunk } from '@reduxjs/toolkit'
 import api from '../../utils/apihelper'
 import Cookies from 'js-cookie'
 
+// Login user
 export const loginUser = createAsyncThunk(
   'auth/loginUser',
   async ({ email, password }, { rejectWithValue }) => {
@@ -20,6 +21,22 @@ export const loginUser = createAsyncThunk(
   }
 )
 
+// Logout user
+export const logoutUser = createAsyncThunk(
+  'auth/logoutUser',
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await api.post('/api/v1/logout')
+      return response
+    } catch (error) {
+      if (error.response && error.response.data?.message) {
+        return rejectWithValue(error.response.data.message)
+      }
+      return rejectWithValue(error.message)
+    }
+  }
+)
+
 const authSlice = createSlice({
   name: 'auth',
   initialState: {
@@ -28,17 +45,10 @@ const authSlice = createSlice({
     error: null,
     success: false
   },
-  reducers: {
-    logout: state => {
-      state.user = null
-      state.success = false
-      state.error = null
-      Cookies.remove('access_token')
-      localStorage.removeItem('tenant_id')
-    }
-  },
+  reducers: {},
   extraReducers: builder => {
     builder
+      // Login cases
       .addCase(loginUser.pending, state => {
         state.isLoading = true
         state.error = null
@@ -47,17 +57,31 @@ const authSlice = createSlice({
         state.isLoading = false
         state.success = true
         state.user = action.payload
-        console.log(state.user.data.data.tenant_id)
-        // // Save tenant_id to localStorage
-        // localStorage.setItem('tenant_id', action.payload.data.tenant_id)
-        localStorage.setItem('tenant_id', state.user.data.data.tenant_id)
+        const tenantId = state.user?.data?.data?.tenant_id
+        if (tenantId) localStorage.setItem('tenant_id', tenantId)
       })
       .addCase(loginUser.rejected, (state, action) => {
+        state.isLoading = false
+        state.error = action.payload
+      })
+
+      // Logout cases
+      .addCase(logoutUser.pending, state => {
+        state.isLoading = true
+        state.error = null
+      })
+      .addCase(logoutUser.fulfilled, state => {
+        state.isLoading = false
+        state.success = false
+        state.user = null
+        Cookies.remove('access_token')
+        localStorage.removeItem('tenant_id')
+      })
+      .addCase(logoutUser.rejected, (state, action) => {
         state.isLoading = false
         state.error = action.payload
       })
   }
 })
 
-export const { logout } = authSlice.actions
 export default authSlice.reducer

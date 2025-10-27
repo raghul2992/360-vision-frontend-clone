@@ -1,5 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react'
-import { Stage, Layer, Line, Circle, Image as KonvaImage } from 'react-konva'
+import {
+  Stage,
+  Layer,
+  Line,
+  Circle,
+  Image as KonvaImage,
+  Rect
+} from 'react-konva'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { bgcolors } from '../../theme'
@@ -22,7 +29,7 @@ import {
   getRois,
   updateRoi,
   deleteRoi,
-  clearRoiOperationSuccess // Import the action creator
+  clearRoiOperationSuccess
 } from '../../features/cameras/roilistslice'
 import useImage from 'use-image'
 import { getCameraSnapshot } from '../../features/cameras/cameraApiSlice'
@@ -43,17 +50,18 @@ const ROIConfiguration = () => {
     roiToEdit,
     currentRoi_Id
   } = location.state || {}
-  const tenantId = propTenantId || 1 // Default to 1 if not provided
+  const tenantId = propTenantId || 1
 
-  const [points, setPoints] = useState([])
+  const [polygons, setPolygons] = useState([])
+  const [currentPolygon, setCurrentPolygon] = useState([])
   const [isDrawing, setIsDrawing] = useState(false)
+  const [drawingMode, setDrawingMode] = useState('polygon')
+  const [isDrawingRectangle, setIsDrawingRectangle] = useState(false)
+  const [rectangleStart, setRectangleStart] = useState(null)
+  const [currentRectangle, setCurrentRectangle] = useState(null)
   const stageRef = useRef(null)
-  const [imageUrl, setImageUrl] = useState()
-  // const [image] = useImage(`${process.env.REACT_APP_BASE_URL}${snapshot}`, 'anonymous')
-  const [image] = useImage(
-    `https://cdn.shopify.com/s/files/1/0648/5134/5473/files/798c3710-74b8-4c85-adf8-f0a371619a2c-Max.jpg?v=1744020342`,
-    'anonymous'
-  )
+  const [snapshotUrl, setSnapshotUrl] = useState(snapshot)
+  const [image] = useImage(snapshotUrl)
 
   const [stageDimensions, setStageDimensions] = useState({
     width: 1050,
@@ -67,9 +75,14 @@ const ROIConfiguration = () => {
     state => state.cameraApi
   )
 
+  // Image dimensions state
+  const [imageDimensions, setImageDimensions] = useState({
+    width: 0,
+    height: 0
+  })
+
   useEffect(() => {
     console.log(`${process.env.REACT_APP_BASE_URL}${snapshot}`)
-    // console.log(roiToEdit)
   }, [])
 
   const [emailNotification, setEmailNotification] = useState(false)
@@ -91,9 +104,9 @@ const ROIConfiguration = () => {
 
   // ROI Settings
   const [roiName, setRoiName] = useState('')
-  const [detectionType, setDetectionType] = useState('ALL_DETECTION') // Changed default to match backend
+  const [detectionType, setDetectionType] = useState('ALL_DETECTION')
   const [alertPriority, setAlertPriority] = useState('High')
-  const [currentRoiId, setCurrentRoiId] = useState(null)
+  const [currentRoiId, setCurrentRoiId] = useState(currentRoi_Id)
 
   // New states for specific detection configs
   const [idieDuration, setIdieDuration] = useState(3000)
@@ -101,25 +114,6 @@ const ROIConfiguration = () => {
 
   const searchParams = new URLSearchParams(location.search)
   const cameraIdFromUrl = searchParams.get('cameraId')
-
-  // Set the image URL from snapshot or snapshotResult
-  // useEffect(() => {
-  //   let url = null
-  //   if (snapshotResult?.frame_url) {
-  //     url = snapshotResult.frame_url.startsWith('https')
-  //       ? snapshotResult.frame_url
-  //       : `${process.env.REACT_APP_BASE_URL}${snapshotResult.frame_url}`
-  //   } else if (snapshot) {
-  //     url = snapshot.startsWith('https')
-  //       ? snapshot
-  //       : `${process.env.REACT_APP_BASE_URL}${snapshot}`
-  //   }
-
-  //   if (url) {
-  //     // Appending a timestamp to bypass cache
-  //     setImageUrl(`${url}${url.includes('?') ? '&' : '?'}_t=${Date.now()}`)
-  //   }
-  // }, [snapshot, snapshotResult])
 
   // Set stage dimensions
   useEffect(() => {
@@ -132,6 +126,16 @@ const ROIConfiguration = () => {
     window.addEventListener('resize', updateDimensions)
     return () => window.removeEventListener('resize', updateDimensions)
   }, [])
+
+  // Update image dimensions when image loads
+  useEffect(() => {
+    if (image) {
+      setImageDimensions({
+        width: image.width,
+        height: image.height
+      })
+    }
+  }, [image])
 
   // Load ROIs when cameraId and tenantId are available
   useEffect(() => {
@@ -153,53 +157,161 @@ const ROIConfiguration = () => {
       toast.error(error)
     }
     if (operationSuccess) {
-      dispatch(getRois({ tenantId, cameraId })) // Refresh ROIs
-      dispatch(clearRoiOperationSuccess()) // Clear success state after handling
+      dispatch(getRois({ tenantId, cameraId }))
+      dispatch(clearRoiOperationSuccess())
     }
   }, [error, operationSuccess, dispatch, tenantId, cameraId])
 
+  // Get scale factors for coordinate conversion
+  const getScaleFactors = () => {
+    if (
+      !imageDimensions.width ||
+      !imageDimensions.height ||
+      !stageRef.current
+    ) {
+      return { scaleX: 1, scaleY: 1 }
+    }
+
+    const stageWidth = stageRef.current.width()
+    const stageHeight = stageRef.current.height()
+
+    return {
+      scaleX: imageDimensions.width / stageWidth,
+      scaleY: imageDimensions.height / stageHeight
+    }
+  }
+
+  // Convert stage coordinates to image coordinates
+  const getImagePoint = (stageX, stageY) => {
+    const { scaleX, scaleY } = getScaleFactors()
+    return {
+      x: Math.round(stageX * scaleX),
+      y: Math.round(stageY * scaleY)
+    }
+  }
+
+  // Convert image coordinates to stage coordinates
+  const getStagePoint = (imageX, imageY) => {
+    const { scaleX, scaleY } = getScaleFactors()
+    return {
+      x: Math.round(imageX / scaleX),
+      y: Math.round(imageY / scaleY)
+    }
+  }
+
+  // Convert polygon points from image to stage coordinates
+  const getStagePolygon = polygon => {
+    if (!polygon || polygon.length === 0) return []
+    return polygon.map(point => getStagePoint(point.x, point.y))
+  }
+
+  // Polygon drawing handlers
   const handleMouseDown = e => {
     if (!isDrawing || !image) return
+
+    const stage = e.target.getStage()
+    const pointerPosition = stage.getPointerPosition()
+    const imagePoint = getImagePoint(pointerPosition.x, pointerPosition.y)
+
+    if (drawingMode === 'polygon') {
+      setCurrentPolygon([
+        ...currentPolygon,
+        { x: imagePoint.x, y: imagePoint.y }
+      ])
+    } else if (drawingMode === 'rectangle') {
+      setIsDrawingRectangle(true)
+      setRectangleStart(pointerPosition)
+      setCurrentRectangle({
+        x: pointerPosition.x,
+        y: pointerPosition.y,
+        width: 0,
+        height: 0
+      })
+    }
+  }
+
+  const handleMouseMove = e => {
+    if (!isDrawingRectangle || !rectangleStart || !image) return
+
     const stage = e.target.getStage()
     const pointerPosition = stage.getPointerPosition()
 
-    // Calculate scale factor to map pointer position to image coordinates
-    const scaleX = image.width / stage.width()
-    const scaleY = image.height / stage.height()
-
-    setPoints([
-      ...points,
-      {
-        x: pointerPosition.x * scaleX,
-        y: pointerPosition.y * scaleY
-      }
-    ])
+    setCurrentRectangle({
+      x: Math.min(rectangleStart.x, pointerPosition.x),
+      y: Math.min(rectangleStart.y, pointerPosition.y),
+      width: Math.abs(pointerPosition.x - rectangleStart.x),
+      height: Math.abs(pointerPosition.y - rectangleStart.y)
+    })
   }
 
-  const handleDragMove = (e, index) => {
-    const newPoints = [...points]
-    const stage = e.target.getStage()
-    const scaleX = image.width / stage.width()
-    const scaleY = image.height / stage.height()
+  const handleMouseUp = () => {
+    if (
+      isDrawingRectangle &&
+      currentRectangle &&
+      currentRectangle.width > 10 &&
+      currentRectangle.height > 10
+    ) {
+      // Convert rectangle corners to image coordinates
+      const topLeft = getImagePoint(currentRectangle.x, currentRectangle.y)
+      const topRight = getImagePoint(
+        currentRectangle.x + currentRectangle.width,
+        currentRectangle.y
+      )
+      const bottomRight = getImagePoint(
+        currentRectangle.x + currentRectangle.width,
+        currentRectangle.y + currentRectangle.height
+      )
+      const bottomLeft = getImagePoint(
+        currentRectangle.x,
+        currentRectangle.y + currentRectangle.height
+      )
 
-    newPoints[index] = {
-      x: e.target.x() * scaleX,
-      y: e.target.y() * scaleY
+      const rectPoints = [
+        { x: topLeft.x, y: topLeft.y },
+        { x: topRight.x, y: topRight.y },
+        { x: bottomRight.x, y: bottomRight.y },
+        { x: bottomLeft.x, y: bottomLeft.y }
+      ]
+
+      setPolygons([...polygons, rectPoints])
+      setIsDrawingRectangle(false)
+      setCurrentRectangle(null)
+      setRectangleStart(null)
     }
-    setPoints(newPoints)
   }
 
-  // Calculate points for display on stage
-  const getStagePoints = point => {
-    if (!image || !stageRef.current) return { x: point.x, y: point.y }
-
-    const scaleX = stageRef.current.width() / image.width
-    const scaleY = stageRef.current.height() / image.height
-
-    return {
-      x: point.x * scaleX,
-      y: point.y * scaleY
+  const completeCurrentPolygon = () => {
+    if (currentPolygon.length >= 3) {
+      setPolygons([...polygons, currentPolygon])
+      setCurrentPolygon([])
+    } else {
+      toast.error('A polygon needs at least 3 points')
     }
+  }
+
+  // Fixed drag handler with proper coordinate conversion
+  const handleDragMove = (e, polygonIndex, pointIndex) => {
+    const newPolygons = [...polygons]
+    const stagePoint = { x: e.target.x(), y: e.target.y() }
+    const imagePoint = getImagePoint(stagePoint.x, stagePoint.y)
+
+    newPolygons[polygonIndex][pointIndex] = {
+      x: imagePoint.x,
+      y: imagePoint.y
+    }
+    setPolygons(newPolygons)
+  }
+
+  const deletePolygon = index => {
+    const newPolygons = polygons.filter((_, i) => i !== index)
+    setPolygons(newPolygons)
+  }
+
+  const deleteAllPolygons = () => {
+    setPolygons([])
+    setCurrentPolygon([])
+    setCurrentRectangle(null)
+    setIsDrawingRectangle(false)
   }
 
   const handleTakeSnapshot = () => {
@@ -207,12 +319,27 @@ const ROIConfiguration = () => {
       toast.error('RTSP URL is missing. Cannot take a snapshot.')
       return
     }
+
+    console.log(rtsp_url)
     const connectionData = {
       rtsp_url,
-      username: username || '',
-      password: password || ''
+      username: '',
+      password: ''
     }
-    dispatch(getCameraSnapshot({ tenantId, connectionData }))
+    dispatch(
+      getCameraSnapshot({
+        tenantId,
+        cameraId: cameraId ? parseInt(cameraId) : null,
+        rtsp_url: rtsp_url,
+        username: '',
+        password: ''
+      })
+    )
+      .unwrap()
+      .then(result => {
+        setSnapshotUrl(result.data.frame_url)
+        toast.success('Snapshot retrieved successfully!')
+      })
   }
 
   const handleSaveRoi = () => {
@@ -220,17 +347,22 @@ const ROIConfiguration = () => {
       toast.error('Please save the camera first before configuring ROIs.')
       return
     }
-    if (!roiName.trim() || points.length < 3) {
+    if (!roiName.trim() || polygons.length === 0) {
       toast.error(
-        'Please provide an ROI name and draw a polygon with at least 3 points.'
+        'Please provide an ROI name and draw at least one polygon area.'
       )
       return
     }
 
+    // UPDATED: Store polygons as array of polygon arrays
+    const polygonsArray = polygons.map(polygon =>
+      polygon.map(p => [Math.round(p.x), Math.round(p.y)])
+    )
+
     const roiData = {
       name: roiName.trim(),
       frame_url: snapshot,
-      polygons: JSON.stringify(points.map(p => [p.x, p.y])), // Convert to string
+      polygons: JSON.stringify(polygonsArray),
       alert_priority: alertPriority.toLowerCase(),
       detection_type: detectionType,
       detection_config: (() => {
@@ -265,22 +397,28 @@ const ROIConfiguration = () => {
       },
       status: 'active',
       meta: {},
-      camera_id: cameraId // Make sure to include camera_id
+      camera_id: cameraId
     }
+
     console.log('handleSaveRoi called. currentRoiId:', currentRoiId)
+    console.log('Polygons data structure:', polygonsArray)
+
     if (currentRoiId) {
       dispatch(updateRoi({ tenantId, cameraId, roiId: currentRoiId, roiData }))
       toast.success('ROI updated successfully!')
       navigate(`/add-camera?id=${cameraId}`)
     } else {
-      dispatch(createRoi({ tenantId, cameraId, roiId: currentRoiId, roiData }))
+      dispatch(createRoi({ tenantId, cameraId, roiData }))
       toast.success('ROI created successfully!')
       resetForm()
-      setCurrentRoiId(null) // Explicitly clear currentRoiId after creating a new ROI
+      setCurrentRoiId(null)
+      navigate(`/add-camera?id=${cameraId}`)
     }
   }
 
+  // UPDATED: Handle ROI editing - parse array of polygon arrays
   const handleEditRoi = roi => {
+    console.log('Editing ROI:', roi)
     setCurrentRoiId(roi.id)
     setRoiName(roi.name)
     setDetectionType(roi.detection_type)
@@ -288,54 +426,83 @@ const ROIConfiguration = () => {
       roi.alert_priority.charAt(0).toUpperCase() + roi.alert_priority.slice(1)
     )
 
+    // Set the snapshot URL from the ROI being edited
+    setSnapshotUrl(roi.frame_url)
+
     // Parse the polygons string back to array
     try {
       const parsedPolygons =
         typeof roi.polygons === 'string'
           ? JSON.parse(roi.polygons)
           : roi.polygons
-      setPoints(parsedPolygons.map(p => ({ x: p[0], y: p[1] })))
+
+      console.log('Parsed ROI polygons:', parsedPolygons)
+
+      // Clear existing polygons and load the ROI's polygons
+      if (parsedPolygons && Array.isArray(parsedPolygons)) {
+        const roiPolygons = []
+
+        // Convert each polygon array to the format we use internally
+        parsedPolygons.forEach(polygonArray => {
+          if (polygonArray && polygonArray.length >= 3) {
+            const polygonPoints = polygonArray.map(point => ({
+              x: point[0],
+              y: point[1]
+            }))
+            roiPolygons.push(polygonPoints)
+          }
+        })
+
+        console.log('Converted ROI polygons:', roiPolygons)
+        setPolygons(roiPolygons)
+      } else {
+        setPolygons([])
+      }
     } catch (error) {
       console.error('Error parsing polygons:', error)
-      setPoints(roi.polygons?.map(p => ({ x: p[0], y: p[1] })) || [])
+      setPolygons([])
     }
 
     // Populate notification states
-    setEmailNotification(roi.notification_config.email.enabled)
-    setEmailRecipients(roi.notification_config.email.recipients || [])
-    setWhatsappNotification(roi.notification_config.whatsapp.enabled)
-    setWhatsappRecipients(roi.notification_config.whatsapp.recipients || [])
-    setCallNotification(roi.notification_config.call.enabled)
-    setCallRecipients(roi.notification_config.call.recipients || [])
+    setEmailNotification(roi.notification_config?.email?.enabled || false)
+    setEmailRecipients(roi.notification_config?.email?.recipients || [])
+    setWhatsappNotification(roi.notification_config?.whatsapp?.enabled || false)
+    setWhatsappRecipients(roi.notification_config?.whatsapp?.recipients || [])
+    setCallNotification(roi.notification_config?.call?.enabled || false)
+    setCallRecipients(roi.notification_config?.call?.recipients || [])
 
     // Populate detection sensitivity states
     if (roi.detection_type === 'IDIE_VEHICLE') {
-      setIdieDuration(roi.detection_config.IDIE_DURATION || 3000)
-      setVehicleCount(roi.detection_config.VEHICLE_COUNT || 3)
+      setIdieDuration(roi.detection_config?.IDIE_DURATION || 3000)
+      setVehicleCount(roi.detection_config?.VEHICLE_COUNT || 3)
     } else {
-      setPersonSensitivity(roi.detection_config.person_sensitivity || 66)
-      setWeaponSensitivity(roi.detection_config.weapon_sensitivity || 88)
-      setVehicleSensitivity(roi.detection_config.vehicle_sensitivity || 90)
-      setFireSensitivity(roi.detection_config.fire_sensitivity || 18)
-      setMotionThreshold(roi.detection_config.motion_threshold || 66)
-      setMinimumObjectSize(roi.detection_config.minimum_object_size || 98)
+      setPersonSensitivity(roi.detection_config?.person_sensitivity || 66)
+      setWeaponSensitivity(roi.detection_config?.weapon_sensitivity || 88)
+      setVehicleSensitivity(roi.detection_config?.vehicle_sensitivity || 90)
+      setFireSensitivity(roi.detection_config?.fire_sensitivity || 18)
+      setMotionThreshold(roi.detection_config?.motion_threshold || 66)
+      setMinimumObjectSize(roi.detection_config?.minimum_object_size || 98)
     }
+
+    // Enable drawing mode for adding new polygons
+    setIsDrawing(true)
   }
 
   const handleDeleteRoi = roiId => {
-    if (window.confirm('Are you sure you want to delete this ROI?')) {
-      dispatch(deleteRoi({ tenantId, cameraId, roiId }))
-      toast.success('ROI deleted successfully!')
-    }
+    dispatch(deleteRoi({ tenantId, cameraId, roiId }))
+    toast.success('ROI deleted successfully!')
   }
 
   const resetForm = () => {
-    // setCurrentRoiId(null) // Removed: currentRoiId should persist when editing
     setRoiName('')
-    setDetectionType('ALL_DETECTION') // Changed default to match backend
+    setDetectionType('ALL_DETECTION')
     setAlertPriority('High')
-    setPoints([])
+    setPolygons([])
+    setCurrentPolygon([])
     setIsDrawing(false)
+    setIsDrawingRectangle(false)
+    setCurrentRectangle(null)
+    setDrawingMode('polygon')
     setEmailNotification(false)
     setCallNotification(false)
     setWhatsappNotification(false)
@@ -349,8 +516,9 @@ const ROIConfiguration = () => {
     setFireSensitivity(18)
     setMotionThreshold(66)
     setMinimumObjectSize(98)
-    setIdieDuration(3000) // Reset new states
-    setVehicleCount(3) // Reset new states
+    setIdieDuration(3000)
+    setVehicleCount(3)
+    setCurrentRoiId(null)
   }
 
   // Function to handle image error in Konva
@@ -361,13 +529,99 @@ const ROIConfiguration = () => {
   // Function to parse ROI polygons for display
   const parseRoiPolygons = roi => {
     try {
-      return typeof roi.polygons === 'string'
-        ? JSON.parse(roi.polygons)
-        : roi.polygons
+      const parsed =
+        typeof roi.polygons === 'string'
+          ? JSON.parse(roi.polygons)
+          : roi.polygons
+
+      // If it's an array of polygon arrays, flatten for display
+      if (
+        Array.isArray(parsed) &&
+        parsed.length > 0 &&
+        Array.isArray(parsed[0])
+      ) {
+        return parsed.flat()
+      }
+      return parsed
     } catch (error) {
       console.error('Error parsing ROI polygons:', error)
       return roi.polygons || []
     }
+  }
+
+  // Render polygons with proper coordinate conversion
+  const renderPolygons = () => {
+    return polygons.map((polygon, polyIndex) => {
+      const stagePolygon = getStagePolygon(polygon)
+      const flatPoints = stagePolygon.flatMap(p => [p.x, p.y])
+
+      return (
+        <React.Fragment key={polyIndex}>
+          <Line
+            points={flatPoints}
+            stroke='#10b981'
+            strokeWidth={3}
+            closed={true}
+            fill='rgba(16, 185, 129, 0.2)'
+          />
+          {stagePolygon.map((point, pointIndex) => (
+            <Circle
+              key={`${polyIndex}-${pointIndex}`}
+              x={point.x}
+              y={point.y}
+              radius={6}
+              fill='#10b981'
+              stroke='white'
+              strokeWidth={2}
+              draggable
+              onDragMove={e => handleDragMove(e, polyIndex, pointIndex)}
+            />
+          ))}
+        </React.Fragment>
+      )
+    })
+  }
+
+  // Render current polygon being drawn
+  const renderCurrentPolygon = () => {
+    if (currentPolygon.length === 0) return null
+
+    const stagePolygon = getStagePolygon(currentPolygon)
+    const flatPoints = stagePolygon.flatMap(p => [p.x, p.y])
+
+    return (
+      <>
+        <Line
+          points={flatPoints}
+          stroke='#3b82f6'
+          strokeWidth={2}
+          dash={[5, 5]}
+        />
+        {stagePolygon.map((point, index) => (
+          <Circle
+            key={index}
+            x={point.x}
+            y={point.y}
+            radius={6}
+            fill='#3b82f6'
+            stroke='white'
+            strokeWidth={2}
+          />
+        ))}
+      </>
+    )
+  }
+
+  // Debug function to log coordinates
+  const debugCoordinates = () => {
+    console.log('Image dimensions:', imageDimensions)
+    console.log('Stage dimensions:', stageDimensions)
+    console.log('Scale factors:', getScaleFactors())
+    console.log('Polygons (image coordinates):', polygons)
+    console.log(
+      'Polygons (stage coordinates):',
+      polygons.map(poly => getStagePolygon(poly))
+    )
   }
 
   return (
@@ -382,7 +636,7 @@ const ROIConfiguration = () => {
           </p>
         </div>
         <button
-          onClick={() => navigate('/camera-setup')}
+          onClick={() => navigate('/camera')}
           className='bg-[#3885CC] hover:bg-blue-600 text-white font-semibold py-2 px-6 rounded-full flex items-center gap-2 transition-colors'
         >
           <IoArrowBackCircle size={20} className='inline-block' />
@@ -393,6 +647,15 @@ const ROIConfiguration = () => {
       {/* ROI Setting Section */}
       <div className='bg-[#30313F] rounded-lg p-6 mb-6'>
         <h2 className='text-xl font-bold mb-4'>ROI Setting</h2>
+
+        {/* Debug button - remove in production */}
+        <button
+          onClick={debugCoordinates}
+          className='mb-4 bg-gray-600 px-3 py-1 rounded text-sm'
+        >
+          Debug Coordinates
+        </button>
+
         <div className='relative'>
           {/* Camera Feed */}
           <div className='w-full bg-black rounded-lg overflow-hidden relative'>
@@ -400,57 +663,53 @@ const ROIConfiguration = () => {
               width={stageDimensions.width}
               height={stageDimensions.height}
               onMouseDown={handleMouseDown}
+              onMouseMove={handleMouseMove}
+              onMouseUp={handleMouseUp}
               ref={stageRef}
               className='w-full h-full'
             >
               <Layer>
-                {/* {image && imageStatus === 'loaded' && ( */}
                 <KonvaImage
                   image={image}
                   width={stageDimensions.width}
                   height={stageDimensions.height}
                   onError={handleImageError}
                 />
-                {/* )} */}
-                {points.length > 0 && (
-                  <Line
-                    points={points.flatMap(p => {
-                      const stagePoint = getStagePoints(p)
-                      return [stagePoint.x, stagePoint.y]
-                    })}
-                    stroke='#10b981'
-                    strokeWidth={3}
-                    closed={points.length > 2}
-                    fill='rgba(16, 185, 129, 0.2)'
+
+                {/* Display existing polygons with proper coordinate conversion */}
+                {renderPolygons()}
+                {renderCurrentPolygon()}
+
+                {/* Display current rectangle being drawn */}
+                {currentRectangle && (
+                  <Rect
+                    x={currentRectangle.x}
+                    y={currentRectangle.y}
+                    width={currentRectangle.width}
+                    height={currentRectangle.height}
+                    stroke='#3b82f6'
+                    strokeWidth={2}
+                    dash={[5, 5]}
+                    fill='rgba(59, 130, 246, 0.2)'
                   />
                 )}
-                {points.map((point, index) => {
-                  const stagePoint = getStagePoints(point)
-                  return (
-                    <Circle
-                      key={index}
-                      x={stagePoint.x}
-                      y={stagePoint.y}
-                      radius={8}
-                      fill='#10b981'
-                      stroke='white'
-                      strokeWidth={2}
-                      draggable
-                      onDragMove={e => handleDragMove(e, index)}
-                    />
-                  )
-                })}
-              </Layer>
-              <Layer>
+
+                {/* Display existing ROIs from backend */}
                 {rois.map(roi => {
+                  if (roi.id === currentRoiId) return null // Don't show the ROI we're currently editing
+
                   const roiPoints = parseRoiPolygons(roi)
+                  if (!roiPoints || roiPoints.length === 0) return null
+
+                  const stagePoints = getStagePolygon(
+                    roiPoints.map(p => ({ x: p[0], y: p[1] }))
+                  )
+                  const flatPoints = stagePoints.flatMap(p => [p.x, p.y])
+
                   return (
                     <Line
                       key={roi.id}
-                      points={roiPoints.flatMap(p => {
-                        const stagePoint = getStagePoints(p)
-                        return [stagePoint.x, stagePoint.y]
-                      })}
+                      points={flatPoints}
                       stroke='yellow'
                       strokeWidth={3}
                       closed={true}
@@ -461,81 +720,166 @@ const ROIConfiguration = () => {
               </Layer>
             </Stage>
 
-            {/* Loading state */}
-            {/* {imageStatus === 'loading' && (
-              <div className='absolute inset-0 flex items-center justify-center bg-black bg-opacity-50'>
-                <div className='text-white'>Loading snapshot...</div>
+            {/* Drawing mode selector */}
+            <div className='absolute top-4 left-4 bg-gray-800 bg-opacity-80 rounded-lg p-3'>
+              <div className='flex gap-2 mb-2'>
+                <button
+                  onClick={() => {
+                    setDrawingMode('polygon')
+                    setIsDrawing(true)
+                    setCurrentPolygon([])
+                  }}
+                  className={`px-3 py-1 rounded ${
+                    drawingMode === 'polygon'
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-gray-700 text-gray-300'
+                  }`}
+                >
+                  Polygon
+                </button>
+                {/* <button
+                  onClick={() => {
+                    setDrawingMode('rectangle')
+                    setIsDrawing(true)
+                    setCurrentPolygon([])
+                  }}
+                  className={`px-3 py-1 rounded ${
+                    drawingMode === 'rectangle'
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-gray-700 text-gray-300'
+                  }`}
+                >
+                  Rectangle
+                </button> */}
               </div>
-            )} */}
-
-            {/* Error state */}
-            {/* {imageStatus === 'failed' && (
-              <div className='absolute inset-0 flex items-center justify-center bg-black bg-opacity-50'>
-                <div className='text-red-400 text-center'>
-                  Failed to load snapshot
-                  <br />
-                  <button
-                    onClick={handleTakeSnapshot}
-                    className='mt-2 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded'
-                  >
-                    Retry Snapshot
-                  </button>
+              {drawingMode === 'polygon' && (
+                <div className='text-xs text-gray-300'>
+                  Click to add points. Complete polygon when done.
                 </div>
-              </div>
-            )} */}
-
-            {/* No image state */}
-            {/* {!imageUrl && imageStatus !== 'loading' && (
-              <div className='absolute inset-0 flex items-center justify-center bg-black bg-opacity-50'>
-                <div className='text-gray-400 text-center'>
-                  No snapshot available
-                  <br />
-                  <button
-                    onClick={handleTakeSnapshot}
-                    className='mt-2 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded'
-                  >
-                    Take Snapshot
-                  </button>
+              )}
+              {drawingMode === 'rectangle' && (
+                <div className='text-xs text-gray-300'>
+                  Click and drag to draw rectangle.
                 </div>
+              )}
+            </div>
+
+            {/* Polygon count display */}
+            <div className='absolute top-4 right-4 bg-gray-800 bg-opacity-80 rounded-lg p-3'>
+              <div className='text-sm text-gray-300'>
+                Areas: {polygons.length}
               </div>
-            )} */}
+              <div className='text-sm text-gray-300'>Mode: {drawingMode}</div>
+            </div>
           </div>
         </div>
 
         {/* ROI Configuration Fields */}
         <div className='flex flex-col mt-3'>
-          {/* Reset and Draw ROI Buttons */}
-          <div className='flex gap-3 w-full justify-end'>
-            {/* <button
-              onClick={handleTakeSnapshot}
-              disabled={isSnapshotLoading}
-              className='bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-full flex items-center gap-2 transition-colors disabled:opacity-50'
-            >
-              <IoCamera size={20} />
-              <span>{isSnapshotLoading ? 'Loading...' : 'Take Snapshot'}</span>
-            </button> */}
-            <button
-              onClick={() => setPoints([])}
-              className='bg-gray-700 hover:bg-gray-600 text-white font-semibold py-2 px-4 rounded-full flex items-center gap-2 transition-colors'
-            >
-              <IoReload size={20} />
-              <span>Reset</span>
-            </button>
-            <button
-              onClick={() => {
-                setPoints([])
-                setIsDrawing(true)
-              }}
-              className='bg-[#3885CC] hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-full flex items-center gap-2 transition-colors'
-            >
-              <IoScanCircle size={20} />
-              <span>Draw ROI</span>
-            </button>
+          {/* Control Buttons */}
+          <div className='flex gap-3 w-full justify-between'>
+            <div className='flex gap-3'>
+              <button
+                onClick={handleTakeSnapshot}
+                disabled={isSnapshotLoading}
+                className='bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-full flex items-center gap-2 transition-colors disabled:opacity-50'
+              >
+                <IoCamera size={20} />
+                <span>
+                  {isSnapshotLoading ? 'Loading...' : 'Take Snapshot'}
+                </span>
+              </button>
+
+              {drawingMode === 'polygon' && currentPolygon.length > 0 && (
+                <button
+                  onClick={completeCurrentPolygon}
+                  className='bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-full flex items-center gap-2 transition-colors'
+                >
+                  <IoScanCircle size={20} />
+                  <span>Complete Polygon</span>
+                </button>
+              )}
+            </div>
+
+            <div className='flex gap-3'>
+              <button
+                onClick={deleteAllPolygons}
+                className='bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-full flex items-center gap-2 transition-colors'
+              >
+                <IoTrash size={20} />
+                <span>Clear All</span>
+              </button>
+
+              <button
+                onClick={() => {
+                  deleteAllPolygons()
+                  setIsDrawing(true)
+                }}
+                className='bg-[#3885CC] hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-full flex items-center gap-2 transition-colors'
+              >
+                <IoScanCircle size={20} />
+                <span>Draw New Area</span>
+              </button>
+            </div>
           </div>
+
+          {/* Polygon management */}
+          {polygons.length > 0 && (
+            <div className='mt-4'>
+              <h3 className='text-lg font-semibold mb-2'>Drawn Areas</h3>
+              <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2'>
+                {polygons.map((polygon, index) => (
+                  <div
+                    key={index}
+                    className='bg-gray-700 rounded p-2 flex justify-between items-center'
+                  >
+                    <span className='text-sm'>
+                      Area {index + 1} ({polygon.length} points)
+                    </span>
+                    <button
+                      onClick={() => deletePolygon(index)}
+                      className='text-red-400 hover:text-red-600'
+                    >
+                      <IoTrash size={16} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {rois.length > 0 && (
             <div className='mt-6'>
               <h3 className='text-lg font-bold mb-3'>Configured ROIs</h3>
+              {/* <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3'>
+                {rois.map(roi => (
+                  <div
+                    key={roi.id}
+                    className='bg-gray-800 rounded-lg p-3 flex justify-between items-center'
+                  >
+                    <div>
+                      <div className='font-semibold'>{roi.name}</div>
+                      <div className='text-sm text-gray-400'>
+                        {roi.detection_type}
+                      </div>
+                    </div>
+                    <div className='flex gap-2'>
+                      <button
+                        onClick={() => handleEditRoi(roi)}
+                        className='text-blue-400 hover:text-blue-600'
+                      >
+                        <IoPencil size={18} />
+                      </button>
+                      <button
+                        onClick={() => handleDeleteRoi(roi.id)}
+                        className='text-red-400 hover:text-red-600'
+                      >
+                        <IoTrash size={18} />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div> */}
             </div>
           )}
 
@@ -591,6 +935,7 @@ const ROIConfiguration = () => {
         </div>
       </div>
 
+      {/* Detection Sensitive Section */}
       <div className='bg-[#30313F] rounded-lg p-6 mb-6'>
         <h2 className='text-xl font-bold mb-6'>Detection Sensitive</h2>
         <div className='grid grid-cols-2 gap-x-12 gap-y-6'>
@@ -777,6 +1122,7 @@ const ROIConfiguration = () => {
         </div>
       </div>
 
+      {/* Notifications Section */}
       <div className='bg-[#30313F] rounded-lg p-6 mb-6'>
         <h2 className='text-xl font-bold mb-6'>Notifications</h2>
         <div className='grid grid-cols-3 gap-6'>
@@ -794,7 +1140,7 @@ const ROIConfiguration = () => {
                   onChange={() => setEmailNotification(!emailNotification)}
                   className='sr-only peer'
                 />
-                <div className="w-11 h-6 bg-gray-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#3885CC]"></div>
+                <div className="w-11 h-6 bg-gray-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-500"></div>
               </label>
             </div>
             <div>
@@ -1005,7 +1351,7 @@ const ROIConfiguration = () => {
             onClick={handleSaveRoi}
             className='bg-[#3885CC] text-sm text-white font-semibold py-2 px-6 rounded-full transition-colors hover:bg-blue-600'
           >
-            {roiToEdit ? 'Update' : 'Save'} ROI
+            {currentRoiId ? 'Update' : 'Save'} ROI
           </button>
         </div>
       </div>

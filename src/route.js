@@ -24,7 +24,7 @@ export const routes = [
         element: <div>Dashboard Home</div>
       },
       {
-        path: '/camera-setup',
+        path: '/camera',
         element: <CameraPage />
       },
       {
@@ -34,7 +34,7 @@ export const routes = [
       {
         path: '/roi-configuration', // absolute path
         element: <ROIConfiguration />
-      },
+      }
     ]
   }
 ]

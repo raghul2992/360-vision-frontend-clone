@@ -35,7 +35,7 @@ function MainApp () {
   // Hide the Floating Button on ALL dashboard-related routes
   const dashboardPaths = [
     '/admin-dashboard',
-    '/camera-setup',
+    '/camera',
     '/add-camera',
     '/roi-configuration'
   ]
