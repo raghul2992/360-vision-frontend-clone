@@ -1,7 +1,7 @@
 import '../../styles/login.css'
 import { bgcolors, fontWeights, textcolors, textSizes } from '../../theme'
 import ButtonComponent from '../../component/Button'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import LoginPage from './Login'
 import RegisterPage from './Register'
 import { useTranslation } from 'react-i18next'
@@ -10,14 +10,32 @@ const AuthPage = () => {
   const [authscreen, Setauthscreen] = useState('login')
   const { t } = useTranslation()
 
+  useEffect(() => {
+    const handleRegisterSuccess = event => {
+      if (event.detail.success) {
+        Setauthscreen('login')
+      }
+    }
+
+    window.addEventListener('registersuccess', handleRegisterSuccess)
+
+    return () => {
+      window.removeEventListener('registersuccess', handleRegisterSuccess)
+    }
+  }, [])
+
   return (
-    <div className='flex h-screen flex-col lg:flex-row relative'>
+    <div className='flex h-screen  flex-col lg:flex-row relative'>
       {/* left banner */}
-      <div className={`max-h-screen flex-1 login-left hidden lg:block`}></div>
+      <div
+        className={`max-h-screen flex-1 h-[100%] login-left hidden lg:block`}
+      ></div>
 
       {/* right banner */}
       <div
-        className={`max-h-screen ${bgcolors.dark} flex-1 py-10 sm:py-16 lg:py-28 overflow-y-scroll`}
+        className={`max-h-screen  ${bgcolors.dark} flex-1 py-16 sm:py-16  ${
+          authscreen !== 'login' ? 'lg:py-52' : 'lg:py-20'
+        } overflow-y-scroll`}
       >
         <div className='flex justify-center items-center '>
           <div

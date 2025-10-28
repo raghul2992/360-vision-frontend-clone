@@ -13,6 +13,11 @@
   "register": {
     "create_account": "Create Account",
     "help_message": "We are here to help you!",
+    "company_name": "Company Name",
+    "company_name_placeholder": "Enter your company name",
+    "company_name_description": "This will be name of the account that you manage.",
+    "address": "Address",
+    "address_placeholder": "Enter your company address",
     "full_name": "Full Name",
     "full_name_placeholder": "Enter your full name",
     "email": "E-mail",
@@ -21,7 +26,8 @@
     "password_placeholder": "Create a password",
     "confirm_password": "Confirm Password",
     "confirm_password_placeholder": "Confirm your password",
-    "create_account_button": "Create Account"
+    "create_account_button": "Create Account",
+    "loading": "Loading"
   },
   "reset_password": {
     "title": "Reset Password",

@@ -48,7 +48,8 @@ const ROIConfiguration = () => {
     username,
     password,
     roiToEdit,
-    currentRoi_Id
+    currentRoi_Id,
+    addnew
   } = location.state || {}
   const tenantId = propTenantId || 1
 
@@ -137,11 +138,11 @@ const ROIConfiguration = () => {
     }
   }, [image])
 
-  // Load ROIs when cameraId and tenantId are available
   useEffect(() => {
+    // console.log(polygons)
     const effectiveCameraId = cameraId || cameraIdFromUrl
 
-    if (effectiveCameraId && tenantId) {
+    if (effectiveCameraId && tenantId && !addnew && !roiToEdit) {
       dispatch(getRois({ tenantId, cameraId: effectiveCameraId }))
     }
 
@@ -149,7 +150,7 @@ const ROIConfiguration = () => {
       handleEditRoi(roiToEdit)
       console.log('ROI to edit loaded, currentRoiId:', roiToEdit.id)
     }
-  }, [dispatch, cameraId, cameraIdFromUrl, tenantId, roiToEdit])
+  }, [dispatch, cameraId, cameraIdFromUrl, tenantId, roiToEdit, addnew])
 
   // Handle errors and success messages
   useEffect(() => {
@@ -709,7 +710,7 @@ const ROIConfiguration = () => {
                   return (
                     <Line
                       key={roi.id}
-                      points={flatPoints}
+                      points={ !addnew && flatPoints}
                       stroke='yellow'
                       strokeWidth={3}
                       closed={true}

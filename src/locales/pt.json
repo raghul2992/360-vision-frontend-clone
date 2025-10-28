@@ -13,6 +13,11 @@
   "register": {
     "create_account": "Criar Conta",
     "help_message": "Estamos aqui para ajudar você!",
+    "company_name": "Nome da Empresa",
+    "company_name_placeholder": "Digite o nome da sua empresa",
+    "company_name_description": "Este será o nome da conta que você gerencia.",
+    "address": "Endereço",
+    "address_placeholder": "Digite o endereço da sua empresa",
     "full_name": "Nome completo",
     "full_name_placeholder": "Digite seu nome completo",
     "email": "E-mail",
@@ -21,7 +26,8 @@
     "password_placeholder": "Crie uma senha",
     "confirm_password": "Confirmar Senha",
     "confirm_password_placeholder": "Confirme sua senha",
-    "create_account_button": "Criar Conta"
+    "create_account_button": "Criar Conta",
+    "loading": "carregando"
   },
   "reset_password": {
     "title": "Redefinir Senha",

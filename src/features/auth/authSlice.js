@@ -14,6 +14,34 @@ export const loginUser = createAsyncThunk(
       return response
     } catch (error) {
       if (error.response && error.response.data?.message) {
+        
+        return rejectWithValue(error.response.data.message)
+      }
+      return rejectWithValue(error.message)
+    }
+  }
+)
+
+// Register user (tenant)
+export const registerUser = createAsyncThunk(
+  'auth/registerUser',
+  async ({ companyName, address, fullName, email, password }, { rejectWithValue }) => {
+    try {
+      const response = await api.post('/api/v1/tenants/', {
+        name: companyName,
+        address: address,
+        status: "active",
+        meta: {},
+        admin_user: {
+          full_name: fullName,
+          email: email,
+          role: "admin",
+          password: password
+        }
+      })
+      return response
+    } catch (error) {
+      if (error.response && error.response.data?.message) {
         return rejectWithValue(error.response.data.message)
       }
       return rejectWithValue(error.message)
@@ -56,8 +84,11 @@ const authSlice = createSlice({
       .addCase(loginUser.fulfilled, (state, action) => {
         state.isLoading = false
         state.success = true
-        state.user = action.payload
-        const tenantId = state.user?.data?.data?.tenant_id
+        state.user = action.payload.data
+        console.log(action.payload.data)
+        console.log(action.payload)
+        const tenantId = state.user?.tenant_id
+        console.log(tenantId)
         if (tenantId) localStorage.setItem('tenant_id', tenantId)
       })
       .addCase(loginUser.rejected, (state, action) => {
@@ -81,7 +112,23 @@ const authSlice = createSlice({
         state.isLoading = false
         state.error = action.payload
       })
+
+      // Register cases
+      .addCase(registerUser.pending, state => {
+        state.isLoading = true
+        state.error = null
+      })
+      .addCase(registerUser.fulfilled, (state, action) => {
+        state.isLoading = false
+        // state.success = true
+        state.user = action.payload.data
+      })
+      .addCase(registerUser.rejected, (state, action) => {
+        state.isLoading = false
+        state.error = action.payload
+      })
   }
 })
 
 export default authSlice.reducer
+

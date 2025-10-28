@@ -33,6 +33,7 @@ const LoginPage = () => {
       navigate('/camera')
     }
     if (error) {
+      console.log(error)
       toast.error(error)
     }
   }, [success, error, navigate, t])

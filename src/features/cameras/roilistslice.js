@@ -9,10 +9,10 @@ export const getRois = createAsyncThunk(
       const response = await api.get(
         `/api/v1/tenants/${tenantId}/camera/${cameraId}/roi/`
       )
-      return response.data.data || response.data
+      return response.data || response.data
     } catch (error) {
       return rejectWithValue(
-        error.response?.data?.messages || 'Failed to fetch ROIs'
+        error.response?.data?.message || 'Failed to fetch ROIs'
       )
     }
   }
@@ -27,10 +27,10 @@ export const createRoi = createAsyncThunk(
         `/api/v1/tenants/${tenantId}/camera/${cameraId}/roi/`,
         roiData
       )
-      return response.data.data || response.data
+      return response.data || response.data
     } catch (error) {
       return rejectWithValue(
-        error.response?.data?.messages || 'Failed to create ROI'
+        error.response?.data?.message || 'Failed to create ROI'
       )
     }
   }
@@ -45,7 +45,7 @@ export const updateRoi = createAsyncThunk(
         `/api/v1/tenants/${tenantId}/camera/${cameraId}/roi/${roiId}`,
         roiData
       )
-      return response.data.data || response.data
+      return response.data || response.data
     } catch (error) {
       return rejectWithValue(
         error.response?.data?.messages || 'Failed to update ROI'

@@ -14,14 +14,14 @@ export const getCameras = createAsyncThunk(
       console.log('API Response Data:', response.data)
 
       // API response has cameras array under data
-      const camerasArray = Array.isArray(response.data.data)
-        ? response.data.data
+      const camerasArray = Array.isArray(response.data)
+        ? response.data
         : []
 
       return camerasArray
     } catch (error) {
       return rejectWithValue(
-        error.response?.data?.messages || 'Failed to fetch cameras'
+        error.response?.data?.message || 'Failed to fetch cameras'
       )
     }
   }
@@ -36,7 +36,7 @@ export const createCamera = createAsyncThunk(
         `/api/v1/tenants/${tenantId}/cameras/`,
         cameraData
       )
-      return response.data.data || response.data
+      return response.data || response.data
     } catch (error) {
       return rejectWithValue(
         error.response?.data?.messages || 'Failed to create camera'
@@ -54,10 +54,10 @@ export const updateCamera = createAsyncThunk(
         `/api/v1/tenants/${tenantId}/cameras/${cameraId}`,
         cameraData
       )
-      return response.data.data || response.data
+      return response.data || response.data
     } catch (error) {
       return rejectWithValue(
-        error.response?.data?.messages || 'Failed to update camera'
+        error.response?.data?.message || 'Failed to update camera'
       )
     }
   }
@@ -75,7 +75,7 @@ export const deleteCamera = createAsyncThunk(
     } catch (error) {
       console.error('Delete error:', error)
       return rejectWithValue(
-        error.response?.data?.messages || 'Failed to delete camera'
+        error.response?.data?.message || 'Failed to delete camera'
       )
     }
   }
@@ -121,7 +121,7 @@ export const getCameraSnapshot = createAsyncThunk(
       return response.data
     } catch (error) {
       return rejectWithValue(
-        error.response?.data?.messages || 'Failed to get snapshot'
+        error.response?.data?.message || 'Failed to get snapshot'
       )
     }
   }
@@ -136,10 +136,10 @@ export const getCameraById = createAsyncThunk(
       const response = await api.get(
         `/api/v1/tenants/${tenantId}/cameras/${cameraId}`
       )
-      return response.data.data || response.data
+      return response.data || response.data
     } catch (error) {
       return rejectWithValue(
-        error.response?.data?.messages || 'Failed to fetch camera'
+        error.response?.data?.message || 'Failed to fetch camera'
       )
     }
   }
@@ -154,10 +154,10 @@ export const toggleCameraStatus = createAsyncThunk(
         `/api/v1/tenants/${tenantId}/cameras/${cameraId}/status`,
         { status }
       )
-      return response.data.data || response.data
+      return response.data || response.data
     } catch (error) {
       return rejectWithValue(
-        error.response?.data?.messages || 'Failed to update camera status'
+        error.response?.data?.message || 'Failed to update camera status'
       )
     }
   }

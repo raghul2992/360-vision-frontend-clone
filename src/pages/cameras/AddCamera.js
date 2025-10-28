@@ -344,16 +344,16 @@ const AddCamera = () => {
       .unwrap()
       .then(result => {
         toast.dismiss(toastId)
-
-        // Update toast to success
+        console.log(result)
         toast.success('Snapshot retrieved successfully!', { id: toastId })
 
         navigate('/roi-configuration', {
           state: {
             rtsp_url: rtspUrl,
-            snapshot: result.data.frame_url,
-            cameraId: currentCameraId, // Pass the correct camera ID
-            tenantId
+            snapshot: result.frame_url,
+            cameraId: currentCameraId,
+            tenantId,
+            addnew:true
           }
         })
       })
@@ -643,7 +643,7 @@ const AddCamera = () => {
                   onClick={handleAddCameraWithTest}
                   disabled={isLoading || isTestingConnection}
                 >
-                  {isTestingConnection
+                  {!isTestingConnection && isLoading
                     ? t('addCamera.addingCamera') || 'Adding...'
                     : t('addCamera.addCameraButton') || 'Add Camera'}
                 </button>
