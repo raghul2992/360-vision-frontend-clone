@@ -22,9 +22,13 @@ import {
   getCameraSnapshot,
   getCameras
 } from '../../features/cameras/cameraApiSlice'
-import { getLocations } from '../../features/locations/locationApiSlice'
+import {
+  getLocations,
+  createLocation
+} from '../../features/locations/locationApiSlice'
 import { getRois, deleteRoi } from '../../features/cameras/roilistslice'
 import { toast } from 'react-toastify'
+import CreatableSelect from '../../component/CreatableSelect'
 import 'react-toastify/dist/ReactToastify.css'
 
 const AddCamera = () => {
@@ -32,7 +36,7 @@ const AddCamera = () => {
   const dispatch = useDispatch()
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
-  const cameraId = searchParams.get('id')
+  const current_cameraId = searchParams.get('id')
 
   // Redux State
   const { cameras, isLoading, error, testConnectionResult, snapshotResult } =
@@ -62,7 +66,8 @@ const AddCamera = () => {
   const [selectedRoiId, setSelectedRoiId] = useState(null)
   const [isConnectionTested, setIsConnectionTested] = useState(false)
   const [isCameraSaved, setIsCameraSaved] = useState(false)
-  const [newCameraId, setNewCameraId] = useState(null) // Store new camera ID
+  const [cameraId, setCameraId] = useState(current_cameraId) // Store new camera ID
+  const [isAddingRoi, setIsAddingRoi] = useState(false)
 
   // Fetch locations on component mount
   useEffect(() => {
@@ -79,7 +84,7 @@ const AddCamera = () => {
       // For existing cameras, mark as saved and connection tested
       setIsCameraSaved(true)
       setIsConnectionTested(true)
-      setNewCameraId(parseInt(cameraId)) // Set the camera ID for editing case
+      setCameraId(parseInt(cameraId)) // Set the camera ID for editing case
     }
   }, [dispatch, cameraId, tenantId])
 
@@ -91,7 +96,7 @@ const AddCamera = () => {
       )
       if (cameraToEdit) {
         setCameraName(cameraToEdit.name || '')
-        setLocation(cameraToEdit.location_id?.toString() || '')
+        setLocation(cameraToEdit.location_id || '')
         setRtspUrl(cameraToEdit.rtsp_url || '')
         setCameraType(cameraToEdit.camera_type || 'ip')
         setUsername(cameraToEdit.username || '')
@@ -115,7 +120,7 @@ const AddCamera = () => {
     if (!cameraId) {
       setIsConnectionTested(false)
       setIsCameraSaved(false)
-      setNewCameraId(null) // Reset camera ID when form changes
+      setCameraId(null) // Reset camera ID when form changes
     }
   }, [cameraName, location, rtspUrl, cameraType, username, password, cameraId])
 
@@ -160,18 +165,18 @@ const AddCamera = () => {
     if (!validateForm()) return
 
     // For new cameras, require connection test first
-    if (!cameraId && !isConnectionTested) {
-      toast.error('Please test the connection before saving the camera.')
-      return
-    }
+    // if (!cameraId && !isConnectionTested) {
+    //   toast.error('Please test the connection before saving the camera.')
+    //   return
+    // }
 
     const cameraData = {
-      tenant_id: 1,
+      tenant_id: tenantId,
       name: cameraName.trim(),
       rtsp_url: rtspUrl.trim(),
       username: username.trim(),
       password: password,
-      camera_type: cameraType,
+      camera_type: 'ip',
       status: 'active',
       location_id: parseInt(location),
       meta: {}
@@ -202,7 +207,7 @@ const AddCamera = () => {
           console.log(result)
           // Store the new camera ID
           if (result.id) {
-            setNewCameraId(result.id)
+            setCameraId(result.id)
           }
         })
         .catch(err => {
@@ -214,9 +219,11 @@ const AddCamera = () => {
   const handleTestConnection = () => {
     if (!rtspUrl.trim()) {
       toast.warn('Please enter RTSP URL first')
-      return
+      return false
     }
-
+    toast.info(
+      'Testing your RTSP camera connection...Please wait for few seconds'
+    )
     setIsTestingConnection(true)
     const connectionData = {
       rtsp_url: rtspUrl.trim(),
@@ -224,7 +231,7 @@ const AddCamera = () => {
       password: ''
     }
 
-    dispatch(testCameraConnection({ tenantId, connectionData }))
+    return dispatch(testCameraConnection({ tenantId, connectionData }))
       .unwrap()
       .then(result => {
         setIsTestingConnection(false)
@@ -234,85 +241,40 @@ const AddCamera = () => {
             t('addCamera.testConnectionSuccess') ||
             'Connection successful!'
         )
+        return true
       })
       .catch(err => {
+        console.log(err);
         setIsTestingConnection(false)
         setIsConnectionTested(false)
         toast.error(err)
+        return false
       })
+    return false
   }
 
-  const handleAddCameraWithTest = () => {
+  const handleAddCameraWithTest = async () => {
     if (!validateForm()) return
 
     // If connection is already tested, just save the camera
-    if (isConnectionTested) {
+    if (!isConnectionTested) {
+      const status = await handleTestConnection()
+      console.log('1', status)
+      if (status) {
+        console.log('2', status)
+        handleSaveCamera()
+      }
+      return
+    } else {
       handleSaveCamera()
-      return
+      console.log('3')
     }
 
-    // If connection is not tested, test it first then save
-    if (!rtspUrl.trim()) {
-      toast.warn('Please enter RTSP URL first')
-      return
-    }
-
-    setIsTestingConnection(true)
-    const connectionData = {
-      rtsp_url: rtspUrl.trim(),
-      username: '',
-      password: ''
-    }
-
-    dispatch(testCameraConnection({ tenantId, connectionData }))
-      .unwrap()
-      .then(result => {
-        setIsTestingConnection(false)
-        setIsConnectionTested(true)
-        toast.success(
-          result.message ||
-            t('addCamera.testConnectionSuccess') ||
-            'Connection successful!'
-        )
-
-        // After successful connection test, save the camera
-        const cameraData = {
-          tenant_id: 1,
-          name: cameraName.trim(),
-          rtsp_url: rtspUrl.trim(),
-          username: username.trim(),
-          password: password,
-          camera_type: cameraType,
-          status: 'active',
-          location_id: parseInt(location),
-          meta: {}
-        }
-
-        dispatch(createCamera({ tenantId, cameraData }))
-          .unwrap()
-          .then(result => {
-            toast.success('Camera added successfully!')
-            setIsCameraSaved(true)
-            console.log(result)
-            // Store the new camera ID
-            if (result.id) {
-              setNewCameraId(result.id)
-            }
-          })
-          .catch(err => {
-            toast.error(err || 'Failed to add camera.')
-          })
-      })
-      .catch(err => {
-        setIsTestingConnection(false)
-        setIsConnectionTested(false)
-        toast.error(err)
-      })
+    return
   }
 
   const handleAddRoi = () => {
-    // Determine which camera ID to use
-    const currentCameraId = cameraId ? parseInt(cameraId) : newCameraId
+    setIsAddingRoi(true)
 
     // For new cameras, check if camera is saved and connection is tested
     if (!cameraId) {
@@ -324,18 +286,18 @@ const AddCamera = () => {
         toast.error('Please test the connection first before adding ROI.')
         return
       }
-      if (!newCameraId) {
+      if (!cameraId) {
         toast.error('Camera ID not found. Please save the camera first.')
         return
       }
     }
 
-    const toastId = toast.loading('Retrieving snapshot...')
+    const toastId = toast.loading('Retrieving RTSP frame...')
 
     dispatch(
       getCameraSnapshot({
         tenantId,
-        cameraId: currentCameraId,
+        cameraId: cameraId,
         rtsp_url: rtspUrl,
         username: '',
         password: ''
@@ -344,21 +306,25 @@ const AddCamera = () => {
       .unwrap()
       .then(result => {
         toast.dismiss(toastId)
+        setIsAddingRoi(false)
+        setIsAddingRoi(false)
         console.log(result)
-        toast.success('Snapshot retrieved successfully!', { id: toastId })
+        toast.success('Frame retrieved successfully!', { id: toastId })
 
         navigate('/roi-configuration', {
           state: {
             rtsp_url: rtspUrl,
             snapshot: result.frame_url,
-            cameraId: currentCameraId,
+            cameraId: cameraId,
             tenantId,
-            addnew:true
+            addnew: true
           }
         })
       })
       .catch(err => {
         toast.dismiss(toastId)
+        setIsAddingRoi(false)
+        setIsAddingRoi(false)
 
         // Update toast to error
         toast.error(
@@ -409,7 +375,23 @@ const AddCamera = () => {
         setSelectedRoiId(null)
       })
   }
-
+  const handleCreateLocation = locationName => {
+    const locationData = {
+      tenant_id: tenantId,
+      name: locationName,
+      meta: {}
+    }
+    dispatch(createLocation({ tenantId, locationData }))
+      .unwrap()
+      .then(newLocation => {
+        toast.success(`Location "${newLocation.name}" created successfully!`)
+        setLocation(newLocation.id)
+        dispatch(getLocations(tenantId)) // Refresh locations
+      })
+      .catch(err => {
+        toast.error(err || 'Failed to create location.')
+      })
+  }
   return (
     <div className={`p-8 ${bgcolors.dark} text-white min-h-screen`}>
       {showConfirm && (
@@ -485,26 +467,17 @@ const AddCamera = () => {
               {t('cameraSetup.locationLabel')} *
             </label>
             <div className='relative'>
-              <select
-                className='w-full bg-[#3A3B47] border border-gray-600/50 rounded-lg py-2.5 px-4 pr-10 text-white focus:outline-none focus:border-gray-500 text-sm appearance-none cursor-pointer'
+              <CreatableSelect
+                options={locations}
                 value={location}
                 onChange={e => setLocation(e.target.value)}
-                disabled={locationsLoading}
-              >
-                <option value='' className='text-gray-500'>
-                  {locationsLoading
+                onCreate={handleCreateLocation}
+                placeholder={
+                  locationsLoading
                     ? t('addCamera.loadingLocations') || 'Loading locations...'
-                    : t('cameraSetup.locationPlaceholder') || 'Select Location'}
-                </option>
-                {locations.map(loc => (
-                  <option key={loc.id} value={loc.id} className='text-white'>
-                    {loc.name || loc.location_name}
-                  </option>
-                ))}
-              </select>
-              <IoChevronDown
-                className='absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none'
-                size={16}
+                    : t('cameraSetup.locationPlaceholder') || 'Select Location'
+                }
+                disabled={locationsLoading}
               />
             </div>
           </div>
@@ -517,14 +490,16 @@ const AddCamera = () => {
             <input
               type='text'
               className='w-full bg-[#3A3B47] border border-gray-600/50 rounded-lg py-2.5 px-4 text-white placeholder-gray-500 focus:outline-none focus:border-gray-500 text-sm'
-              placeholder={t('cameraSetup.rtspUrlPlaceholder')}
+              placeholder={
+                'rtsp://[username]:[password]@[domain_or_ip]:[port]/[stream_path]'
+              }
               value={rtspUrl}
               onChange={e => setRtspUrl(e.target.value)}
             />
           </div>
 
           {/* Camera Type */}
-          <div>
+          {/* <div>
             <label className='block text-white mb-2 text-sm font-medium'>
               {t('cameraSetup.cameraTypeLabel')} *
             </label>
@@ -544,7 +519,7 @@ const AddCamera = () => {
                 size={16}
               />
             </div>
-          </div>
+          </div> */}
 
           {/* Username */}
           {/* <div>
@@ -615,9 +590,9 @@ const AddCamera = () => {
                   ✓ Connection tested successfully
                 </p>
               )}
-              {/* {!cameraId && newCameraId && (
+              {/* {!cameraId && cameraId && (
                 <p className='text-blue-400 text-sm mt-1'>
-                  ✓ Camera ID: {newCameraId}
+                  ✓ Camera ID: {cameraId}
                 </p>
               )} */}
             </div>
@@ -637,29 +612,31 @@ const AddCamera = () => {
                   ? t('addCamera.testingConnection') || 'Testing...'
                   : t('cameraSetup.testConnectionButton') || 'Test Connection'}
               </button>
-              {!cameraId && (
-                <button
-                  className='bg-[#3885CC] hover:bg-blue-600 text-white font-semibold py-2.5 px-6 rounded-full transition-colors text-sm disabled:bg-gray-600 disabled:cursor-not-allowed'
-                  onClick={handleAddCameraWithTest}
-                  disabled={isLoading || isTestingConnection}
-                >
-                  {!isTestingConnection && isLoading
-                    ? t('addCamera.addingCamera') || 'Adding...'
-                    : t('addCamera.addCameraButton') || 'Add Camera'}
-                </button>
-              )}
+              <button
+                className='bg-[#3885CC] hover:bg-blue-600 text-white font-semibold py-2.5 px-6 rounded-full transition-colors text-sm disabled:bg-gray-600 disabled:cursor-not-allowed'
+                onClick={handleAddCameraWithTest}
+                disabled={isLoading || isTestingConnection || isAddingRoi}
+              >
+                {isAddingRoi
+                  ? 'Add Camera'
+                  : !isTestingConnection && isLoading
+                  ? t('addCamera.addingCamera') || 'Adding...'
+                  : t('addCamera.addCameraButton') || 'Add Camera'}
+              </button>
 
-              {cameraId && (
+              {/* {cameraId && (
                 <button
                   className='bg-[#3885CC] hover:bg-blue-600 text-white font-semibold py-2.5 px-6 rounded-full transition-colors text-sm disabled:bg-gray-600 disabled:cursor-not-allowed'
                   onClick={handleSaveCamera}
                   disabled={isLoading}
                 >
-                  {isLoading
+                  {isAddingRoi
+                    ? 'Save Changes'
+                    : isLoading
                     ? t('addCamera.savingChanges') || 'Saving...'
                     : t('addCamera.saveChangesButton') || 'Save Changes'}
                 </button>
-              )}
+              )} */}
             </div>
           </div>
         </div>
@@ -678,16 +655,16 @@ const AddCamera = () => {
                 ? 'You can now add ROIs for this camera.'
                 : 'Please save the camera first to add ROIs.'}
             </p>
-            {/* {newCameraId && (
+            {/* {cameraId && (
               <p className='text-blue-400 text-sm mb-4'>
-                Camera ID: {newCameraId}
+                Camera ID: {cameraId}
               </p>
             )} */}
             <button
               onClick={handleAddRoi}
-              disabled={!isCameraSaved || !newCameraId}
+              disabled={!isCameraSaved || !cameraId}
               className={`flex items-center gap-2 text-white font-semibold py-2.5 px-5 rounded-full transition-colors mx-auto ${
-                isCameraSaved && newCameraId
+                isCameraSaved && cameraId
                   ? 'bg-[#3885CC] hover:bg-blue-600'
                   : 'bg-gray-600 cursor-not-allowed'
               }`}
@@ -700,7 +677,7 @@ const AddCamera = () => {
                 Please save the camera first
               </p>
             )}
-            {isCameraSaved && !newCameraId && (
+            {isCameraSaved && !cameraId && (
               <p className='text-yellow-400 text-sm mt-2'>
                 Camera ID not available. Please try saving again.
               </p>

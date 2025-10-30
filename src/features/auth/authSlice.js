@@ -2,6 +2,55 @@ import { createSlice, createAsyncThunk } from '@reduxjs/toolkit'
 import api from '../../utils/apihelper'
 import Cookies from 'js-cookie'
 
+// Send OTP
+export const sendOtp = createAsyncThunk(
+  'auth/sendOtp',
+  async ({ email }, { rejectWithValue }) => {
+    try {
+      const response = await api.post('/api/v1/otp/generate-otp', {
+        email
+      })
+      return response
+    } catch (error) {
+      if (error.response && error.response.data?.message) {
+        return rejectWithValue(error.response.data.message)
+      }
+      return rejectWithValue(error.message)
+    }
+  }
+)
+
+// Register user (tenant) with OTP
+export const registerUser = createAsyncThunk(
+  'auth/registerUser',
+  async (
+    { companyName, address, fullName, email, password, otp },
+    { rejectWithValue }
+  ) => {
+    try {
+      const response = await api.post('/api/v1/tenants/', {
+        name: companyName,
+        address: address,
+        status: 'active',
+        meta: {},
+        otp: otp,
+        admin_user: {
+          full_name: fullName,
+          email: email,
+          role: 'admin',
+          password: password
+        }
+      })
+      return response
+    } catch (error) {
+      if (error.response && error.response.data?.message) {
+        return rejectWithValue(error.response.data.message)
+      }
+      return rejectWithValue(error.message)
+    }
+  }
+)
+
 // Login user
 export const loginUser = createAsyncThunk(
   'auth/loginUser',
@@ -10,34 +59,6 @@ export const loginUser = createAsyncThunk(
       const response = await api.post('/api/v1/login/access-token', {
         email,
         password
-      })
-      return response
-    } catch (error) {
-      if (error.response && error.response.data?.message) {
-        
-        return rejectWithValue(error.response.data.message)
-      }
-      return rejectWithValue(error.message)
-    }
-  }
-)
-
-// Register user (tenant)
-export const registerUser = createAsyncThunk(
-  'auth/registerUser',
-  async ({ companyName, address, fullName, email, password }, { rejectWithValue }) => {
-    try {
-      const response = await api.post('/api/v1/tenants/', {
-        name: companyName,
-        address: address,
-        status: "active",
-        meta: {},
-        admin_user: {
-          full_name: fullName,
-          email: email,
-          role: "admin",
-          password: password
-        }
       })
       return response
     } catch (error) {
@@ -65,17 +86,65 @@ export const logoutUser = createAsyncThunk(
   }
 )
 
+// Forgot password
+export const forgotPassword = createAsyncThunk(
+  'auth/forgotPassword',
+  async ({ tenant_id, email }, { rejectWithValue }) => {
+    try {
+      const response = await api.post(
+        `/api/v1/tenants/${tenant_id}/users/password/forgot`,
+        {
+          email
+        }
+      )
+      return response
+    } catch (error) {
+      if (error.response && error.response.data?.message) {
+        return rejectWithValue(error.response.data.message)
+      }
+      return rejectWithValue(error.message)
+    }
+  }
+)
+
 const authSlice = createSlice({
   name: 'auth',
   initialState: {
     user: null,
     isLoading: false,
     error: null,
-    success: false
+    success: false,
+    otpSent: false,
+    otpEmail: null
   },
-  reducers: {},
+  reducers: {
+    clearError: state => {
+      state.error = null
+    },
+    resetOtpState: state => {
+      state.otpSent = false
+      state.otpEmail = null
+    }
+  },
   extraReducers: builder => {
     builder
+      // Send OTP cases
+      .addCase(sendOtp.pending, state => {
+        state.isLoading = true
+        state.error = null
+        state.otpSent = false
+      })
+      .addCase(sendOtp.fulfilled, (state, action) => {
+        state.isLoading = false
+        state.otpSent = true
+        state.otpEmail = action.meta.arg.email
+      })
+      .addCase(sendOtp.rejected, (state, action) => {
+        state.isLoading = false
+        state.error = action.payload
+        state.otpSent = false
+      })
+
       // Login cases
       .addCase(loginUser.pending, state => {
         state.isLoading = true
@@ -122,13 +191,29 @@ const authSlice = createSlice({
         state.isLoading = false
         // state.success = true
         state.user = action.payload.data
+        state.otpSent = false
+        state.otpEmail = null
       })
       .addCase(registerUser.rejected, (state, action) => {
+        state.isLoading = false
+        state.error = action.payload
+      })
+
+      // Forgot password cases
+      .addCase(forgotPassword.pending, state => {
+        state.isLoading = true
+        state.error = null
+      })
+      .addCase(forgotPassword.fulfilled, (state, action) => {
+        state.isLoading = false
+        state.success = true
+      })
+      .addCase(forgotPassword.rejected, (state, action) => {
         state.isLoading = false
         state.error = action.payload
       })
   }
 })
 
+export const { clearError, resetOtpState } = authSlice.actions
 export default authSlice.reducer
-

@@ -1,14 +1,37 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
-import { IoGrid, IoList, IoApps, IoAddCircleOutline } from 'react-icons/io5'
+import {
+  IoGrid,
+  IoList,
+  IoApps,
+  IoAddCircleOutline,
+  IoChevronDown
+} from 'react-icons/io5'
 import { bgcolors } from '../../theme'
 import CameraGrid from './CameraGrid'
 import CameraList from './CameraList'
+import { useDispatch, useSelector } from 'react-redux'
+import { getLocations } from '../../features/locations/locationApiSlice'
 
 const CameraPage = () => {
   const { t } = useTranslation()
-  const [view, setView] = useState('grid')
+  const dispatch = useDispatch()
+
+  // ✅ Default view set to 'list'
+  const [view, setView] = useState('list')
+  const [selectedLocation, setSelectedLocation] = useState('')
+
+  const { locations, isLoading: locationsLoading } = useSelector(
+    state => state.locationApi
+  )
+  const tenantId = localStorage.getItem('tenant_id')
+
+  useEffect(() => {
+    if (tenantId) {
+      dispatch(getLocations(tenantId))
+    }
+  }, [dispatch, tenantId])
 
   return (
     <div className={`p-8 ${bgcolors.dark} text-white min-h-screen`}>
@@ -18,6 +41,25 @@ const CameraPage = () => {
           <p className='text-gray-400 mt-1'>{t('cameraGrid.description')}</p>
         </div>
         <div className='flex items-center gap-4'>
+          {/* <div className='relative'>
+            <select
+              className='w-full bg-[#3A3B47] border border-gray-600/50 rounded-lg py-2.5 px-4 pr-10 text-white focus:outline-none focus:border-gray-500 text-sm appearance-none cursor-pointer'
+              value={selectedLocation}
+              onChange={e => setSelectedLocation(e.target.value)}
+              disabled={locationsLoading}
+            >
+              <option value=''>All Locations</option>
+              {locations.map(loc => (
+                <option key={loc.id} value={loc.id}>
+                  {loc.name || loc.location_name}
+                </option>
+              ))}
+            </select>
+            <IoChevronDown
+              className='absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none'
+              size={16}
+            />
+          </div> */}
           <div className='flex items-center gap-1 bg-[#30313F] p-1 rounded-lg'>
             <button
               onClick={() => setView('grid')}
@@ -44,7 +86,11 @@ const CameraPage = () => {
           </Link>
         </div>
       </div>
-      {view === 'grid' ? <CameraGrid /> : <CameraList />}
+      {view === 'grid' ? (
+        <CameraGrid locationId={selectedLocation} />
+      ) : (
+        <CameraList locationId={selectedLocation} />
+      )}
     </div>
   )
 }

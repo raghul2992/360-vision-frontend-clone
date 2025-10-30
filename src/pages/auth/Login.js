@@ -12,17 +12,17 @@ import { loginUser } from '../../features/auth/authSlice'
 import { toast } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 
-const LoginPage = () => {
+const LoginPage = ({callbackScreen}) => {
   const { t, i18n } = useTranslation()
   const dispatch = useDispatch()
   const navigate = useNavigate()
 
-  const { isLoading, error, success } = useSelector((state) => state.auth)
+  const { isLoading, error, success } = useSelector(state => state.auth)
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
 
-  const changeLanguage = (lng) => {
+  const changeLanguage = lng => {
     i18n.changeLanguage(lng)
   }
 
@@ -41,6 +41,8 @@ const LoginPage = () => {
   const handleLogin = () => {
     dispatch(loginUser({ email, password }))
   }
+
+  
 
   return (
     <div className='flex flex-col justify-start items-center w-full'>
@@ -62,7 +64,7 @@ const LoginPage = () => {
           icon={<IoMailOutline size={20} color='#888888' />}
           placeholder={t('login.email')}
           value={email}
-          onChange={(e) => setEmail(e.target.value)}
+          onChange={e => setEmail(e.target.value)}
         />
       </div>
       <div className='flex flex-col gap-3 w-full  p-1 items-start'>
@@ -71,15 +73,15 @@ const LoginPage = () => {
           icon={<IoLockClosed size={20} color='#888888' />}
           placeholder={t('login.password')}
           value={password}
-          onChange={(e) => setPassword(e.target.value)}
+          onChange={e => setPassword(e.target.value)}
         />
       </div>
       <div className='self-start p-1 mb-1 '>
-        <Link to={"/reset-password"}>
-        <ButtonComponent
-          children={t('login.forgot_password')}
-          className={`${fontWeights.semibold}`}
-        />
+        <Link to={'/reset-password'}>
+          <ButtonComponent
+            children={t('login.forgot_password')}
+            className={`${fontWeights.semibold}`}
+          />
         </Link>
       </div>
 
@@ -92,13 +94,18 @@ const LoginPage = () => {
         />
       </div>
       <div className='flex items-center justify-center mt-4'>
-        <p className={`${textSizes.base} ${textcolors.normaltext} mr-1`}>{t('login.no_account')}</p>
-        <Link to="/register">
-          <ButtonComponent
-            children={t('login.sign_up')}
-            className={`${fontWeights.semibold} ${textcolors.primary}`}
-          />
-        </Link>
+        <p className={`${textSizes.base} ${textcolors.normaltext} mr-1`}>
+          {t('login.no_account')}
+        </p>
+        {/* <Link to="/register"> */}
+        <ButtonComponent
+          children={t('login.sign_up')}
+          className={`${fontWeights.semibold} ${textcolors.primary}`}
+          onClick={() => {
+            callbackScreen('register')
+          }}
+        />
+        {/* </Link> */}
       </div>
     </div>
   )

@@ -3,7 +3,6 @@ import { useSelector, useDispatch } from 'react-redux'
 import {
   IoPencil,
   IoTrashOutline,
-  IoEllipsisHorizontal,
   IoCopyOutline,
   IoSearchOutline,
   IoChevronDown,
@@ -14,12 +13,15 @@ import {
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { getCameras, deleteCamera } from '../../features/cameras/cameraApiSlice'
+import { getLocations } from '../../features/locations/locationApiSlice'
 import { toast } from 'react-toastify'
 
 const CameraGrid = () => {
   const { t } = useTranslation()
   const dispatch = useDispatch()
   const { cameras, isLoading, error } = useSelector(state => state.cameraApi)
+  const { locations } = useSelector(state => state.locationApi)
+
   const [searchTerm, setSearchTerm] = useState('')
   const [locationFilter, setLocationFilter] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
@@ -29,11 +31,13 @@ const CameraGrid = () => {
     cameraName: ''
   })
 
-  const tenantId = localStorage.getItem("tenant_id")
+  const tenantId = localStorage.getItem('tenant_id')
 
   useEffect(() => {
-    console.log(localStorage.getItem("tenant_id"))
-    dispatch(getCameras({ tenantId }))
+    if (tenantId) {
+      dispatch(getCameras({ tenantId }))
+      dispatch(getLocations(tenantId))
+    }
   }, [dispatch, tenantId])
 
   const handleDeleteClick = (cameraId, cameraName) => {
@@ -46,7 +50,6 @@ const CameraGrid = () => {
 
   const handleDeleteConfirm = async () => {
     if (!deletePopup.cameraId) return
-
     try {
       await dispatch(
         deleteCamera({ tenantId, cameraId: deletePopup.cameraId })
@@ -73,8 +76,10 @@ const CameraGrid = () => {
     const matchesSearch =
       camera.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       camera.rtsp_url?.toLowerCase().includes(searchTerm.toLowerCase())
+
     const matchesLocation =
       !locationFilter || camera.location_id?.toString() === locationFilter
+
     const matchesStatus = !statusFilter || camera.status === statusFilter
 
     return matchesSearch && matchesLocation && matchesStatus
@@ -189,8 +194,11 @@ const CameraGrid = () => {
               <option value=''>
                 {t('cameraList.locationOption') || 'All Locations'}
               </option>
-              <option value='1'>Location 1</option>
-              <option value='2'>Location 2</option>
+              {locations?.map(loc => (
+                <option key={loc.id} value={loc.id}>
+                  {loc.name}
+                </option>
+              ))}
             </select>
             <IoChevronDown
               className='absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 pointer-events-none'
@@ -244,6 +252,7 @@ const CameraGrid = () => {
       {!isLoading && filteredCameras.length === 0 && (
         <p className='text-center text-gray-400'>{'No cameras found.'}</p>
       )}
+
       <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-6'>
         {filteredCameras.map(camera => (
           <div
@@ -259,11 +268,11 @@ const CameraGrid = () => {
                 >
                   {camera.name}
                 </h2>
-                <p
-                  className='text-sm text-gray-400 truncate'
-                  title={camera.location_id}
-                >
-                  Location: {camera.location_id || 'N/A'}
+                <p className='text-sm text-gray-400 truncate'>
+                  Location:{' '}
+                  {locations.find(
+                    loc => loc.id?.toString() === camera.location_id?.toString()
+                  )?.name || 'N/A'}
                 </p>
               </div>
               <div className='relative inline-flex items-center'>
@@ -306,10 +315,7 @@ const CameraGrid = () => {
 
             {/* Footer actions */}
             <div className='flex justify-between items-center pt-4 border-t border-gray-700/50 mt-auto'>
-              <Link
-                // to={`/roi-configuration?cameraId=${camera.rois[0]?.id}`}
-                className='flex items-center'
-              >
+              <Link className='flex items-center'>
                 <button className='flex items-center gap-1.5 text-gray-400 hover:text-white transition-colors text-sm'>
                   <IoRadio size={16} />
                   {t('cameraGrid.roiButton') || 'ROI'}

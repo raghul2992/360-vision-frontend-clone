@@ -7,10 +7,9 @@ export const getLocations = createAsyncThunk(
   async (tenantId, { rejectWithValue }) => {
     try {
       const response = await api.get(`/api/v1/tenants/${tenantId}/locations/`)
-      console.log('Locations API Response:', response.data)
       
-      const locationsArray = Array.isArray(response.data.data) 
-        ? response.data.data 
+      const locationsArray = Array.isArray(response.data) 
+        ? response.data 
         : Array.isArray(response.data) 
         ? response.data 
         : []
@@ -20,7 +19,27 @@ export const getLocations = createAsyncThunk(
       if (error.response && error.response.data.message) {
         return rejectWithValue(error.response.data.message)
       }
-      return rejectWithValue(error.message)
+      return rejectWithValue(error.response.data.message)
+    }
+  }
+)
+
+// Create a new location
+export const createLocation = createAsyncThunk(
+  'locations/createLocation',
+  async ({ tenantId, locationData }, { rejectWithValue }) => {
+    try {
+      const response = await api.post(
+        `/api/v1/tenants/${tenantId}/locations/`,
+        locationData
+      )
+      return response.data
+    } catch (error) {
+      console.log(error)
+      if (error.response && error.response.data.message) {
+        return rejectWithValue(error.response.data.message)
+      }
+      return rejectWithValue(error.response.data.message)
     }
   }
 )
@@ -30,16 +49,16 @@ const locationApiSlice = createSlice({
   initialState: {
     locations: [],
     isLoading: false,
-    error: null,
+    error: null
   },
   reducers: {
-    clearLocationError: (state) => {
+    clearLocationError: state => {
       state.error = null
-    },
+    }
   },
-  extraReducers: (builder) => {
+  extraReducers: builder => {
     builder
-      .addCase(getLocations.pending, (state) => {
+      .addCase(getLocations.pending, state => {
         state.isLoading = true
         state.error = null
       })
@@ -51,7 +70,19 @@ const locationApiSlice = createSlice({
         state.isLoading = false
         state.error = action.payload
       })
-  },
+      .addCase(createLocation.pending, state => {
+        state.isLoading = true
+        state.error = null
+      })
+      .addCase(createLocation.fulfilled, (state, action) => {
+        state.isLoading = false
+        state.locations.push(action.payload.data) // Add new location to the list
+      })
+      .addCase(createLocation.rejected, (state, action) => {
+        state.isLoading = false
+        state.error = action.payload
+      })
+  }
 })
 
 export const { clearLocationError } = locationApiSlice.actions

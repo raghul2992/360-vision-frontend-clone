@@ -17,21 +17,32 @@ import { useTranslation } from 'react-i18next'
 import { bgcolors } from '../../theme'
 import { Link } from 'react-router-dom'
 import { getCameras, deleteCamera } from '../../features/cameras/cameraApiSlice'
+import { getLocations } from '../../features/locations/locationApiSlice'
 import { toast } from 'react-toastify'
 
 const CameraList = () => {
   const { t } = useTranslation()
   const dispatch = useDispatch()
   const { cameras, isLoading, error } = useSelector(state => state.cameraApi)
+  const { locations, isLoading: locationsLoading } = useSelector(
+    state => state.locationApi
+  )
   const [searchTerm, setSearchTerm] = useState('')
   const [locationFilter, setLocationFilter] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
-  const [deletePopup, setDeletePopup] = useState({ isOpen: false, cameraId: null, cameraName: '' })
+  const [deletePopup, setDeletePopup] = useState({
+    isOpen: false,
+    cameraId: null,
+    cameraName: ''
+  })
 
-  const tenantId = localStorage.getItem("tenant_id")
+  const tenantId = localStorage.getItem('tenant_id')
 
   useEffect(() => {
-    dispatch(getCameras({ tenantId }))
+    if (tenantId) {
+      dispatch(getCameras({ tenantId }))
+      dispatch(getLocations(tenantId))
+    }
   }, [dispatch, tenantId])
 
   const handleDeleteClick = (cameraId, cameraName) => {
@@ -46,7 +57,9 @@ const CameraList = () => {
     if (!deletePopup.cameraId) return
 
     try {
-      await dispatch(deleteCamera({ tenantId, cameraId: deletePopup.cameraId })).unwrap()
+      await dispatch(
+        deleteCamera({ tenantId, cameraId: deletePopup.cameraId })
+      ).unwrap()
       toast.success('Camera deleted successfully!')
       dispatch(getCameras({ tenantId }))
     } catch (error) {
@@ -127,17 +140,21 @@ const CameraList = () => {
                 <IoClose size={24} />
               </button>
             </div>
-            
+
             <div className='mb-6'>
               <p className='text-gray-300'>
                 Are you sure you want to delete the camera{' '}
-                <span className='font-semibold text-white'>"{deletePopup.cameraName}"</span>?
+                <span className='font-semibold text-white'>
+                  "{deletePopup.cameraName}"
+                </span>
+                ?
               </p>
               <p className='text-sm text-red-400 mt-2'>
-                This action cannot be undone and all associated ROI configurations will be lost.
+                This action cannot be undone and all associated ROI
+                configurations will be lost.
               </p>
             </div>
-            
+
             <div className='flex justify-end gap-3'>
               <button
                 onClick={handleDeleteCancel}
@@ -175,18 +192,22 @@ const CameraList = () => {
             />
           </div>
 
+          {/* Location Filter */}
           <div className='relative flex items-center bg-[#4D4D4D] border border-gray-700/50 rounded-lg text-white min-w-[180px]'>
             <IoLocationOutline className='ml-3 text-white' size={16} />
             <select
               value={locationFilter}
               onChange={e => setLocationFilter(e.target.value)}
-              className='appearance-none bg-transparent flex-1 py-2.5 pl-2 pr-10 text-sm focus:outline-none cursor-pointer'
+              className='appearance-none w-full bg-[#4D4D4D] border border-gray-700/50 rounded-lg py-2.5 pl-4 pr-10 text-white text-sm focus:outline-none cursor-pointer text-gray-300'
             >
               <option value=''>
                 {t('cameraList.locationOption') || 'All Locations'}
               </option>
-              <option value='1'>Location 1</option>
-              <option value='2'>Location 2</option>
+              {locations?.map(loc => (
+                <option key={loc.id} value={loc.id}>
+                  {loc.name}
+                </option>
+              ))}
             </select>
             <IoChevronDown
               className='absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 pointer-events-none'
@@ -252,7 +273,11 @@ const CameraList = () => {
                 <h3 className='font-semibold text-base mb-1'>{camera.name}</h3>
                 <div className='flex items-center gap-2 text-sm text-gray-400'>
                   <IoLocationOutline className='w-4 h-4' />
-                  <span>Location: {camera.location_id || 'N/A'}</span>
+                  <span>
+                    Location:{' '}
+                    {locations.find(loc => loc.id === camera.location_id)
+                      ?.name || 'N/A'}
+                  </span>
                   <span className='mx-2 text-gray-600'>|</span>
                   <IoVideocamOutline className='w-4 h-4' />
                   <span className='font-mono text-xs truncate max-w-xs'>

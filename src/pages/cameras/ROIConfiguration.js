@@ -338,8 +338,8 @@ const ROIConfiguration = () => {
     )
       .unwrap()
       .then(result => {
-        setSnapshotUrl(result.data.frame_url)
-        toast.success('Snapshot retrieved successfully!')
+        setSnapshotUrl(result.frame_url)
+        toast.success('Frame retrieved successfully!')
       })
   }
 
@@ -524,7 +524,7 @@ const ROIConfiguration = () => {
 
   // Function to handle image error in Konva
   const handleImageError = () => {
-    toast.error('Failed to display snapshot image')
+    toast.error('Failed to display Frame image')
   }
 
   // Function to parse ROI polygons for display
@@ -710,7 +710,7 @@ const ROIConfiguration = () => {
                   return (
                     <Line
                       key={roi.id}
-                      points={ !addnew && flatPoints}
+                      points={!addnew && flatPoints}
                       stroke='yellow'
                       strokeWidth={3}
                       closed={true}
@@ -787,7 +787,7 @@ const ROIConfiguration = () => {
               >
                 <IoCamera size={20} />
                 <span>
-                  {isSnapshotLoading ? 'Loading...' : 'Take Snapshot'}
+                  {isSnapshotLoading ? 'Loading...' : 'Capture Frame'}
                 </span>
               </button>
 

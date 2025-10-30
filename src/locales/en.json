@@ -27,7 +27,23 @@
     "confirm_password": "Confirm Password",
     "confirm_password_placeholder": "Confirm your password",
     "create_account_button": "Create Account",
-    "loading": "Loading"
+    "loading": "Loading",
+    "verify_email": "Verify Email",
+    "otp_message": "We've sent a verification code to",
+    "enter_otp": "Enter verification code",
+    "verify_button": "Verify",
+    "didnt_receive": "Didn't receive the code?",
+    "resend_otp": "Resend code",
+    "back_to_registration": "Back to registration",
+    "get_otp_button": "Get OTP",
+    "all_fields_required": "All fields are required",
+    "sending_otp": "Sending OTP...",
+    "otp_expires_in": "OTP expires in",
+    "registering": "Creating your account...",
+    "submit_registration": "Submit & Register",
+    "otp_expired": "OTP has expired",
+    "password_length": "Password must be at least 8 characters",
+    "password_mismatch": "Passwords do not match"
   },
   "reset_password": {
     "title": "Reset Password",
@@ -38,7 +54,8 @@
     "send_reset_link": "Send Reset Link",
     "back_to_login": "Back to Sign In",
     "remember_password": "Remember your password?",
-    "sign_in_here": "Sign in here"
+    "sign_in_here": "Sign in here",
+    "success_message": "If an account with that email exists, we have sent a password reset link."
   },
   "auth_page": {
     "welcome": "Welcome to SST",
@@ -145,7 +162,8 @@
     "totalCameras": "Total Cameras - {{count}}",
     "cameraLocation": "{{location}} | {{streamUrl}}",
     "editButton": "Edit",
-    "deleteButton": "Delete"
+    "deleteButton": "Delete",
+    "noCameras": "No Camera Found"
   },
   "addCamera": {
     "editTitle": "Edit Camera",
@@ -171,5 +189,13 @@
     "addingCamera": "Adding Camera...",
     "saveChangesButton": "Save Changes",
     "addCameraButton": "Add Camera"
+  },
+  "success_display": {
+    "title": "Send E-mail",
+    "message": "We have sent a password reset link to:",
+    "instructions": "Please check your email and follow the instructions to reset your password.",
+    "spam_notice": "Didn't find the email? Check your spam box or try again.",
+    "resend_button": "Send again",
+    "back_button": "Back"
   }
 }

@@ -88,7 +88,7 @@ const AuthPage = () => {
                   }}
                 />
               </div>
-              {authscreen === 'login' ? <LoginPage /> : <RegisterPage />}
+              {authscreen === 'login' ? <LoginPage  callbackScreen={Setauthscreen} /> : <RegisterPage callbackScreen={Setauthscreen}  />}
             </div>
             <div
               className={`text-center min-w-[64px] ${textcolors.white} text-xs sm:text-sm lg:text-base 4k:text-xl`}

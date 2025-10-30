@@ -12,9 +12,23 @@ import ButtonComponent from '../../component/Button'
 import '../../styles/login.css'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { useDispatch, useSelector } from 'react-redux'
+import { forgotPassword } from '../../features/auth/authSlice'
+import { useState } from 'react'
+import SuccessDisplay from '../../component/SuccessDisplay'
 
 const ResetPasswordPage = () => {
   const { t } = useTranslation()
+  const dispatch = useDispatch()
+  const { isLoading, error, success } = useSelector(state => state.auth)
+  const [email, setEmail] = useState('')
+
+  const handleSubmit = (e) => {
+    e.preventDefault()
+    const tenant_id = localStorage.getItem('tenant_id')
+    dispatch(forgotPassword({ tenant_id, email }))
+  }
+
   return (
     <div className='flex h-screen flex-col lg:flex-row'>
       {/* left banner */}
@@ -37,7 +51,7 @@ const ResetPasswordPage = () => {
               {t('reset_password.subtitle')}
             </span>
 
-            <div
+            {success ? <SuccessDisplay email={email} /> : <div
               className={`${bgcolors.white} p-4 sm:p-8 flex flex-col w-full sm:min-w-[340px] lg:min-w-[440px] mb-2 rounded-[20px] justify-start items-start`}
             >
               <Link to={'/'}>
@@ -67,12 +81,16 @@ const ResetPasswordPage = () => {
                   <TextInput
                     icon={<IoMailOutline size={20} color='#888888' />}
                     placeholder={t('reset_password.email_placeholder')}
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
                   />
                 </div>
                 <div className='p-1 w-full'>
                   <ButtonComponent
+                    onClick={handleSubmit}
                     children={t('reset_password.send_reset_link')}
                     className={`${fontWeights.semibold} ${textcolors.white} ${textSizes.base} ${bgcolors.primary} w-full py-[8px] px-[16px] flex items-center justify-center rounded-[100px]`}
+                    isLoading={isLoading}
                   />
                 </div>
 
@@ -84,8 +102,9 @@ const ResetPasswordPage = () => {
                     />
                   </a>
                 </div>
+                {error && <p className='text-red-500'>{error}</p>}
               </div>
-            </div>
+            </div>}
             <div className='mt-1'>
               <p className={`${textSizes.base} ${textcolors.white}`}>
                 {t('reset_password.remember_password')}{' '}

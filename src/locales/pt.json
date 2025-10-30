@@ -27,7 +27,23 @@
     "confirm_password": "Confirmar Senha",
     "confirm_password_placeholder": "Confirme sua senha",
     "create_account_button": "Criar Conta",
-    "loading": "carregando"
+    "loading": "carregando",
+    "verify_email": "Verificar E-mail",
+    "otp_message": "Enviamos um código de verificação para {email}",
+    "enter_otp": "Digite o código de verificação",
+    "verify_button": "Verificar",
+    "didnt_receive": "Não recebeu o código?",
+    "resend_otp": "Reenviar código",
+    "back_to_registration": "Voltar ao registro",
+    "get_otp_button": "Obter OTP",
+    "all_fields_required": "Todos os campos são obrigatórios",
+    "sending_otp": "Enviando OTP...",
+    "otp_expires_in": "OTP expira em",
+    "registering": "Criando sua conta...",
+    "submit_registration": "Enviar e Registrar",
+    "otp_expired": "OTP expirou",
+    "password_length": "A senha deve ter pelo menos 8 caracteres",
+    "password_mismatch": "As senhas não coincidem"
   },
   "reset_password": {
     "title": "Redefinir Senha",
@@ -38,7 +54,8 @@
     "send_reset_link": "Enviar Link de Redefinição",
     "back_to_login": "Voltar para Entrar",
     "remember_password": "Lembra sua senha?",
-    "sign_in_here": "Entre aqui"
+    "sign_in_here": "Entre aqui",
+    "success_message": "Se existir uma conta com esse e-mail, enviamos um link para redefinição de senha."
   },
   "auth_page": {
     "welcome": "Bem-vindo à SST",
@@ -145,7 +162,8 @@
     "totalCameras": "Total de Câmeras - {{count}}",
     "cameraLocation": "{{location}} | {{streamUrl}}",
     "editButton": "Editar",
-    "deleteButton": "Excluir"
+    "deleteButton": "Excluir",
+    "noCameras": "Nenhuma câmera encontrada"
   },
   "addCamera": {
     "editTitle": "Editar Câmera",
@@ -171,5 +189,13 @@
     "addingCamera": "Adicionando Câmera...",
     "saveChangesButton": "Salvar Alterações",
     "addCameraButton": "Adicionar Câmera"
+  },
+  "success_display": {
+    "title": "Enviar E-mail",
+    "message": "Enviamos um link de redefinição de senha para:",
+    "instructions": "Verifique seu e-mail e siga as instruções para redefinir sua senha.",
+    "spam_notice": "Não encontrou o e-mail? Verifique sua caixa de spam ou tente novamente.",
+    "resend_button": "Enviar novamente",
+    "back_button": "Voltar"
   }
 }
