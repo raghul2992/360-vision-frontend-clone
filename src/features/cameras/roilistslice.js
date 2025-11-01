@@ -24,7 +24,7 @@ export const createRoi = createAsyncThunk(
   async ({ tenantId, cameraId, roiData }, { rejectWithValue }) => {
     try {
       const response = await api.post(
-        `/api/v1/tenants/${tenantId}/camera/${cameraId}/roi/`,
+        `/api/v1/tenants/${tenantId}/camera/${cameraId}/roi/?operation=true`,
         roiData
       )
       return response.data || response.data
@@ -42,7 +42,7 @@ export const updateRoi = createAsyncThunk(
   async ({ tenantId, cameraId, roiId, roiData }, { rejectWithValue }) => {
     try {
       const response = await api.put(
-        `/api/v1/tenants/${tenantId}/camera/${cameraId}/roi/${roiId}`,
+        `/api/v1/tenants/${tenantId}/camera/${cameraId}/roi/${roiId}?operation=true`,
         roiData
       )
       return response.data || response.data
@@ -60,12 +60,30 @@ export const deleteRoi = createAsyncThunk(
   async ({ tenantId, cameraId, roiId }, { rejectWithValue }) => {
     try {
       await api.delete(
-        `/api/v1/tenants/${tenantId}/camera/${cameraId}/roi/${roiId}`
+        `/api/v1/tenants/${tenantId}/camera/${cameraId}/roi/${roiId}?operation=true`
       )
       return roiId
     } catch (error) {
       return rejectWithValue(
         error.response?.data?.messages || 'Failed to delete ROI'
+      )
+    }
+  }
+)
+
+// Update ROI status
+export const updateRoiStatus = createAsyncThunk(
+  'rois/updateRoiStatus',
+  async ({ tenantId, cameraId, roiId, status }, { rejectWithValue }) => {
+    try {
+      const response = await api.put(
+        `/api/v1/tenants/${tenantId}/camera/${cameraId}/roi/${roiId}?operation=true`,
+        { status }
+      )
+      return response.data
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data?.message || 'Failed to update ROI status'
       )
     }
   }
@@ -161,6 +179,22 @@ const roiSlice = createSlice({
         state.operationSuccess = false
         // Add toast error for failed deletion
         // toast.error(action.payload || 'Failed to delete ROI!'); // This should be handled in the component
+      })
+      // Update ROI Status
+      .addCase(updateRoiStatus.pending, state => {
+        state.isLoading = true
+        state.error = null
+      })
+      .addCase(updateRoiStatus.fulfilled, (state, action) => {
+        state.isLoading = false
+        const index = state.rois.findIndex(roi => roi.id === action.payload.id)
+        if (index !== -1) {
+          state.rois[index] = action.payload
+        }
+      })
+      .addCase(updateRoiStatus.rejected, (state, action) => {
+        state.isLoading = false
+        state.error = action.payload
       })
   }
 })

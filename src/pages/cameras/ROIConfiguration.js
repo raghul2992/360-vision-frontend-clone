@@ -49,9 +49,10 @@ const ROIConfiguration = () => {
     password,
     roiToEdit,
     currentRoi_Id,
+    status,
     addnew
   } = location.state || {}
-  const tenantId = propTenantId || 1
+  const tenantId = propTenantId
 
   const [polygons, setPolygons] = useState([])
   const [currentPolygon, setCurrentPolygon] = useState([])
@@ -61,12 +62,14 @@ const ROIConfiguration = () => {
   const [rectangleStart, setRectangleStart] = useState(null)
   const [currentRectangle, setCurrentRectangle] = useState(null)
   const stageRef = useRef(null)
-  const [snapshotUrl, setSnapshotUrl] = useState(snapshot)
+  const SNAPSHOT_DIR = `${process.env.REACT_APP_BASE_URL}/api/v1/tenants/${tenantId}/cameras/snapshot/image`
+  const SNAPSHOT_URL = `${SNAPSHOT_DIR}/${snapshot}`
+  const [snapshotUrl, setSnapshotUrl] = useState(SNAPSHOT_URL)
   const [image] = useImage(snapshotUrl)
 
   const [stageDimensions, setStageDimensions] = useState({
-    width: 1050,
-    height: 450
+    width: 1100,
+    height: 640
   })
 
   const { rois, isLoading, error, operationSuccess } = useSelector(
@@ -83,7 +86,7 @@ const ROIConfiguration = () => {
   })
 
   useEffect(() => {
-    console.log(`${process.env.REACT_APP_BASE_URL}${snapshot}`)
+    console.log(`${snapshotUrl}`)
   }, [])
 
   const [emailNotification, setEmailNotification] = useState(false)
@@ -116,18 +119,6 @@ const ROIConfiguration = () => {
   const searchParams = new URLSearchParams(location.search)
   const cameraIdFromUrl = searchParams.get('cameraId')
 
-  // Set stage dimensions
-  useEffect(() => {
-    const updateDimensions = () => {
-      const width = window.innerWidth > 1400 ? 1200 : 1050
-      setStageDimensions({ width, height: 450 })
-    }
-
-    updateDimensions()
-    window.addEventListener('resize', updateDimensions)
-    return () => window.removeEventListener('resize', updateDimensions)
-  }, [])
-
   // Update image dimensions when image loads
   useEffect(() => {
     if (image) {
@@ -139,7 +130,6 @@ const ROIConfiguration = () => {
   }, [image])
 
   useEffect(() => {
-    // console.log(polygons)
     const effectiveCameraId = cameraId || cameraIdFromUrl
 
     if (effectiveCameraId && tenantId && !addnew && !roiToEdit) {
@@ -204,6 +194,14 @@ const ROIConfiguration = () => {
   const getStagePolygon = polygon => {
     if (!polygon || polygon.length === 0) return []
     return polygon.map(point => getStagePoint(point.x, point.y))
+  }
+
+  // Add this function to transform polygons format
+  const transformPolygonsFormat = polygonsArray => {
+    return polygonsArray.map((polygon, index) => ({
+      roi_name: `Area ${index + 1}`,
+      polygon_points: polygon.flatMap(point => [point.x, point.y])
+    }))
   }
 
   // Polygon drawing handlers
@@ -338,7 +336,7 @@ const ROIConfiguration = () => {
     )
       .unwrap()
       .then(result => {
-        setSnapshotUrl(result.frame_url)
+        setSnapshotUrl(`${SNAPSHOT_DIR}/${result.frame_url}`)
         toast.success('Frame retrieved successfully!')
       })
   }
@@ -355,15 +353,13 @@ const ROIConfiguration = () => {
       return
     }
 
-    // UPDATED: Store polygons as array of polygon arrays
-    const polygonsArray = polygons.map(polygon =>
-      polygon.map(p => [Math.round(p.x), Math.round(p.y)])
-    )
+    // Transform polygons to the new format
+    const transformedPolygons = transformPolygonsFormat(polygons)
 
     const roiData = {
       name: roiName.trim(),
       frame_url: snapshot,
-      polygons: JSON.stringify(polygonsArray),
+      polygons: transformedPolygons, // Removed JSON.stringify
       alert_priority: alertPriority.toLowerCase(),
       detection_type: detectionType,
       detection_config: (() => {
@@ -396,13 +392,13 @@ const ROIConfiguration = () => {
           recipients: callRecipients
         }
       },
-      status: 'active',
+      status: roiToEdit ? status : 'inactive',
       meta: {},
       camera_id: cameraId
     }
 
     console.log('handleSaveRoi called. currentRoiId:', currentRoiId)
-    console.log('Polygons data structure:', polygonsArray)
+    console.log('Transformed polygons data:', transformedPolygons)
 
     if (currentRoiId) {
       dispatch(updateRoi({ tenantId, cameraId, roiId: currentRoiId, roiData }))
@@ -417,7 +413,7 @@ const ROIConfiguration = () => {
     }
   }
 
-  // UPDATED: Handle ROI editing - parse array of polygon arrays
+  // UPDATED: Handle ROI editing - parse both old and new formats
   const handleEditRoi = roi => {
     console.log('Editing ROI:', roi)
     setCurrentRoiId(roi.id)
@@ -428,35 +424,76 @@ const ROIConfiguration = () => {
     )
 
     // Set the snapshot URL from the ROI being edited
-    setSnapshotUrl(roi.frame_url)
+    setSnapshotUrl(`${SNAPSHOT_DIR}/${roi.frame_url}`)
 
-    // Parse the polygons string back to array
+    // Parse the polygons - no need for JSON.parse since we're not stringifying anymore
     try {
-      const parsedPolygons =
-        typeof roi.polygons === 'string'
-          ? JSON.parse(roi.polygons)
-          : roi.polygons
+      const parsedPolygons = roi.polygons // Direct assignment since it's already an object
 
-      console.log('Parsed ROI polygons:', parsedPolygons)
+      console.log('Parsed ROI polygons for editing:', parsedPolygons)
 
       // Clear existing polygons and load the ROI's polygons
       if (parsedPolygons && Array.isArray(parsedPolygons)) {
         const roiPolygons = []
 
-        // Convert each polygon array to the format we use internally
-        parsedPolygons.forEach(polygonArray => {
-          if (polygonArray && polygonArray.length >= 3) {
-            const polygonPoints = polygonArray.map(point => ({
-              x: point[0],
-              y: point[1]
-            }))
-            roiPolygons.push(polygonPoints)
-          }
-        })
+        // Check if it's the new format (array of objects)
+        if (
+          parsedPolygons.length > 0 &&
+          typeof parsedPolygons[0] === 'object' &&
+          'polygon_points' in parsedPolygons[0]
+        ) {
+          // New format: array of objects with polygon_points
+          parsedPolygons.forEach(polygonObj => {
+            const polygonArray = polygonObj.polygon_points
+            if (
+              polygonArray &&
+              Array.isArray(polygonArray) &&
+              polygonArray.length >= 6
+            ) {
+              // At least 3 points (6 coordinates)
+              const polygonPoints = []
+              for (let i = 0; i < polygonArray.length; i += 2) {
+                if (i + 1 < polygonArray.length) {
+                  polygonPoints.push({
+                    x: polygonArray[i],
+                    y: polygonArray[i + 1]
+                  })
+                }
+              }
+              if (polygonPoints.length >= 3) {
+                roiPolygons.push(polygonPoints)
+              }
+            }
+          })
+        } else {
+          // Old format: array of polygon arrays (for backward compatibility)
+          parsedPolygons.forEach(polygonArray => {
+            if (
+              polygonArray &&
+              Array.isArray(polygonArray) &&
+              polygonArray.length >= 6
+            ) {
+              // At least 3 points (6 coordinates)
+              const polygonPoints = []
+              for (let i = 0; i < polygonArray.length; i += 2) {
+                if (i + 1 < polygonArray.length) {
+                  polygonPoints.push({
+                    x: polygonArray[i],
+                    y: polygonArray[i + 1]
+                  })
+                }
+              }
+              if (polygonPoints.length >= 3) {
+                roiPolygons.push(polygonPoints)
+              }
+            }
+          })
+        }
 
-        console.log('Converted ROI polygons:', roiPolygons)
+        console.log('Converted ROI polygons for editing:', roiPolygons)
         setPolygons(roiPolygons)
       } else {
+        console.log('No valid polygons found, setting empty array')
         setPolygons([])
       }
     } catch (error) {
@@ -527,26 +564,38 @@ const ROIConfiguration = () => {
     toast.error('Failed to display Frame image')
   }
 
-  // Function to parse ROI polygons for display
+  // Function to parse ROI polygons for display - FIXED VERSION
   const parseRoiPolygons = roi => {
     try {
-      const parsed =
-        typeof roi.polygons === 'string'
-          ? JSON.parse(roi.polygons)
-          : roi.polygons
+      const parsed = roi.polygons // Direct assignment since it's already an object
 
-      // If it's an array of polygon arrays, flatten for display
-      if (
-        Array.isArray(parsed) &&
-        parsed.length > 0 &&
-        Array.isArray(parsed[0])
-      ) {
-        return parsed.flat()
+      console.log('parseRoiPolygons - parsed:', parsed) // Debug log
+
+      // Handle both old and new formats for display
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        // Check if new format (array of objects)
+        if (typeof parsed[0] === 'object' && 'polygon_points' in parsed[0]) {
+          // New format: extract polygon_points from each object and flatten
+          return parsed.flatMap(polygonObj => {
+            if (
+              polygonObj.polygon_points &&
+              Array.isArray(polygonObj.polygon_points)
+            ) {
+              return polygonObj.polygon_points
+            }
+            return []
+          })
+        } else {
+          // Old format: already flat array
+          return parsed.flat()
+        }
       }
-      return parsed
+
+      // If parsed is not an array or empty, return empty array
+      return []
     } catch (error) {
       console.error('Error parsing ROI polygons:', error)
-      return roi.polygons || []
+      return []
     }
   }
 
@@ -659,7 +708,7 @@ const ROIConfiguration = () => {
 
         <div className='relative'>
           {/* Camera Feed */}
-          <div className='w-full bg-black rounded-lg overflow-hidden relative'>
+          <div className='w-full bg-black rounded-lg  relative '>
             <Stage
               width={stageDimensions.width}
               height={stageDimensions.height}
@@ -695,28 +744,57 @@ const ROIConfiguration = () => {
                   />
                 )}
 
-                {/* Display existing ROIs from backend */}
+                {/* Display existing ROIs from backend - FIXED VERSION */}
                 {rois.map(roi => {
                   if (roi.id === currentRoiId) return null // Don't show the ROI we're currently editing
 
                   const roiPoints = parseRoiPolygons(roi)
-                  if (!roiPoints || roiPoints.length === 0) return null
+                  console.log('ROI points for display:', roiPoints) // Debug log
 
-                  const stagePoints = getStagePolygon(
-                    roiPoints.map(p => ({ x: p[0], y: p[1] }))
-                  )
-                  const flatPoints = stagePoints.flatMap(p => [p.x, p.y])
+                  // Ensure roiPoints is an array and has enough points
+                  if (
+                    !roiPoints ||
+                    !Array.isArray(roiPoints) ||
+                    roiPoints.length === 0
+                  ) {
+                    console.log('Skipping ROI due to invalid points:', roi.id)
+                    return null
+                  }
 
-                  return (
-                    <Line
-                      key={roi.id}
-                      points={!addnew && flatPoints}
-                      stroke='yellow'
-                      strokeWidth={3}
-                      closed={true}
-                      fill='rgba(255, 255, 0, 0.2)'
-                    />
-                  )
+                  try {
+                    // Convert points to the format expected by getStagePolygon
+                    const pointsForDisplay = []
+                    for (let i = 0; i < roiPoints.length; i += 2) {
+                      if (i + 1 < roiPoints.length) {
+                        pointsForDisplay.push({
+                          x: roiPoints[i],
+                          y: roiPoints[i + 1]
+                        })
+                      }
+                    }
+
+                    if (pointsForDisplay.length === 0) {
+                      console.log('No valid points found for ROI:', roi.id)
+                      return null
+                    }
+
+                    const stagePoints = getStagePolygon(pointsForDisplay)
+                    const flatPoints = stagePoints.flatMap(p => [p.x, p.y])
+
+                    return (
+                      <Line
+                        key={roi.id}
+                        points={!addnew && flatPoints}
+                        stroke='yellow'
+                        strokeWidth={3}
+                        closed={true}
+                        fill='rgba(255, 255, 0, 0.2)'
+                      />
+                    )
+                  } catch (error) {
+                    console.error('Error rendering ROI:', roi.id, error)
+                    return null
+                  }
                 })}
               </Layer>
             </Stage>
@@ -738,20 +816,6 @@ const ROIConfiguration = () => {
                 >
                   Polygon
                 </button>
-                {/* <button
-                  onClick={() => {
-                    setDrawingMode('rectangle')
-                    setIsDrawing(true)
-                    setCurrentPolygon([])
-                  }}
-                  className={`px-3 py-1 rounded ${
-                    drawingMode === 'rectangle'
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-gray-700 text-gray-300'
-                  }`}
-                >
-                  Rectangle
-                </button> */}
               </div>
               {drawingMode === 'polygon' && (
                 <div className='text-xs text-gray-300'>
@@ -852,35 +916,6 @@ const ROIConfiguration = () => {
           {rois.length > 0 && (
             <div className='mt-6'>
               <h3 className='text-lg font-bold mb-3'>Configured ROIs</h3>
-              {/* <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3'>
-                {rois.map(roi => (
-                  <div
-                    key={roi.id}
-                    className='bg-gray-800 rounded-lg p-3 flex justify-between items-center'
-                  >
-                    <div>
-                      <div className='font-semibold'>{roi.name}</div>
-                      <div className='text-sm text-gray-400'>
-                        {roi.detection_type}
-                      </div>
-                    </div>
-                    <div className='flex gap-2'>
-                      <button
-                        onClick={() => handleEditRoi(roi)}
-                        className='text-blue-400 hover:text-blue-600'
-                      >
-                        <IoPencil size={18} />
-                      </button>
-                      <button
-                        onClick={() => handleDeleteRoi(roi.id)}
-                        className='text-red-400 hover:text-red-600'
-                      >
-                        <IoTrash size={18} />
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div> */}
             </div>
           )}
 

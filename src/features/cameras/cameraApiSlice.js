@@ -14,9 +14,7 @@ export const getCameras = createAsyncThunk(
       console.log('API Response Data:', response.data)
 
       // API response has cameras array under data
-      const camerasArray = Array.isArray(response.data)
-        ? response.data
-        : []
+      const camerasArray = Array.isArray(response.data) ? response.data : []
 
       return camerasArray
     } catch (error) {
@@ -51,7 +49,7 @@ export const updateCamera = createAsyncThunk(
   async ({ tenantId, cameraId, cameraData }, { rejectWithValue }) => {
     try {
       const response = await api.put(
-        `/api/v1/tenants/${tenantId}/cameras/${cameraId}`,
+        `/api/v1/tenants/${tenantId}/cameras/${cameraId}?operation=true`,
         cameraData
       )
       return response.data || response.data
@@ -68,7 +66,7 @@ export const deleteCamera = createAsyncThunk(
   async ({ tenantId, cameraId }, { rejectWithValue }) => {
     try {
       const response = await api.delete(
-        `/api/v1/tenants/${tenantId}/cameras/${cameraId}`
+        `/api/v1/tenants/${tenantId}/cameras/${cameraId}?operation=true`
       )
       console.log('Delete response:', response)
       return cameraId
@@ -92,11 +90,9 @@ export const testCameraConnection = createAsyncThunk(
       )
       console.log(response)
       return response.data
-    } catch (error) { 
-        console.log(error.response.data)
-      return rejectWithValue(
-        error.response.data || 'Connection test failed'
-      )
+    } catch (error) {
+      console.log(error.response.data)
+      return rejectWithValue(error.response.data || 'Connection test failed')
     }
   }
 )
@@ -104,7 +100,10 @@ export const testCameraConnection = createAsyncThunk(
 // Get Camera Snapshot
 export const getCameraSnapshot = createAsyncThunk(
   'cameras/getCameraSnapshot',
-  async ({ tenantId, cameraId, rtsp_url, username, password }, { rejectWithValue }) => {
+  async (
+    { tenantId, cameraId, rtsp_url, username, password },
+    { rejectWithValue }
+  ) => {
     try {
       // Build URL dynamically
       let url = `/api/v1/tenants/${tenantId}/cameras/snapshot`
@@ -115,7 +114,7 @@ export const getCameraSnapshot = createAsyncThunk(
       const response = await api.post(url, {
         rtsp_url,
         username,
-        password,
+        password
       })
 
       return response.data
@@ -126,7 +125,6 @@ export const getCameraSnapshot = createAsyncThunk(
     }
   }
 )
-
 
 // Get Camera by ID
 export const getCameraById = createAsyncThunk(

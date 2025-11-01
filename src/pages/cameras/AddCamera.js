@@ -26,7 +26,11 @@ import {
   getLocations,
   createLocation
 } from '../../features/locations/locationApiSlice'
-import { getRois, deleteRoi } from '../../features/cameras/roilistslice'
+import {
+  getRois,
+  deleteRoi,
+  updateRoiStatus
+} from '../../features/cameras/roilistslice'
 import { toast } from 'react-toastify'
 import CreatableSelect from '../../component/CreatableSelect'
 import 'react-toastify/dist/ReactToastify.css'
@@ -68,6 +72,7 @@ const AddCamera = () => {
   const [isCameraSaved, setIsCameraSaved] = useState(false)
   const [cameraId, setCameraId] = useState(current_cameraId) // Store new camera ID
   const [isAddingRoi, setIsAddingRoi] = useState(false)
+  const [cameraStatus, setCameraStatus] = useState('inactive') // Camera enable/disable state
 
   // Fetch locations on component mount
   useEffect(() => {
@@ -101,6 +106,7 @@ const AddCamera = () => {
         setCameraType(cameraToEdit.camera_type || 'ip')
         setUsername(cameraToEdit.username || '')
         setPassword(cameraToEdit.password || '')
+        setCameraStatus(cameraToEdit.status || 'inactive') // Set camera status
       } else {
         toast.error('Camera not found.')
         navigate('/camera')
@@ -177,7 +183,7 @@ const AddCamera = () => {
       username: username.trim(),
       password: password,
       camera_type: 'ip',
-      status: 'active',
+      status: cameraStatus, // Include camera status
       location_id: parseInt(location),
       meta: {}
     }
@@ -244,7 +250,7 @@ const AddCamera = () => {
         return true
       })
       .catch(err => {
-        console.log(err);
+        console.log(err)
         setIsTestingConnection(false)
         setIsConnectionTested(false)
         toast.error(err)
@@ -335,7 +341,9 @@ const AddCamera = () => {
   }
 
   const handleEditRoi = roi => {
-    console.log(roi.roi_id)
+    console.log(roi.id)
+    console.log(roi)
+    // return
     navigate('/roi-configuration', {
       state: {
         rtsp_url: rtspUrl,
@@ -343,7 +351,8 @@ const AddCamera = () => {
         cameraId: parseInt(cameraId),
         tenantId,
         roiToEdit: roi, // Pass the entire ROI object for editing
-        currentRoi_Id: roi.roi_id
+        currentRoi_Id: roi.id,
+        status: roi.status
       }
     })
   }
@@ -392,6 +401,37 @@ const AddCamera = () => {
         toast.error(err || 'Failed to create location.')
       })
   }
+
+  // Handle ROI status change (non-functional for now)
+  const handleRoiStatusChange = (roiId, newStatus) => {
+    if (!cameraId || !tenantId) {
+      toast.error('Camera ID or Tenant ID not found')
+      return
+    }
+
+    dispatch(
+      updateRoiStatus({
+        tenantId,
+        cameraId: parseInt(cameraId),
+        roiId,
+        status: newStatus
+      })
+    )
+      .unwrap()
+      .then(() => {
+        toast.success(
+          `ROI ${newStatus === 'active' ? 'enabled' : 'disabled'} successfully!`
+        )
+        // Refresh the ROI list to get updated data
+        dispatch(getRois({ tenantId, cameraId: parseInt(cameraId) }))
+      })
+      .catch(err => {
+        toast.error(err || 'Failed to update ROI status')
+        // Revert the select value by refreshing the ROI list
+        dispatch(getRois({ tenantId, cameraId: parseInt(cameraId) }))
+      })
+  }
+
   return (
     <div className={`p-8 ${bgcolors.dark} text-white min-h-screen`}>
       {showConfirm && (
@@ -496,6 +536,27 @@ const AddCamera = () => {
               value={rtspUrl}
               onChange={e => setRtspUrl(e.target.value)}
             />
+          </div>
+
+          {/* Camera Status Dropdown */}
+          <div>
+            <label className='block text-white mb-2 text-sm font-medium'>
+              Camera Status
+            </label>
+            <div className='relative'>
+              <select
+                className='w-full bg-[#3A3B47] border border-gray-600/50 rounded-lg py-2.5 px-4 pr-10 text-white focus:outline-none focus:border-gray-500 text-sm appearance-none cursor-pointer'
+                value={cameraStatus}
+                onChange={e => setCameraStatus(e.target.value)}
+              >
+                <option value='active'>Enable</option>
+                <option value='inactive'>Disable</option>
+              </select>
+              <IoChevronDown
+                className='absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none'
+                size={16}
+              />
+            </div>
           </div>
 
           {/* Camera Type */}
@@ -618,10 +679,10 @@ const AddCamera = () => {
                 disabled={isLoading || isTestingConnection || isAddingRoi}
               >
                 {isAddingRoi
-                  ? 'Add Camera'
+                  ? 'Submit'
                   : !isTestingConnection && isLoading
-                  ? t('addCamera.addingCamera') || 'Adding...'
-                  : t('addCamera.addCameraButton') || 'Add Camera'}
+                  ? t('addCamera.addingCamera') || 'Submitting...'
+                  : t('addCamera.addCameraButton') || 'Sumbit'}
               </button>
 
               {/* {cameraId && (
@@ -729,6 +790,9 @@ const AddCamera = () => {
                       Status
                     </th>
                     <th className='text-left py-3 px-4 text-sm font-semibold text-gray-300'>
+                      Enable/Disable
+                    </th>
+                    <th className='text-left py-3 px-4 text-sm font-semibold text-gray-300'>
                       Notifications
                     </th>
                     <th className='text-left py-3 px-4 text-sm font-semibold text-gray-300'>
@@ -771,6 +835,24 @@ const AddCamera = () => {
                         >
                           {roi.status === 'active' ? 'Active' : 'Inactive'}
                         </span>
+                      </td>
+                      <td className='py-4 px-4 text-sm'>
+                        <div className='relative'>
+                          <select
+                            className='w-full bg-[#3A3B47] border border-gray-600/50 rounded-lg py-1.5 px-3 pr-8 text-white focus:outline-none focus:border-gray-500 text-xs appearance-none cursor-pointer'
+                            value={roi.status || 'active'}
+                            onChange={e =>
+                              handleRoiStatusChange(roi.id, e.target.value)
+                            }
+                          >
+                            <option value='active'>Enable</option>
+                            <option value='inactive'>Disable</option>
+                          </select>
+                          <IoChevronDown
+                            className='absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none'
+                            size={12}
+                          />
+                        </div>
                       </td>
                       <td className='py-4 px-4'>
                         <div className='flex items-center gap-3'>

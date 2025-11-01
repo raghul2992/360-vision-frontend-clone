@@ -12,7 +12,7 @@ import { loginUser } from '../../features/auth/authSlice'
 import { toast } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 
-const LoginPage = ({callbackScreen}) => {
+const LoginPage = ({ callbackScreen }) => {
   const { t, i18n } = useTranslation()
   const dispatch = useDispatch()
   const navigate = useNavigate()
@@ -41,8 +41,6 @@ const LoginPage = ({callbackScreen}) => {
   const handleLogin = () => {
     dispatch(loginUser({ email, password }))
   }
-
-  
 
   return (
     <div className='flex flex-col justify-start items-center w-full'>

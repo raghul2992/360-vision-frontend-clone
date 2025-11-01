@@ -6,6 +6,7 @@ import AddCamera from './pages/cameras/AddCamera'
 import ROIConfiguration from './pages/cameras/ROIConfiguration'
 // import CameraList from './pages/cameras/CameraList'
 import CameraPage from './pages/cameras/CameraPage'
+import DashboardHome from './pages/dashboardhome/DashboardHome'
 
 export const routes = [
   {
@@ -21,7 +22,7 @@ export const routes = [
     children: [
       {
         path: '/admin-dashboard',
-        element: <div>Dashboard Home</div>
+        element: <DashboardHome />
       },
       {
         path: '/camera',

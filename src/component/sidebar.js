@@ -18,14 +18,14 @@ const Sidebar = () => {
   const navigate = useNavigate()
 
   const handleLogout = async () => {
-  try {
-    const result = await dispatch(logoutUser()).unwrap()
-    console.log('Logout success:', result)
-    navigate('/')
-  } catch (error) {
-    console.error('Logout failed:', error)
+    try {
+      const result = await dispatch(logoutUser()).unwrap()
+      console.log('Logout success:', result)
+      navigate('/')
+    } catch (error) {
+      console.error('Logout failed:', error)
+    }
   }
-}
 
   return (
     <div className='sticky w-[90px] h-screen bg-[#1c1c24] flex flex-col items-center py-3'>
@@ -34,9 +34,13 @@ const Sidebar = () => {
       </div>
 
       <div className='flex flex-col items-center justify-center flex-1 gap-5 text-xl'>
-        {/* <div className=' w-12 h-12 flex justify-center items-center cursor-pointer hover:bg-[#30313F]  hover:rounded-[16px]'>
-          <IoHome className={`${textcolors.white}  hover:text-[#3885CC] text-2xl`} />
-        </div> */}
+        {/* <Link to='/admin-dashboard'>
+          <div className=' w-12 h-12 flex justify-center items-center cursor-pointer hover:bg-[#30313F]  hover:rounded-[16px]'>
+            <IoHome
+              className={`${textcolors.white}  hover:text-[#3885CC] text-2xl`}
+            />
+          </div>
+        </Link> */}
 
         {/* <div className='w-12 h-12 flex justify-center items-center cursor-pointer hover:bg-[#30313F]  hover:rounded-[16px]'>
           <IoLocationOutline className={`${textcolors.white} hover:text-[#3885CC] text-2xl`} />
