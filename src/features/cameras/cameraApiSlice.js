@@ -196,6 +196,18 @@ const cameraApiSlice = createSlice({
       state.testConnectionResult = null
       state.snapshotResult = null
       state.operationSuccess = false
+    },
+    updateCameraStatusFromWebSocket: (state, action) => {
+      const { camera_id, status } = action.payload
+      const cameraIndex = state.cameras.findIndex(
+        camera => camera.id === camera_id
+      )
+      if (cameraIndex !== -1) {
+        state.cameras[cameraIndex].status = status
+      }
+      if (state.currentCamera && state.currentCamera.id === camera_id) {
+        state.currentCamera.status = status
+      }
     }
   },
   extraReducers: builder => {
@@ -364,7 +376,8 @@ export const {
   clearSnapshotResult,
   clearOperationSuccess,
   clearCurrentCamera,
-  resetCameraState
+  resetCameraState,
+  updateCameraStatusFromWebSocket
 } = cameraApiSlice.actions
 
 export default cameraApiSlice.reducer

@@ -1,4 +1,5 @@
 import { createSlice } from '@reduxjs/toolkit'
+import { toast } from 'react-toastify'
 
 const initialState = {
   alerts: [
@@ -87,21 +88,15 @@ const alertsSlice = createSlice({
     },
     // Future WebSocket handler
     handleWebSocketMessage: (state, action) => {
-      const { type, data } = action.payload
+      const { type, message, data } = action.payload
       switch (type) {
-        case 'NEW_ALERT':
+        case 'event_alert':
           state.alerts.unshift(data)
           break
-        case 'UPDATE_STATS':
-          state.statistics = { ...state.statistics, ...data }
-          break
-        case 'UPDATE_ALERT':
-          const alert = state.alerts.find(a => a.id === data.id)
-          if (alert) {
-            Object.assign(alert, data)
-          }
+        case 'camera_status':
           break
         default:
+          console.warn('Unknown WebSocket message type:', type, data)
           break
       }
     }

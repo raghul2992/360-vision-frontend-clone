@@ -27,7 +27,7 @@ const AlertItem = ({ alert }) => {
   }
 
   return (
-    <div className='bg-white rounded-lg p-4 flex items-center justify-between hover:shadow-lg transition-shadow'>
+    <div className='bg-white rounded-lg p-4 w-full flex items-center justify-between hover:shadow-lg transition-shadow'>
       <div className='flex items-center gap-4 flex-1'>
         <div
           className={`w-12 h-12 rounded-full ${getIconColor(

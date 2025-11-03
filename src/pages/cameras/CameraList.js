@@ -11,8 +11,13 @@ import {
   IoLocationOutline,
   IoVideocamOutline,
   IoBan,
-  IoClose
+  IoClose,
+  IoEllipsisHorizontal,
+  IoCog,
+  IoRefresh,
+  IoAddCircleOutline
 } from 'react-icons/io5'
+import { FaCircleNotch } from 'react-icons/fa'
 import { useTranslation } from 'react-i18next'
 import { bgcolors } from '../../theme'
 import { Link } from 'react-router-dom'
@@ -106,8 +111,8 @@ const CameraList = () => {
         )
       case 'processing':
         return (
-          <div className='w-12 h-12 rounded-xl bg-blue-500/20 flex items-center justify-center border border-blue-500/30'>
-            <IoVideocamOutline className='text-blue-400' size={24} />
+          <div className='w-12 h-12 rounded-xl bg-orange-500/20 flex items-center justify-center border border-orange-500/30'>
+            <FaCircleNotch className='text-orange-500 animate-spin' size={24} />
           </div>
         )
       case 'error':

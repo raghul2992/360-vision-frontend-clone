@@ -7,7 +7,7 @@ const Alerts = () => {
   const { alerts, wsConnected } = useSelector(state => state.alerts)
 
   return (
-    <div className='min-h-screen bg-[#1a1d29] p-6'>
+    <div className='min-h-screen bg-[#1a1d29] p-6  w-full'>
       <div className='max-w-7xl mx-auto'>
         <div className='flex items-center justify-between mb-6'>
           <h1 className='text-white text-3xl font-bold'>Alertas</h1>
@@ -25,9 +25,9 @@ const Alerts = () => {
           </div>
         </div>
 
-        <div className='grid grid-cols-1 lg:grid-cols-2 gap-6'>
-          <StatisticsChart />
-          <div className='bg-[#2a2f45] rounded-lg p-4'>
+        <div className='grid grid-cols-1 lg:grid-cols-2 gap-6 w-full'>
+          {/* <StatisticsChart /> */}
+          <div className='bg-[#2a2f45] w-full rounded-lg p-4'>
             <h2 className='text-white text-xl font-semibold mb-4'>
               Últimos Alertas
             </h2>
