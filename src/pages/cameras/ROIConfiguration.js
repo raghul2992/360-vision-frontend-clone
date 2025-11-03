@@ -199,7 +199,7 @@ const ROIConfiguration = () => {
   // Add this function to transform polygons format
   const transformPolygonsFormat = polygonsArray => {
     return polygonsArray.map((polygon, index) => ({
-      roi_name: `Area ${index + 1}`,
+      polygon_name: `Area ${index + 1}`,
       polygon_points: polygon.flatMap(point => [point.x, point.y])
     }))
   }
