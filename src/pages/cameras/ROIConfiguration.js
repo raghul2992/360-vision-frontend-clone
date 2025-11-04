@@ -112,9 +112,11 @@ const ROIConfiguration = () => {
   const [alertPriority, setAlertPriority] = useState('High')
   const [currentRoiId, setCurrentRoiId] = useState(currentRoi_Id)
 
-  // New states for specific detection configs
-  const [idieDuration, setIdieDuration] = useState(3000)
-  const [vehicleCount, setVehicleCount] = useState(3)
+  // New detection config states
+  const [queueCountThreshold, setQueueCountThreshold] = useState(1)
+  const [queueDwellTimeSeconds, setQueueDwellTimeSeconds] = useState(8)
+  const [dwellTimeSeconds, setDwellTimeSeconds] = useState(15)
+  const [attendantAbsenceDwellTime, setAttendantAbsenceDwellTime] = useState(6)
 
   const searchParams = new URLSearchParams(location.search)
   const cameraIdFromUrl = searchParams.get('cameraId')
@@ -359,24 +361,27 @@ const ROIConfiguration = () => {
     const roiData = {
       name: roiName.trim(),
       frame_url: snapshot,
-      polygons: transformedPolygons, // Removed JSON.stringify
+      polygons: transformedPolygons,
       alert_priority: alertPriority.toLowerCase(),
       detection_type: detectionType,
       detection_config: (() => {
-        if (detectionType === 'IDIE_VEHICLE') {
+        if (detectionType === 'VEHICLE_QUEUE_DETECTION') {
           return {
-            IDIE_DURATION: idieDuration,
-            VEHICLE_COUNT: vehicleCount
+            queue_count_threshold: queueCountThreshold,
+            queue_dwell_time_seconds: queueDwellTimeSeconds
           }
         }
-        return {
-          person_sensitivity: personSensitivity,
-          weapon_sensitivity: weaponSensitivity,
-          vehicle_sensitivity: vehicleSensitivity,
-          fire_sensitivity: fireSensitivity,
-          motion_threshold: motionThreshold,
-          minimum_object_size: minimumObjectSize
+        if (detectionType === 'VEHICLE_DWELL_TIME') {
+          return {
+            dwell_time_seconds: dwellTimeSeconds
+          }
         }
+        if (detectionType === 'ATTENDANT_ABSENCE_ON_PUMP') {
+          return {
+            dwell_time_seconds: attendantAbsenceDwellTime
+          }
+        }
+        return {}
       })(),
       notification_config: {
         whatsapp: {
@@ -426,23 +431,20 @@ const ROIConfiguration = () => {
     // Set the snapshot URL from the ROI being edited
     setSnapshotUrl(`${SNAPSHOT_DIR}/${roi.frame_url}`)
 
-    // Parse the polygons - no need for JSON.parse since we're not stringifying anymore
+    // Parse the polygons
     try {
-      const parsedPolygons = roi.polygons // Direct assignment since it's already an object
+      const parsedPolygons = roi.polygons
 
       console.log('Parsed ROI polygons for editing:', parsedPolygons)
 
-      // Clear existing polygons and load the ROI's polygons
       if (parsedPolygons && Array.isArray(parsedPolygons)) {
         const roiPolygons = []
 
-        // Check if it's the new format (array of objects)
         if (
           parsedPolygons.length > 0 &&
           typeof parsedPolygons[0] === 'object' &&
           'polygon_points' in parsedPolygons[0]
         ) {
-          // New format: array of objects with polygon_points
           parsedPolygons.forEach(polygonObj => {
             const polygonArray = polygonObj.polygon_points
             if (
@@ -450,7 +452,6 @@ const ROIConfiguration = () => {
               Array.isArray(polygonArray) &&
               polygonArray.length >= 6
             ) {
-              // At least 3 points (6 coordinates)
               const polygonPoints = []
               for (let i = 0; i < polygonArray.length; i += 2) {
                 if (i + 1 < polygonArray.length) {
@@ -466,14 +467,12 @@ const ROIConfiguration = () => {
             }
           })
         } else {
-          // Old format: array of polygon arrays (for backward compatibility)
           parsedPolygons.forEach(polygonArray => {
             if (
               polygonArray &&
               Array.isArray(polygonArray) &&
               polygonArray.length >= 6
             ) {
-              // At least 3 points (6 coordinates)
               const polygonPoints = []
               for (let i = 0; i < polygonArray.length; i += 2) {
                 if (i + 1 < polygonArray.length) {
@@ -509,17 +508,20 @@ const ROIConfiguration = () => {
     setCallNotification(roi.notification_config?.call?.enabled || false)
     setCallRecipients(roi.notification_config?.call?.recipients || [])
 
-    // Populate detection sensitivity states
-    if (roi.detection_type === 'IDIE_VEHICLE') {
-      setIdieDuration(roi.detection_config?.IDIE_DURATION || 3000)
-      setVehicleCount(roi.detection_config?.VEHICLE_COUNT || 3)
+    // Populate detection sensitivity states based on detection type
+    if (roi.detection_type === 'VEHICLE_QUEUE_DETECTION') {
+      setQueueCountThreshold(roi.detection_config?.queue_count_threshold || 1)
+      setQueueDwellTimeSeconds(
+        roi.detection_config?.queue_dwell_time_seconds || 8
+      )
+    } else if (roi.detection_type === 'VEHICLE_DWELL_TIME') {
+      setDwellTimeSeconds(roi.detection_config?.dwell_time_seconds || 15)
+    } else if (roi.detection_type === 'ATTENDANT_ABSENCE_ON_PUMP') {
+      setAttendantAbsenceDwellTime(
+        roi.detection_config?.dwell_time_seconds || 6
+      )
     } else {
-      setPersonSensitivity(roi.detection_config?.person_sensitivity || 66)
-      setWeaponSensitivity(roi.detection_config?.weapon_sensitivity || 88)
-      setVehicleSensitivity(roi.detection_config?.vehicle_sensitivity || 90)
-      setFireSensitivity(roi.detection_config?.fire_sensitivity || 18)
-      setMotionThreshold(roi.detection_config?.motion_threshold || 66)
-      setMinimumObjectSize(roi.detection_config?.minimum_object_size || 98)
+      // Default or other detection types, no specific config to load
     }
 
     // Enable drawing mode for adding new polygons
@@ -548,14 +550,10 @@ const ROIConfiguration = () => {
     setCallRecipients([])
     setWhatsappRecipients([])
     setWhatsappNumber('')
-    setPersonSensitivity(66)
-    setWeaponSensitivity(88)
-    setVehicleSensitivity(90)
-    setFireSensitivity(18)
-    setMotionThreshold(66)
-    setMinimumObjectSize(98)
-    setIdieDuration(3000)
-    setVehicleCount(3)
+    setQueueCountThreshold(1)
+    setQueueDwellTimeSeconds(8)
+    setDwellTimeSeconds(15)
+    setAttendantAbsenceDwellTime(6)
     setCurrentRoiId(null)
   }
 
@@ -567,15 +565,12 @@ const ROIConfiguration = () => {
   // Function to parse ROI polygons for display - FIXED VERSION
   const parseRoiPolygons = roi => {
     try {
-      const parsed = roi.polygons // Direct assignment since it's already an object
+      const parsed = roi.polygons
 
-      console.log('parseRoiPolygons - parsed:', parsed) // Debug log
+      console.log('parseRoiPolygons - parsed:', parsed)
 
-      // Handle both old and new formats for display
       if (Array.isArray(parsed) && parsed.length > 0) {
-        // Check if new format (array of objects)
         if (typeof parsed[0] === 'object' && 'polygon_points' in parsed[0]) {
-          // New format: extract polygon_points from each object and flatten
           return parsed.flatMap(polygonObj => {
             if (
               polygonObj.polygon_points &&
@@ -586,12 +581,10 @@ const ROIConfiguration = () => {
             return []
           })
         } else {
-          // Old format: already flat array
           return parsed.flat()
         }
       }
 
-      // If parsed is not an array or empty, return empty array
       return []
     } catch (error) {
       console.error('Error parsing ROI polygons:', error)
@@ -746,12 +739,11 @@ const ROIConfiguration = () => {
 
                 {/* Display existing ROIs from backend - FIXED VERSION */}
                 {rois.map(roi => {
-                  if (roi.id === currentRoiId) return null // Don't show the ROI we're currently editing
+                  if (roi.id === currentRoiId) return null
 
                   const roiPoints = parseRoiPolygons(roi)
-                  console.log('ROI points for display:', roiPoints) // Debug log
+                  console.log('ROI points for display:', roiPoints)
 
-                  // Ensure roiPoints is an array and has enough points
                   if (
                     !roiPoints ||
                     !Array.isArray(roiPoints) ||
@@ -762,7 +754,6 @@ const ROIConfiguration = () => {
                   }
 
                   try {
-                    // Convert points to the format expected by getStagePolygon
                     const pointsForDisplay = []
                     for (let i = 0; i < roiPoints.length; i += 2) {
                       if (i + 1 < roiPoints.length) {
@@ -944,12 +935,13 @@ const ROIConfiguration = () => {
                   className='w-full bg-gray-700 border border-gray-600 rounded-lg py-2 px-4 text-white focus:outline-none focus:border-blue-500 transition-colors appearance-none'
                 >
                   <option value='ALL_DETECTION'>All Detection</option>
-                  <option value='PERSON_DETECTION'>Person Detection</option>
-                  <option value='VEHICLE_DETECTION'>Vehicle Detection</option>
-                  <option value='MOTION_DETECTION'>Motion Detection</option>
-                  <option value='WEAPON_DETECTION'>Weapon Detection</option>
-                  <option value='FIRE_DETECTION'>Fire Detection</option>
-                  <option value='IDIE_VEHICLE'>IDIE Vehicle</option>
+                  <option value='VEHICLE_QUEUE_DETECTION'>
+                    Vehicle Queue Detection
+                  </option>
+                  <option value='VEHICLE_DWELL_TIME'>Vehicle Dwell Time</option>
+                  <option value='ATTENDANT_ABSENCE_ON_PUMP'>
+                    Attendant Absence On Pump
+                  </option>
                 </select>
               </div>
               <div>
@@ -971,190 +963,93 @@ const ROIConfiguration = () => {
         </div>
       </div>
 
-      {/* Detection Sensitive Section */}
+      {/* Detection Configuration Section */}
       <div className='bg-[#30313F] rounded-lg p-6 mb-6'>
-        <h2 className='text-xl font-bold mb-6'>Detection Sensitive</h2>
+        <h2 className='text-xl font-bold mb-4'>Detection Configuration</h2>
+        <p className='text-sm text-gray-400 mb-6'>
+          Set the specific parameters for each detection type to fine-tune alert
+          triggers.
+        </p>
         <div className='grid grid-cols-2 gap-x-12 gap-y-6'>
-          {(detectionType === 'ALL_DETECTION' ||
-            detectionType === 'PERSON_DETECTION') && (
-            <div>
-              <div className='flex justify-between mb-2'>
-                <label className='text-sm text-gray-300'>
-                  Person Detection Sensitivity
-                </label>
-                <span className='text-sm font-semibold'>
-                  {personSensitivity}%
-                </span>
-              </div>
-              <input
-                type='range'
-                min='0'
-                max='100'
-                value={personSensitivity}
-                onChange={e => setPersonSensitivity(e.target.value)}
-                className='w-full h-2 bg-gray-600 rounded-lg appearance-none cursor-pointer accent-blue-500'
-                style={{
-                  background: `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${personSensitivity}%, #4b5563 ${personSensitivity}%, #4b5563 100%)`
-                }}
-              />
-            </div>
-          )}
-
-          {(detectionType === 'ALL_DETECTION' ||
-            detectionType === 'FIRE_DETECTION') && (
-            <div>
-              <div className='flex justify-between mb-2'>
-                <label className='text-sm text-gray-300'>
-                  Fire Detection Sensitivity
-                </label>
-                <span className='text-sm font-semibold'>
-                  {fireSensitivity}%
-                </span>
-              </div>
-              <input
-                type='range'
-                min='0'
-                max='100'
-                value={fireSensitivity}
-                onChange={e => setFireSensitivity(e.target.value)}
-                className='w-full h-2 bg-gray-600 rounded-lg appearance-none cursor-pointer accent-blue-500'
-                style={{
-                  background: `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${fireSensitivity}%, #4b5563 ${fireSensitivity}%, #4b5563 100%)`
-                }}
-              />
-            </div>
-          )}
-
-          {(detectionType === 'ALL_DETECTION' ||
-            detectionType === 'WEAPON_DETECTION') && (
-            <div>
-              <div className='flex justify-between mb-2'>
-                <label className='text-sm text-gray-300'>
-                  Weapon Detection Sensitivity
-                </label>
-                <span className='text-sm font-semibold'>
-                  {weaponSensitivity}%
-                </span>
-              </div>
-              <input
-                type='range'
-                min='0'
-                max='100'
-                value={weaponSensitivity}
-                onChange={e => setWeaponSensitivity(e.target.value)}
-                className='w-full h-2 bg-gray-600 rounded-lg appearance-none cursor-pointer accent-blue-500'
-                style={{
-                  background: `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${weaponSensitivity}%, #4b5563 ${weaponSensitivity}%, #4b5563 100%)`
-                }}
-              />
-            </div>
-          )}
-
-          {(detectionType === 'ALL_DETECTION' ||
-            detectionType === 'MOTION_DETECTION') && (
-            <div>
-              <div className='flex justify-between mb-2'>
-                <label className='text-sm text-gray-300'>
-                  Motion Detection Threshold
-                </label>
-                <span className='text-sm font-semibold'>
-                  {motionThreshold}%
-                </span>
-              </div>
-              <input
-                type='range'
-                min='0'
-                max='100'
-                value={motionThreshold}
-                onChange={e => setMotionThreshold(e.target.value)}
-                className='w-full h-2 bg-gray-600 rounded-lg appearance-none cursor-pointer accent-blue-500'
-                style={{
-                  background: `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${motionThreshold}%, #4b5563 ${motionThreshold}%, #4b5563 100%)`
-                }}
-              />
-            </div>
-          )}
-
-          {(detectionType === 'ALL_DETECTION' ||
-            detectionType === 'VEHICLE_DETECTION') && (
-            <div>
-              <div className='flex justify-between mb-2'>
-                <label className='text-sm text-gray-300'>
-                  Vehicle Detection Sensitivity
-                </label>
-                <span className='text-sm font-semibold'>
-                  {vehicleSensitivity}%
-                </span>
-              </div>
-              <input
-                type='range'
-                min='0'
-                max='100'
-                value={vehicleSensitivity}
-                onChange={e => setVehicleSensitivity(e.target.value)}
-                className='w-full h-2 bg-gray-600 rounded-lg appearance-none cursor-pointer accent-blue-500'
-                style={{
-                  background: `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${vehicleSensitivity}%, #4b5563 ${vehicleSensitivity}%, #4b5563 100%)`
-                }}
-              />
-            </div>
-          )}
-
-          {(detectionType === 'ALL_DETECTION' ||
-            detectionType === 'PERSON_DETECTION' ||
-            detectionType === 'VEHICLE_DETECTION' ||
-            detectionType === 'MOTION_DETECTION' ||
-            detectionType === 'WEAPON_DETECTION' ||
-            detectionType === 'FIRE_DETECTION') && (
-            <div>
-              <div className='flex justify-between mb-2'>
-                <label className='text-sm text-gray-300'>
-                  Minimum Object Size
-                </label>
-                <span className='text-sm font-semibold'>
-                  {minimumObjectSize}%
-                </span>
-              </div>
-              <input
-                type='range'
-                min='0'
-                max='100'
-                value={minimumObjectSize}
-                onChange={e => setMinimumObjectSize(e.target.value)}
-                className='w-full h-2 bg-gray-600 rounded-lg appearance-none cursor-pointer accent-blue-500'
-                style={{
-                  background: `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${minimumObjectSize}%, #4b5563 ${minimumObjectSize}%, #4b5563 100%)`
-                }}
-              />
-            </div>
-          )}
-
-          {detectionType === 'IDIE_VEHICLE' && (
+          {/* Vehicle Queue Detection Fields */}
+          {detectionType === 'VEHICLE_QUEUE_DETECTION' && (
             <>
               <div>
                 <label className='block text-sm text-gray-400 mb-2'>
-                  IDIE Duration (ms)
+                  Queue Count Threshold
                 </label>
+                <p className='text-xs text-gray-500 mb-2'>
+                  Set the minimum number of vehicles required to trigger a queue
+                  detection alert. (e.g., 1)
+                </p>
                 <input
                   type='number'
-                  value={idieDuration}
-                  onChange={e => setIdieDuration(Number(e.target.value))}
+                  value={queueCountThreshold}
+                  onChange={e => setQueueCountThreshold(Number(e.target.value))}
                   className='w-full bg-gray-700 border border-gray-600 rounded-lg py-2 px-4 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 transition-colors'
                 />
               </div>
               <div>
                 <label className='block text-sm text-gray-400 mb-2'>
-                  Vehicle Count
+                  Queue Dwell Time (seconds)
                 </label>
+                <p className='text-xs text-gray-500 mb-2'>
+                  Define how long a vehicle must remain in the queue to trigger
+                  an alert. (e.g., 8 seconds)
+                </p>
                 <input
                   type='number'
-                  value={vehicleCount}
-                  onChange={e => setVehicleCount(Number(e.target.value))}
+                  value={queueDwellTimeSeconds}
+                  onChange={e =>
+                    setQueueDwellTimeSeconds(Number(e.target.value))
+                  }
                   className='w-full bg-gray-700 border border-gray-600 rounded-lg py-2 px-4 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 transition-colors'
                 />
               </div>
             </>
           )}
+
+          {/* Vehicle Dwell Time Fields */}
+          {detectionType === 'VEHICLE_DWELL_TIME' && (
+            <div>
+              <label className='block text-sm text-gray-400 mb-2'>
+                Dwell Time (seconds)
+              </label>
+              <p className='text-xs text-gray-500 mb-2'>
+                Specify the duration a vehicle must remain stationary to trigger
+                a dwell time alert. (e.g., 15 seconds)
+              </p>
+              <input
+                type='number'
+                value={dwellTimeSeconds}
+                onChange={e => setDwellTimeSeconds(Number(e.target.value))}
+                className='w-full bg-gray-700 border border-gray-600 rounded-lg py-2 px-4 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 transition-colors'
+              />
+            </div>
+          )}
+
+          {/* Attendant Absence On Pump Fields */}
+          {detectionType === 'ATTENDANT_ABSENCE_ON_PUMP' && (
+            <div>
+              <label className='block text-sm text-gray-400 mb-2'>
+                Dwell Time (seconds)
+              </label>
+              <p className='text-xs text-gray-500 mb-2'>
+                Set the maximum time an attendant can be absent from the pump
+                area before an alert is triggered. (e.g., 6 seconds)
+              </p>
+              <input
+                type='number'
+                value={attendantAbsenceDwellTime}
+                onChange={e =>
+                  setAttendantAbsenceDwellTime(Number(e.target.value))
+                }
+                className='w-full bg-gray-700 border border-gray-600 rounded-lg py-2 px-4 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 transition-colors'
+              />
+            </div>
+          )}
+
+          {/* Existing detection fields */}
         </div>
       </div>
 
@@ -1232,6 +1127,7 @@ const ROIConfiguration = () => {
             </div>
           </div>
 
+          {/* Call Notification */}
           <div className='bg-gray-900 rounded-lg p-4 border border-gray-700'>
             <div className='flex items-center justify-between mb-4'>
               <div className='flex items-center gap-2'>
