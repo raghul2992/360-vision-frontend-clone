@@ -934,7 +934,7 @@ const ROIConfiguration = () => {
                   onChange={e => setDetectionType(e.target.value)}
                   className='w-full bg-gray-700 border border-gray-600 rounded-lg py-2 px-4 text-white focus:outline-none focus:border-blue-500 transition-colors appearance-none'
                 >
-                  <option value='ALL_DETECTION'>All Detection</option>
+                  {/* <option value='ALL_DETECTION'>All Detection</option> */}
                   <option value='VEHICLE_QUEUE_DETECTION'>
                     Vehicle Queue Detection
                   </option>
