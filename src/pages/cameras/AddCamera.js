@@ -72,7 +72,7 @@ const AddCamera = () => {
   const [isCameraSaved, setIsCameraSaved] = useState(false)
   const [cameraId, setCameraId] = useState(current_cameraId) // Store new camera ID
   const [isAddingRoi, setIsAddingRoi] = useState(false)
-  const [cameraStatus, setCameraStatus] = useState('inactive') // Camera enable/disable state
+  const [cameraStatus, setCameraStatus] = useState('active') // Camera enable/disable state
 
   // Fetch locations on component mount
   useEffect(() => {

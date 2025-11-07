@@ -397,7 +397,7 @@ const ROIConfiguration = () => {
           recipients: callRecipients
         }
       },
-      status: roiToEdit ? status : 'inactive',
+      status: roiToEdit ? status : 'active',
       meta: {},
       camera_id: cameraId
     }
