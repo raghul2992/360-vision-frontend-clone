@@ -73,7 +73,9 @@ export default function HealthCard ({ status, displayStatus, count, color }) {
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'center', // 👈 Even vertical spacing
-          alignItems: 'center'
+          alignItems: 'center',
+          marginBottom: '0px !important',
+          paddingBottom: '0px !important'
         }}
       >
         {getStatusIcon(status)}
