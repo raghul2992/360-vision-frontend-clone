@@ -1,0 +1,36 @@
+name: Deploy FrontEnd - Dev
+
+on:
+  push:
+    branches: [development]
+
+jobs:
+  build-deploy:
+    name: Build and Deploy to Dev
+    runs-on: [self-hosted, linux]
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '21.7.3'
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm install
+
+      - name: Build React App
+        run: npm run build
+
+      - name: Setup gcloud CLI
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          service_account_key: ${{ secrets.GCP_SA_KEY }}
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+
+      - name: Deploy to GCS (Dev)
+        run: |
+          gsutil -m rsync -R build/ gs://sst-frontend-dev
+
