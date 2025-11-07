@@ -29,8 +29,8 @@ const LoginPage = ({ callbackScreen }) => {
   useEffect(() => {
     if (success) {
       // toast.success()
-      // navigate('/admin-dashboard')
-      navigate('/camera')
+      navigate('/dashboard')
+      // navigate('/camera')
     }
     if (error) {
       console.log(error)

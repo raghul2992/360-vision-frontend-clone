@@ -2,8 +2,14 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useDispatch } from 'react-redux'
 import { updateCameraStatusFromWebSocket } from '../features/cameras/cameraApiSlice'
+import {
+  addNotification,
+  fetchNotifications
+} from '../features/notification/notificationSlice'
+import { toast } from 'react-toastify'
+import eventEmitter from '../utils/eventEmitter'
 
-const useWebSocket = (url, reconnectInterval = 2000) => {
+const useWebSocket = (url, tenant_id, reconnectInterval = 2000) => {
   const [isConnected, setIsConnected] = useState(false)
   const [message, setMessage] = useState(null)
   const [error, setError] = useState(null)
@@ -44,6 +50,26 @@ const useWebSocket = (url, reconnectInterval = 2000) => {
 
         if (receivedMessage.type === 'camera_status') {
           dispatch(updateCameraStatusFromWebSocket(receivedMessage.data))
+          // toast.info()
+          console.log('dispatch')
+          dispatch(
+            fetchNotifications({
+              tenant_id: tenant_id,
+              queryParams: { type: 'camera_status' }
+            })
+          )
+          toast.info(receivedMessage.message || 'New Notification!')
+          eventEmitter.emit('newNotification')
+        } else if (receivedMessage.type === 'event_alert') {
+          dispatch(addNotification(receivedMessage.data))
+          dispatch(
+            fetchNotifications({
+              tenant_id: tenant_id,
+              queryParams: { type: 'event_alert' }
+            })
+          )
+          eventEmitter.emit('newNotification')
+          toast.info(receivedMessage.data.message || 'New Notification!')
         }
       } catch (e) {
         console.error('Failed to parse WebSocket message:', e)
@@ -69,7 +95,7 @@ const useWebSocket = (url, reconnectInterval = 2000) => {
         ws.current.close()
       }
     }
-  }, [url, reconnectInterval, dispatch])
+  }, [url, reconnectInterval, dispatch, tenant_id])
 
   useEffect(() => {
     connect()
@@ -80,7 +106,7 @@ const useWebSocket = (url, reconnectInterval = 2000) => {
       }
       clearTimeout(reconnectTimeout.current)
     }
-  }, [url, connect])
+  }, [url, connect, tenant_id])
 
   const sendMessage = useCallback(data => {
     if (ws.current && ws.current.readyState === WebSocket.OPEN) {

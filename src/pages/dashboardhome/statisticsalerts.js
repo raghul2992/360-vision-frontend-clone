@@ -1,7 +1,9 @@
 import React from 'react'
 import { useSelector } from 'react-redux'
+import { useTranslation } from 'react-i18next'
 
 const StatisticsChart = () => {
+  const { t } = useTranslation()
   const statistics = useSelector(state => state.alerts.statistics)
 
   const maxValue = Math.max(...Object.values(statistics))
@@ -18,10 +20,10 @@ const StatisticsChart = () => {
   }
 
   const labels = {
-    carros: 'Carros',
-    onibus: 'Ônibus',
-    motos: 'Motos',
-    caminhao: 'Caminhão'
+    carros: t('statistics.cars'),
+    onibus: t('statistics.buses'),
+    motos: t('statistics.motorcycles'),
+    caminhao: t('statistics.trucks')
   }
 
   return (
@@ -35,7 +37,9 @@ const StatisticsChart = () => {
               <div className='w-1 h-1 bg-white'></div>
               <div className='w-1 h-1 bg-white'></div>
             </div>
-            <span className='text-gray-400 text-sm'>Total de alertas</span>
+            <span className='text-gray-400 text-sm'>
+              {t('statistics.total_alerts')}
+            </span>
           </div>
         </div>
       </div>

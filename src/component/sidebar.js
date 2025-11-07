@@ -34,13 +34,13 @@ const Sidebar = () => {
       </div>
 
       <div className='flex flex-col items-center justify-center flex-1 gap-5 text-xl'>
-        {/* <Link to='/admin-dashboard'>
+        <Link to='/dashboard'>
           <div className=' w-12 h-12 flex justify-center items-center cursor-pointer hover:bg-[#30313F]  hover:rounded-[16px]'>
             <IoHome
               className={`${textcolors.white}  hover:text-[#3885CC] text-2xl`}
             />
           </div>
-        </Link> */}
+        </Link>
 
         {/* <div className='w-12 h-12 flex justify-center items-center cursor-pointer hover:bg-[#30313F]  hover:rounded-[16px]'>
           <IoLocationOutline className={`${textcolors.white} hover:text-[#3885CC] text-2xl`} />

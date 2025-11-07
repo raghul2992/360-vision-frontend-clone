@@ -58,3 +58,23 @@
 .animate-pulse-once {
   animation: pulse-once 1s ease-out;
 }
+
+.border-l-4.border-yellow-500 {
+  border-left-color: #f59e0b;
+}
+
+.border-l-4.border-blue-500 {
+  border-left-color: #3b82f6;
+}
+
+.border-l-4.border-red-500 {
+  border-left-color: #ef4444;
+}
+
+.border-l-4.border-green-500 {
+  border-left-color: #22c55e;
+}
+
+.border-l-4.border-gray-500 {
+  border-left-color: #6b7280;
+}

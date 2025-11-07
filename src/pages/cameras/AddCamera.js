@@ -90,6 +90,7 @@ const AddCamera = () => {
       setIsCameraSaved(true)
       setIsConnectionTested(true)
       setCameraId(parseInt(cameraId)) // Set the camera ID for editing case
+      console.log('roi list', roiList)
     }
   }, [dispatch, cameraId, tenantId])
 
@@ -539,25 +540,27 @@ const AddCamera = () => {
           </div>
 
           {/* Camera Status Dropdown */}
-          <div>
-            <label className='block text-white mb-2 text-sm font-medium'>
-              Camera Status
-            </label>
-            <div className='relative'>
-              <select
-                className='w-full bg-[#3A3B47] border border-gray-600/50 rounded-lg py-2.5 px-4 pr-10 text-white focus:outline-none focus:border-gray-500 text-sm appearance-none cursor-pointer'
-                value={cameraStatus}
-                onChange={e => setCameraStatus(e.target.value)}
-              >
-                <option value='active'>Enable</option>
-                <option value='inactive'>Disable</option>
-              </select>
-              <IoChevronDown
-                className='absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none'
-                size={16}
-              />
+          {cameraId && (
+            <div>
+              <label className='block text-white mb-2 text-sm font-medium'>
+                Camera Status
+              </label>
+              <div className='relative'>
+                <select
+                  className='w-full bg-[#3A3B47] border border-gray-600/50 rounded-lg py-2.5 px-4 pr-10 text-white focus:outline-none focus:border-gray-500 text-sm appearance-none cursor-pointer'
+                  value={cameraStatus}
+                  onChange={e => setCameraStatus(e.target.value)}
+                >
+                  <option value='active'>Enable</option>
+                  <option value='inactive'>Disable</option>
+                </select>
+                <IoChevronDown
+                  className='absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none'
+                  size={16}
+                />
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Camera Type */}
           {/* <div>

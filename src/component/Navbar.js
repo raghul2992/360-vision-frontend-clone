@@ -5,21 +5,37 @@ import { useTranslation } from 'react-i18next'
 import { bgcolors } from '../theme'
 import NotificationBell from './NotificationBell'
 import useWebSocket from '../hooks/useWebSocket'
-import { useSelector } from 'react-redux'
+import { useSelector, useDispatch } from 'react-redux'
+import {
+  fetchNotifications,
+  markNotificationAsRead,
+  markAllNotificationsAsRead
+} from '../features/notification/notificationSlice'
+import { Tooltip } from '@mui/material'
 
 const Navbar = () => {
   const { i18n } = useTranslation()
   const [isOpen, setIsOpen] = useState(false)
   const [wsStatus, setWsStatus] = useState('disconnected') // Track status locally
 
+  const dispatch = useDispatch()
+  const { unreadCount } = useSelector(state => state.notifications)
+
   const tenantId = localStorage.getItem('tenant_id')
   const wsUrl = tenantId
     ? `${process.env.REACT_APP_BASE_URL}/ws/${tenantId}`
     : null
 
-  const { isConnected, error } = useWebSocket(wsUrl)
+  const { isConnected, error } = useWebSocket(wsUrl, tenantId)
 
-  // Update local state whenever isConnected changes
+  // Fetch notifications on mount
+  useEffect(() => {
+    if (tenantId) {
+      dispatch(fetchNotifications({ tenantId }))
+    }
+  }, [dispatch, tenantId])
+
+  // Update local WebSocket status
   useEffect(() => {
     setWsStatus(isConnected ? 'connected' : 'disconnected')
     console.log(
@@ -39,22 +55,27 @@ const Navbar = () => {
     >
       <div className='flex items-center gap-6'>
         {/* WebSocket Connection Indicator */}
-        <div className='flex items-center gap-2'>
-          <div
-            className={`w-3 h-3 rounded-full transition-colors ${
-              wsStatus === 'connected' ? 'bg-green-500' : 'bg-red-500'
-            }`}
-            title={
-              wsStatus === 'connected'
-                ? 'WebSocket Connected'
-                : `WebSocket Disconnected ${error ? `- ${error}` : ''}`
-            }
-          ></div>
-          <span className='text-xs text-gray-400'>
-            {wsStatus === 'connected' ? 'Online' : 'Offline'}
-          </span>
-        </div>
+        <Tooltip
+          title={
+            wsStatus === 'connected'
+              ? 'Realtime Sync with connected camera system'
+              : `Realtime Sync Disconnected ${error ? `- ${error}` : ''}`
+          }
+        >
+          <div className='flex items-center gap-2'>
+            <div
+              className={`w-3 h-3 rounded-full transition-colors ${
+                wsStatus === 'connected' ? 'bg-green-500' : 'bg-red-500'
+              }`}
+            ></div>
 
+            <span className='text-xs text-gray-400'>
+              {wsStatus === 'connected'
+                ? 'Realtime Sync'
+                : 'Realtime Disconnected'}
+            </span>
+          </div>
+        </Tooltip>
         {/* Language Selector */}
         <div className='relative'>
           <button
@@ -94,7 +115,7 @@ const Navbar = () => {
         </div>
 
         {/* Notification Bell Component */}
-        <NotificationBell />
+        <NotificationBell unreadCount={unreadCount} />
       </div>
     </div>
   )

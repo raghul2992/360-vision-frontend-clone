@@ -6,22 +6,19 @@ import {
 } from 'react-router-dom'
 import { routes } from './route'
 import FloatingLanguageButton from './component/FloatingLanguageButton'
+import AlertPopup from './component/AlertPopup'
 import { Provider, useSelector, useDispatch } from 'react-redux'
+import eventEmitter from './utils/eventEmitter'
 import store from './app/store'
 import { ToastContainer } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useCallback } from 'react'
 import useWebSocket from './hooks/useWebSocket'
+import { getCameras } from './features/cameras/cameraApiSlice'
 import {
-  handleWebSocketMessage,
-  setWsConnected,
-  setWsError
-} from './features/alert/alertsslice'
-import { getCameras } from './features/cameras/cameraApiSlice' // Import getCameras from cameraApiSlice
-import {
-  addNotification,
-  fetchNotifications
-} from './features/notification/notificationSlice' // Import addNotification and fetchNotifications
+  fetchNotifications,
+  addNotification
+} from './features/notification/notificationSlice'
 import { logoutUser } from './features/auth/authSlice'
 
 function AppRoutes () {
@@ -47,60 +44,117 @@ function MainApp () {
   const dispatch = useDispatch()
   const { user } = useSelector(state => state.auth)
   const [websocketUrl, setWebsocketUrl] = useState(null)
-
-  useEffect(() => {
-    const tenantId = localStorage.getItem('tenant_id')
-    if (tenantId && user) {
-      const baseUrl = process.env.REACT_APP_BASE_URL
-      const websocketBaseUrl = baseUrl
-      setWebsocketUrl(`${websocketBaseUrl}/ws/${tenantId}`)
-    } else {
-      setWebsocketUrl(null) // Close WebSocket on logout
-    }
-  }, [user])
+  const [notificationPermission, setNotificationPermission] = useState(
+    Notification.permission
+  )
+  const [alertData, setAlertData] = useState(null) // store alert popup data
 
   const {
     isConnected,
     message: wsMessage,
     error: wsError
-  } = useWebSocket(websocketUrl)
+  } = useWebSocket(websocketUrl, localStorage.getItem('tenant_id'))
+
+  // --- Set WebSocket URL ---
+
+  // --- Notification permission listener ---
+  const handlePermissionChange = useCallback(() => {
+    setNotificationPermission(Notification.permission)
+  }, [])
 
   useEffect(() => {
-    dispatch(setWsConnected(isConnected))
-  }, [isConnected, dispatch])
-
-  useEffect(() => {
-    if (wsError) {
-      console.error('WebSocket connection error:', wsError)
-      dispatch(setWsError(wsError.message))
-      // Optionally, dispatch logout if WebSocket error is critical
-      // dispatch(logoutUser());
+    navigator.permissions
+      ?.query({ name: 'notifications' })
+      .then(permissionStatus => {
+        permissionStatus.onchange = handlePermissionChange
+      })
+    return () => {
+      navigator.permissions
+        ?.query({ name: 'notifications' })
+        .then(permissionStatus => {
+          permissionStatus.onchange = null
+        })
     }
-  }, [wsError, dispatch])
+  }, [handlePermissionChange])
+
+  // --- WebSocket Error Logging ---
+  useEffect(() => {
+    if (wsError) console.error('WebSocket connection error:', wsError)
+  }, [wsError])
+
+  // --- Request browser notification permission ---
+  const requestNotificationPermission = useCallback(async () => {
+    if (!('Notification' in window)) {
+      console.warn('Browser does not support notifications')
+      return
+    }
+    if (Notification.permission === 'default') {
+      const permission = await Notification.requestPermission()
+      setNotificationPermission(permission)
+    }
+  }, [])
 
   useEffect(() => {
-    if (wsMessage) {
-      dispatch(handleWebSocketMessage(wsMessage))
-      if (wsMessage.type === 'camera_status') {
-        const tenantId = localStorage.getItem('tenant_id')
-        if (tenantId) {
-          dispatch(getCameras({ tenantId }))
-          dispatch(fetchNotifications({ tenantId })) // Also fetch notifications
-        }
-      } else if (wsMessage.type === 'event_alert') {
-        dispatch(addNotification(wsMessage.data))
+    requestNotificationPermission()
+  }, [requestNotificationPermission])
+
+  // --- Handle WebSocket messages ---
+  useEffect(() => {
+    if (!wsMessage) return
+
+    const tenantId = localStorage.getItem('tenant_id')
+
+    if (wsMessage.type === 'camera_status' && tenantId) {
+      dispatch(getCameras({ tenantId }))
+      if (Notification.permission === 'granted') {
+        new Notification('Camera Status Update', {
+          body: `Camera ${wsMessage.data.camera_id} status changed to ${wsMessage.data.status}`,
+          icon: '/favicon.ico'
+        })
+      }
+      setAlertData(wsMessage.data)
+      dispatch(
+        addNotification({
+          title: 'Camera Status Update',
+          message: `Camera ${wsMessage.data.camera_id} status changed to ${wsMessage.data.status}`,
+          type: 'camera_status',
+          meta: wsMessage.data
+        })
+      )
+    } else if (wsMessage.type === 'event_alert') {
+      // Set alert popup data
+      setAlertData(wsMessage.data)
+      dispatch(
+        addNotification({
+          title: wsMessage.data.title || 'New Alert',
+          message: wsMessage.data.message,
+          type: 'event_alert',
+          meta: wsMessage.data
+        })
+      )
+
+      // Also show system notification
+      if (Notification.permission === 'granted') {
+        new Notification(wsMessage.data.title || 'New Alert', {
+          body: wsMessage.data.message,
+          icon: '/logo192.png'
+        })
       }
     }
-  }, [wsMessage, dispatch])
+  }, [wsMessage, dispatch, alertData])
 
-  // Hide the Floating Button on ALL dashboard-related routes
+  // --- Handle close of AlertPopup ---
+  const handleCloseAlert = useCallback(() => {
+    setAlertData(null)
+  }, [])
+
+  // --- Hide Floating Button on specific pages ---
   const dashboardPaths = [
-    '/admin-dashboard',
+    '/dashboard',
     '/camera',
     '/add-camera',
     '/roi-configuration'
   ]
-
   const hideFloatingButton = dashboardPaths.some(path =>
     location.pathname.startsWith(path)
   )
@@ -108,7 +162,18 @@ function MainApp () {
   return (
     <>
       <AppRoutes />
+
+      {/* Show popup only when WebSocket alert arrives */}
+      {/* <AlertPopup /> */}
+
       {!hideFloatingButton && <FloatingLanguageButton />}
+
+      {notificationPermission === 'denied' && (
+        <div className='fixed bottom-4 right-4 bg-red-500 text-white p-3 rounded-md shadow-lg z-50'>
+          Notifications are blocked. Please enable them in your browser settings
+          to receive alerts.
+        </div>
+      )}
     </>
   )
 }

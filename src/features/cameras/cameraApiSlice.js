@@ -4,12 +4,31 @@ import api from '../../utils/apihelper'
 // Get List of Cameras
 export const getCameras = createAsyncThunk(
   'cameras/getCameras',
-  async ({ tenantId, cameraId }, { rejectWithValue }) => {
+  async (
+    { tenantId, location_id, camera_id, skip = 0, limit = 100 },
+    { rejectWithValue }
+  ) => {
     try {
       let url = `/api/v1/tenants/${tenantId}/cameras/`
-      if (cameraId) {
-        url += `?camera_id=${cameraId}`
+      const queryParams = []
+
+      if (location_id) {
+        queryParams.push(`location_id=${location_id}`)
       }
+      if (camera_id) {
+        queryParams.push(`camera_id=${camera_id}`)
+      }
+      if (skip !== 0) {
+        queryParams.push(`skip=${skip}`)
+      }
+      if (limit !== 100) {
+        queryParams.push(`limit=${limit}`)
+      }
+
+      if (queryParams.length > 0) {
+        url += `?${queryParams.join('&')}`
+      }
+
       const response = await api.get(url)
       console.log('API Response Data:', response.data)
 
@@ -48,8 +67,12 @@ export const updateCamera = createAsyncThunk(
   'cameras/updateCamera',
   async ({ tenantId, cameraId, cameraData }, { rejectWithValue }) => {
     try {
+      const operation = process.env.REACT_APP_CAMERA_OPERATION
+        ? `${process.env.REACT_APP_CAMERA_OPERATION}`
+        : true
+
       const response = await api.put(
-        `/api/v1/tenants/${tenantId}/cameras/${cameraId}?operation=true`,
+        `/api/v1/tenants/${tenantId}/cameras/${cameraId}?operation=${operation}`,
         cameraData
       )
       return response.data || response.data
@@ -65,8 +88,11 @@ export const deleteCamera = createAsyncThunk(
   'cameras/deleteCamera',
   async ({ tenantId, cameraId }, { rejectWithValue }) => {
     try {
+      const operation = process.env.REACT_APP_CAMERA_OPERATION
+        ? `${process.env.REACT_APP_CAMERA_OPERATION}`
+        : true
       const response = await api.delete(
-        `/api/v1/tenants/${tenantId}/cameras/${cameraId}?operation=true`
+        `/api/v1/tenants/${tenantId}/cameras/${cameraId}?operation=${operation}`
       )
       console.log('Delete response:', response)
       return cameraId

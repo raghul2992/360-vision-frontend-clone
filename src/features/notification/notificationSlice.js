@@ -2,44 +2,41 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit'
 import api from '../../utils/apihelper'
 
-// Helper functions for localStorage persistence
-const loadState = () => {
-  try {
-    const serializedState = localStorage.getItem('notifications')
-    if (serializedState === null) {
-      return undefined
-    }
-    return JSON.parse(serializedState)
-  } catch (err) {
-    console.error('Could not load state from localStorage', err)
-    return undefined
-  }
-}
-
-const saveState = state => {
-  try {
-    const serializedState = JSON.stringify(state)
-    localStorage.setItem('notifications', serializedState)
-  } catch (err) {
-    console.error('Could not save state to localStorage', err)
-  }
-}
-
-// Async Thunk to fetch notifications with GET method
+// Async Thunk to fetch notifications with filters
 export const fetchNotifications = createAsyncThunk(
   'notifications/fetchNotifications',
-  async ({ tenantId, queryParams = {}, type = null }, { rejectWithValue }) => {
+  async ({ tenantId, queryParams = {} }, { rejectWithValue }) => {
     try {
-      const params = new URLSearchParams(queryParams)
-      if (type) {
-        params.append('type', type)
-      }
+      const params = new URLSearchParams()
 
-      const url = `/api/v1/tenants/${tenantId}/notification/?${params.toString()}`
+      // Add all query parameters
+      if (queryParams.id) params.append('id', queryParams.id)
+      if (queryParams.location_id)
+        params.append('location_id', queryParams.location_id)
+      if (queryParams.camera_id)
+        params.append('camera_id', queryParams.camera_id)
+      if (queryParams.type) params.append('type', queryParams.type)
+      if (queryParams.is_read !== undefined)
+        params.append('is_read', queryParams.is_read)
+      if (queryParams.title) params.append('title', queryParams.title)
+      if (queryParams.message) params.append('message', queryParams.message)
+      if (queryParams.created_after)
+        params.append('created_after', queryParams.created_after)
+      if (queryParams.created_before)
+        params.append('created_before', queryParams.created_before)
+      if (queryParams.meta_filters)
+        params.append('meta_filters', queryParams.meta_filters)
+
+      // Pagination
+      params.append('skip', queryParams.skip || 0)
+      params.append('limit', queryParams.limit || 10)
+
+      const url = `/api/v1/tenants/${
+        tenantId || localStorage.getItem('tenant_id')
+      }/notification/?${params.toString()}`
       console.log('Fetching notifications from:', url)
 
       const response = await api.get(url)
-
       console.log('Notifications fetched:', response.data)
       return response.data
     } catch (error) {
@@ -51,7 +48,7 @@ export const fetchNotifications = createAsyncThunk(
   }
 )
 
-// Async Thunk to mark notification as read (POST/PUT method)
+// Async Thunk to mark notification as read
 export const markNotificationAsReadAPI = createAsyncThunk(
   'notifications/markAsRead',
   async ({ tenantId, notificationId }, { rejectWithValue }) => {
@@ -68,20 +65,40 @@ export const markNotificationAsReadAPI = createAsyncThunk(
   }
 )
 
-// Load persisted state
-const persistedState = loadState()
+// Async Thunk to update a notification
+export const updateNotificationAPI = createAsyncThunk(
+  'notifications/updateNotification',
+  async ({ tenantId, notificationId, data }, { rejectWithValue }) => {
+    try {
+      const response = await api.put(
+        `/api/v1/tenants/${tenantId}/notification/${notificationId}`,
+        data
+      )
+      return { notificationId, data: response.data }
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data?.message || 'Failed to update notification'
+      )
+    }
+  }
+)
 
 const notificationSlice = createSlice({
   name: 'notifications',
-  initialState: persistedState || {
+  initialState: {
     notifications: [],
     unreadCount: 0,
     isLoading: false,
     error: null,
-    lastFetched: null
+    lastFetched: null,
+    filters: {
+      tenantId: null,
+      locationId: null,
+      cameraId: null,
+      type: null
+    }
   },
   reducers: {
-    // Add notification from WebSocket
     addNotification: (state, action) => {
       const newNotification = {
         ...action.payload,
@@ -89,17 +106,13 @@ const notificationSlice = createSlice({
         id: action.payload.id || Date.now(),
         created_at: action.payload.created_at || new Date().toISOString()
       }
-
-      // Check if notification already exists
       const exists = state.notifications.some(n => n.id === newNotification.id)
       if (!exists) {
         state.notifications.unshift(newNotification)
         state.unreadCount += 1
-        saveState(state)
       }
     },
 
-    // Mark single notification as read
     markNotificationAsRead: (state, action) => {
       const notification = state.notifications.find(
         n => n.id === action.payload
@@ -107,28 +120,22 @@ const notificationSlice = createSlice({
       if (notification && !notification.is_read) {
         notification.is_read = true
         state.unreadCount = Math.max(0, state.unreadCount - 1)
-        saveState(state)
       }
     },
 
-    // Mark all notifications as read
     markAllNotificationsAsRead: state => {
       state.notifications.forEach(n => {
         n.is_read = true
       })
       state.unreadCount = 0
-      saveState(state)
     },
 
-    // Clear all notifications
     clearNotifications: state => {
       state.notifications = []
       state.unreadCount = 0
       state.lastFetched = null
-      saveState(state)
     },
 
-    // Remove single notification
     removeNotification: (state, action) => {
       const notification = state.notifications.find(
         n => n.id === action.payload
@@ -139,12 +146,14 @@ const notificationSlice = createSlice({
       state.notifications = state.notifications.filter(
         n => n.id !== action.payload
       )
-      saveState(state)
+    },
+
+    setFilters: (state, action) => {
+      state.filters = { ...state.filters, ...action.payload }
     }
   },
   extraReducers: builder => {
     builder
-      // Fetch notifications
       .addCase(fetchNotifications.pending, state => {
         state.isLoading = true
         state.error = null
@@ -153,44 +162,39 @@ const notificationSlice = createSlice({
         state.isLoading = false
         state.lastFetched = new Date().toISOString()
 
-        // Handle response data (could be array or object with results)
         const fetchedNotifications = Array.isArray(action.payload)
           ? action.payload
           : action.payload.results || []
 
-        // Normalize fetched notifications
         const newNotifications = fetchedNotifications.map(n => ({
           ...n,
-          is_read: n.is_read || false
+          is_read:
+            n.is_read === 'false'
+              ? false
+              : n.is_read === 'true'
+              ? true
+              : n.is_read
         }))
 
-        // Get existing notification IDs
         const existingNotificationIds = new Set(
           state.notifications.map(n => n.id)
         )
 
-        // Filter out duplicates
         const uniqueNewNotifications = newNotifications.filter(
           n => !existingNotificationIds.has(n.id)
         )
 
-        // Merge and sort by created_at
-        state.notifications = [
-          ...uniqueNewNotifications,
-          ...state.notifications
-        ].sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+        state.notifications = newNotifications.sort(
+          (a, b) => new Date(b.created_at) - new Date(a.created_at)
+        )
 
-        // Update unread count
         state.unreadCount = state.notifications.filter(n => !n.is_read).length
-
-        saveState(state)
       })
       .addCase(fetchNotifications.rejected, (state, action) => {
         state.isLoading = false
         state.error = action.payload
       })
 
-      // Mark as read API call
       .addCase(markNotificationAsReadAPI.fulfilled, (state, action) => {
         const { notificationId } = action.payload
         const notification = state.notifications.find(
@@ -199,7 +203,31 @@ const notificationSlice = createSlice({
         if (notification && !notification.is_read) {
           notification.is_read = true
           state.unreadCount = Math.max(0, state.unreadCount - 1)
-          saveState(state)
+        }
+      })
+      .addCase(updateNotificationAPI.fulfilled, (state, action) => {
+        const { notificationId, data } = action.payload
+        const notificationIndex = state.notifications.findIndex(
+          n => n.id === notificationId
+        )
+        if (notificationIndex !== -1) {
+          const oldIsRead = state.notifications[notificationIndex].is_read
+          state.notifications[notificationIndex] = {
+            ...state.notifications[notificationIndex],
+            ...data,
+            is_read: data.is_read === 'true' || data.is_read === true
+          }
+          if (
+            oldIsRead === false &&
+            state.notifications[notificationIndex].is_read === true
+          ) {
+            state.unreadCount = Math.max(0, state.unreadCount - 1)
+          } else if (
+            oldIsRead === true &&
+            state.notifications[notificationIndex].is_read === false
+          ) {
+            state.unreadCount += 1
+          }
         }
       })
   }
@@ -210,7 +238,8 @@ export const {
   markNotificationAsRead,
   markAllNotificationsAsRead,
   clearNotifications,
-  removeNotification
+  removeNotification,
+  setFilters
 } = notificationSlice.actions
 
 export default notificationSlice.reducer

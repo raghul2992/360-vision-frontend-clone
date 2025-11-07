@@ -4,8 +4,8 @@ import roilistReducer from '../features/cameras/roilistslice'
 import authReducer from '../features/auth/authSlice'
 import cameraApiReducer from '../features/cameras/cameraApiSlice'
 import locationApiReducer from '../features/locations/locationApiSlice'
-import alertsReducer from '../features/alert/alertsslice'
 import notificationReducer from '../features/notification/notificationSlice'
+import alertReducer from '../features/alert/alertSlice'
 
 export const store = configureStore({
   reducer: {
@@ -13,8 +13,8 @@ export const store = configureStore({
     auth: authReducer,
     cameraApi: cameraApiReducer,
     locationApi: locationApiReducer,
-    alerts: alertsReducer,
-    notifications: notificationReducer
+    notifications: notificationReducer,
+    alerts: alertReducer
   }
 })
 

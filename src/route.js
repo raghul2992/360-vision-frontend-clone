@@ -21,7 +21,7 @@ export const routes = [
     element: <Dashboard />,
     children: [
       {
-        path: '/admin-dashboard',
+        path: '/dashboard',
         element: <DashboardHome />
       },
       {

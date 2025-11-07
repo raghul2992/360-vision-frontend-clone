@@ -23,8 +23,11 @@ export const createRoi = createAsyncThunk(
   'rois/createRoi',
   async ({ tenantId, cameraId, roiData }, { rejectWithValue }) => {
     try {
+      const operation = process.env.REACT_APP_CAMERA_OPERATION
+        ? `${process.env.REACT_APP_CAMERA_OPERATION}`
+        : true
       const response = await api.post(
-        `/api/v1/tenants/${tenantId}/camera/${cameraId}/roi/?operation=true`,
+        `/api/v1/tenants/${tenantId}/camera/${cameraId}/roi/?operation=${operation}`,
         roiData
       )
       return response.data || response.data
@@ -41,8 +44,11 @@ export const updateRoi = createAsyncThunk(
   'rois/updateRoi',
   async ({ tenantId, cameraId, roiId, roiData }, { rejectWithValue }) => {
     try {
+      const operation = process.env.REACT_APP_CAMERA_OPERATION
+        ? `${process.env.REACT_APP_CAMERA_OPERATION}`
+        : true
       const response = await api.put(
-        `/api/v1/tenants/${tenantId}/camera/${cameraId}/roi/${roiId}?operation=true`,
+        `/api/v1/tenants/${tenantId}/camera/${cameraId}/roi/${roiId}?operation=${operation}`,
         roiData
       )
       return response.data || response.data
@@ -59,8 +65,11 @@ export const deleteRoi = createAsyncThunk(
   'rois/deleteRoi',
   async ({ tenantId, cameraId, roiId }, { rejectWithValue }) => {
     try {
+      const operation = process.env.REACT_APP_CAMERA_OPERATION
+        ? `${process.env.REACT_APP_CAMERA_OPERATION}`
+        : true
       await api.delete(
-        `/api/v1/tenants/${tenantId}/camera/${cameraId}/roi/${roiId}?operation=true`
+        `/api/v1/tenants/${tenantId}/camera/${cameraId}/roi/${roiId}?operation=${operation}`
       )
       return roiId
     } catch (error) {
@@ -76,8 +85,11 @@ export const updateRoiStatus = createAsyncThunk(
   'rois/updateRoiStatus',
   async ({ tenantId, cameraId, roiId, status }, { rejectWithValue }) => {
     try {
+      const operation = process.env.REACT_APP_CAMERA_OPERATION
+        ? `${process.env.REACT_APP_CAMERA_OPERATION}`
+        : true
       const response = await api.put(
-        `/api/v1/tenants/${tenantId}/camera/${cameraId}/roi/${roiId}?operation=true`,
+        `/api/v1/tenants/${tenantId}/camera/${cameraId}/roi/${roiId}?operation=${operation}`,
         { status }
       )
       return response.data
@@ -135,7 +147,7 @@ const roiSlice = createSlice({
       })
       .addCase(createRoi.fulfilled, (state, action) => {
         state.isLoading = false
-        state.rois.push(action.payload)
+        // state.rois=(action.payload)
         state.operationSuccess = true
       })
       .addCase(createRoi.rejected, (state, action) => {

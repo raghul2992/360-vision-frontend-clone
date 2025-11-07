@@ -8,3 +8,32 @@
 body {
   font-family: 'Inter', sans-serif;
 }
+
+.MuiChartsLabel-root.MuiChartsLegend-label {
+  color: white;
+}
+
+/* Webkit scrollbar styles for the alert list */
+.scrollbar-thin::-webkit-scrollbar {
+  width: 8px;
+  /* Adjust as needed */
+}
+
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: #1f2333;
+  /* scrollbar-track-[#1f2333] */
+  border-radius: 10px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background-color: #3b405e;
+  /* scrollbar-thumb-[#3b405e] */
+  border-radius: 10px;
+  border: 2px solid #1f2333;
+  /* Adjust border color to match track for a cleaner look */
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background-color: #4a5070;
+  /* hover:scrollbar-thumb-[#4a5070] */
+}
