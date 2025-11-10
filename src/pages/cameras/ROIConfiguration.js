@@ -201,7 +201,7 @@ const ROIConfiguration = () => {
   // Add this function to transform polygons format
   const transformPolygonsFormat = polygonsArray => {
     return polygonsArray.map((polygon, index) => ({
-      polygon_name: `Area ${index + 1}`,
+      polygon_name: `${t('roi.area')} ${index + 1}`,
       polygon_points: polygon.flatMap(point => [point.x, point.y])
     }))
   }
@@ -672,10 +672,11 @@ const ROIConfiguration = () => {
       {/* Header */}
       <div className='flex justify-between items-center mb-6'>
         <div>
-          <h1 className='text-2xl font-bold'>Camera Configuration Settings</h1>
+          <h1 className='text-2xl font-bold'>
+            {t('roi.cameraConfigurationSettings')}
+          </h1>
           <p className='text-sm text-gray-400'>
-            Configure as configurações de conexão da sua câmera de segurança
-            para adicionar uma nova câmera ao seu sistema de monitoramento
+            {t('roi.configureCameraConnectionSettings')}
           </p>
         </div>
         <button
@@ -683,20 +684,20 @@ const ROIConfiguration = () => {
           className='bg-[#3885CC] hover:bg-blue-600 text-white font-semibold py-2 px-6 rounded-full flex items-center gap-2 transition-colors'
         >
           <IoArrowBackCircle size={20} className='inline-block' />
-          <span>Back</span>
+          <span>{t('roi.back')}</span>
         </button>
       </div>
 
       {/* ROI Setting Section */}
       <div className='bg-[#30313F] rounded-lg p-6 mb-6'>
-        <h2 className='text-xl font-bold mb-4'>ROI Setting</h2>
+        <h2 className='text-xl font-bold mb-4'>{t('roi.roiSetting')}</h2>
 
         {/* Debug button - remove in production */}
         <button
           onClick={debugCoordinates}
           className='mb-4 bg-gray-600 px-3 py-1 rounded text-sm'
         >
-          Debug Coordinates
+          {t('roi.debugCoordinates')}
         </button>
 
         <div className='relative'>
@@ -805,17 +806,17 @@ const ROIConfiguration = () => {
                       : 'bg-gray-700 text-gray-300'
                   }`}
                 >
-                  Polygon
+                  {t('roi.polygon')}
                 </button>
               </div>
               {drawingMode === 'polygon' && (
                 <div className='text-xs text-gray-300'>
-                  Click to add points. Complete polygon when done.
+                  {t('roi.clickToAddPoints')}
                 </div>
               )}
               {drawingMode === 'rectangle' && (
                 <div className='text-xs text-gray-300'>
-                  Click and drag to draw rectangle.
+                  {t('roi.clickAndDragToDrawRectangle')}
                 </div>
               )}
             </div>
@@ -823,9 +824,11 @@ const ROIConfiguration = () => {
             {/* Polygon count display */}
             <div className='absolute top-4 right-4 bg-gray-800 bg-opacity-80 rounded-lg p-3'>
               <div className='text-sm text-gray-300'>
-                Areas: {polygons.length}
+                {t('roi.areas')}: {polygons.length}
               </div>
-              <div className='text-sm text-gray-300'>Mode: {drawingMode}</div>
+              <div className='text-sm text-gray-300'>
+                {t('roi.mode')}: {drawingMode}
+              </div>
             </div>
           </div>
         </div>
@@ -842,7 +845,7 @@ const ROIConfiguration = () => {
               >
                 <IoCamera size={20} />
                 <span>
-                  {isSnapshotLoading ? 'Loading...' : 'Capture Frame'}
+                  {isSnapshotLoading ? t('roi.loading') : t('roi.captureFrame')}
                 </span>
               </button>
 
@@ -852,7 +855,7 @@ const ROIConfiguration = () => {
                   className='bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-full flex items-center gap-2 transition-colors'
                 >
                   <IoScanCircle size={20} />
-                  <span>Complete Polygon</span>
+                  <span>{t('roi.completePolygon')}</span>
                 </button>
               )}
             </div>
@@ -863,7 +866,7 @@ const ROIConfiguration = () => {
                 className='bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-full flex items-center gap-2 transition-colors'
               >
                 <IoTrash size={20} />
-                <span>Clear All</span>
+                <span>{t('roi.clearAll')}</span>
               </button>
 
               <button
@@ -874,7 +877,7 @@ const ROIConfiguration = () => {
                 className='bg-[#3885CC] hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-full flex items-center gap-2 transition-colors'
               >
                 <IoScanCircle size={20} />
-                <span>Draw New Area</span>
+                <span>{t('roi.drawNewArea')}</span>
               </button>
             </div>
           </div>
@@ -882,7 +885,9 @@ const ROIConfiguration = () => {
           {/* Polygon management */}
           {polygons.length > 0 && (
             <div className='mt-4'>
-              <h3 className='text-lg font-semibold mb-2'>Drawn Areas</h3>
+              <h3 className='text-lg font-semibold mb-2'>
+                {t('roi.drawnAreas')}
+              </h3>
               <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2'>
                 {polygons.map((polygon, index) => (
                   <div
@@ -890,7 +895,8 @@ const ROIConfiguration = () => {
                     className='bg-gray-700 rounded p-2 flex justify-between items-center'
                   >
                     <span className='text-sm'>
-                      Area {index + 1} ({polygon.length} points)
+                      {t('roi.area')} {index + 1} ({polygon.length}{' '}
+                      {t('roi.points')})
                     </span>
                     <button
                       onClick={() => deletePolygon(index)}
@@ -906,20 +912,22 @@ const ROIConfiguration = () => {
 
           {rois.length > 0 && (
             <div className='mt-6'>
-              <h3 className='text-lg font-bold mb-3'>Configured ROIs</h3>
+              <h3 className='text-lg font-bold mb-3'>
+                {t('roi.configuredRois')}
+              </h3>
             </div>
           )}
 
           <div className='mt-3 space-y-4'>
             <div>
               <label className='block text-sm text-gray-400 mb-2'>
-                ROI Name*
+                {t('roi.roiName')}*
               </label>
               <input
                 type='text'
                 value={roiName}
                 onChange={e => setRoiName(e.target.value)}
-                placeholder='e.g., Camera 01 | Posto Petrobras- Zona Sul'
+                placeholder={t('roi.roiNamePlaceholder')}
                 className='w-full bg-gray-700 border border-gray-600 rounded-lg py-2 px-4 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 transition-colors'
               />
             </div>
@@ -927,7 +935,7 @@ const ROIConfiguration = () => {
             <div className='grid grid-cols-2 gap-4'>
               <div>
                 <label className='block text-sm text-gray-400 mb-2'>
-                  Detection Type
+                  {t('roi.detectionType')}
                 </label>
                 <select
                   value={detectionType}
@@ -936,26 +944,28 @@ const ROIConfiguration = () => {
                 >
                   <option value=''>-------</option>
                   <option value='VEHICLE_QUEUE_DETECTION'>
-                    Vehicle Queue Detection
+                    {t('roi.vehicleQueueDetection')}
                   </option>
-                  <option value='VEHICLE_DWELL_TIME'>Vehicle Dwell Time</option>
+                  <option value='VEHICLE_DWELL_TIME'>
+                    {t('roi.vehicleDwellTime')}
+                  </option>
                   <option value='ATTENDANT_ABSENCE_ON_PUMP'>
-                    Attendant Absence On Pump
+                    {t('roi.attendantAbsenceOnPump')}
                   </option>
                 </select>
               </div>
               <div>
                 <label className='block text-sm text-gray-400 mb-2'>
-                  Alert Priority
+                  {t('roi.alertPriority')}
                 </label>
                 <select
                   value={alertPriority}
                   onChange={e => setAlertPriority(e.target.value)}
                   className='w-full bg-gray-700 border border-gray-600 rounded-lg py-2 px-4 text-white focus:outline-none focus:border-blue-500 transition-colors appearance-none'
                 >
-                  <option>High</option>
-                  <option>Medium</option>
-                  <option>Low</option>
+                  <option>{t('roi.high')}</option>
+                  <option>{t('roi.medium')}</option>
+                  <option>{t('roi.low')}</option>
                 </select>
               </div>
             </div>
@@ -965,10 +975,11 @@ const ROIConfiguration = () => {
 
       {/* Detection Configuration Section */}
       <div className='bg-[#30313F] rounded-lg p-6 mb-6'>
-        <h2 className='text-xl font-bold mb-4'>Detection Configuration</h2>
+        <h2 className='text-xl font-bold mb-4'>
+          {t('roi.detectionConfiguration')}
+        </h2>
         <p className='text-sm text-gray-400 mb-6'>
-          Set the specific parameters for each detection type to fine-tune alert
-          triggers.
+          {t('roi.detectionConfigurationDescription')}
         </p>
         <div className='grid grid-cols-2 gap-x-12 gap-y-6'>
           {/* Vehicle Queue Detection Fields */}
@@ -976,11 +987,10 @@ const ROIConfiguration = () => {
             <>
               <div>
                 <label className='block text-sm text-gray-400 mb-2'>
-                  Queue Count Threshold
+                  {t('roi.queueCountThreshold')}
                 </label>
                 <p className='text-xs text-gray-500 mb-2'>
-                  Set the minimum number of vehicles required to trigger a queue
-                  detection alert. (e.g., 1)
+                  {t('roi.queueCountThresholdDescription')}
                 </p>
                 <input
                   type='number'
@@ -991,11 +1001,10 @@ const ROIConfiguration = () => {
               </div>
               <div>
                 <label className='block text-sm text-gray-400 mb-2'>
-                  Queue Dwell Time (seconds)
+                  {t('roi.queueDwellTimeSeconds')}
                 </label>
                 <p className='text-xs text-gray-500 mb-2'>
-                  Define how long a vehicle must remain in the queue to trigger
-                  an alert. (e.g., 8 seconds)
+                  {t('roi.queueDwellTimeSecondsDescription')}
                 </p>
                 <input
                   type='number'
@@ -1013,11 +1022,10 @@ const ROIConfiguration = () => {
           {detectionType === 'VEHICLE_DWELL_TIME' && (
             <div>
               <label className='block text-sm text-gray-400 mb-2'>
-                Dwell Time (seconds)
+                {t('roi.dwellTimeSeconds')}
               </label>
               <p className='text-xs text-gray-500 mb-2'>
-                Specify the duration a vehicle must remain stationary to trigger
-                a dwell time alert. (e.g., 15 seconds)
+                {t('roi.dwellTimeSecondsDescription')}
               </p>
               <input
                 type='number'
@@ -1032,11 +1040,10 @@ const ROIConfiguration = () => {
           {detectionType === 'ATTENDANT_ABSENCE_ON_PUMP' && (
             <div>
               <label className='block text-sm text-gray-400 mb-2'>
-                Dwell Time (seconds)
+                {t('roi.dwellTimeSeconds')}
               </label>
               <p className='text-xs text-gray-500 mb-2'>
-                Set the maximum time an attendant can be absent from the pump
-                area before an alert is triggered. (e.g., 6 seconds)
+                {t('roi.attendantAbsenceDwellTimeDescription')}
               </p>
               <input
                 type='number'
@@ -1048,21 +1055,21 @@ const ROIConfiguration = () => {
               />
             </div>
           )}
-
-          {/* Existing detection fields */}
         </div>
       </div>
 
       {/* Notifications Section */}
       <div className='bg-[#30313F] rounded-lg p-6 mb-6'>
-        <h2 className='text-xl font-bold mb-6'>Notifications</h2>
+        <h2 className='text-xl font-bold mb-6'>{t('roi.notifications')}</h2>
         <div className='grid grid-cols-3 gap-6'>
           {/* Email Notification */}
           <div className='bg-gray-900 rounded-lg p-4 border border-gray-700'>
             <div className='flex items-center justify-between mb-4'>
               <div className='flex items-center gap-2'>
                 <IoMailOutline size={20} />
-                <span className='font-semibold'>Email Notification</span>
+                <span className='font-semibold'>
+                  {t('roi.emailNotification')}
+                </span>
               </div>
               <label className='relative inline-flex items-center cursor-pointer'>
                 <input
@@ -1076,14 +1083,14 @@ const ROIConfiguration = () => {
             </div>
             <div>
               <label className='block text-sm text-gray-400 mb-2'>
-                Enable Email Alerts
+                {t('roi.enableEmailAlerts')}
               </label>
               <div className='flex gap-2'>
                 <input
                   type='email'
                   value={emailAddress}
                   onChange={e => setEmailAddress(e.target.value)}
-                  placeholder='Enter Email address'
+                  placeholder={t('roi.enterEmailAddress')}
                   className='flex-1 bg-gray-700 border border-gray-600 rounded-lg py-2 px-3 text-white placeholder-gray-500 text-sm focus:outline-none focus:border-blue-500 transition-colors'
                 />
                 <button
@@ -1132,7 +1139,9 @@ const ROIConfiguration = () => {
             <div className='flex items-center justify-between mb-4'>
               <div className='flex items-center gap-2'>
                 <IoChatboxEllipsesOutline size={20} />
-                <span className='font-semibold'>Call Notification</span>
+                <span className='font-semibold'>
+                  {t('roi.callNotification')}
+                </span>
               </div>
               <label className='relative inline-flex items-center cursor-pointer'>
                 <input
@@ -1146,14 +1155,14 @@ const ROIConfiguration = () => {
             </div>
             <div>
               <label className='block text-sm text-gray-400 mb-2'>
-                Enable Call Alerts
+                {t('roi.enableCallAlerts')}
               </label>
               <div className='flex gap-2'>
                 <input
                   type='tel'
                   value={phoneNumber}
                   onChange={e => setPhoneNumber(e.target.value)}
-                  placeholder='Enter Phone Number'
+                  placeholder={t('roi.enterPhoneNumber')}
                   className='flex-1 bg-gray-700 border border-gray-600 rounded-lg py-2 px-3 text-white placeholder-gray-500 text-sm focus:outline-none focus:border-blue-500 transition-colors'
                 />
                 <button
@@ -1199,7 +1208,9 @@ const ROIConfiguration = () => {
             <div className='flex items-center justify-between mb-4'>
               <div className='flex items-center gap-2'>
                 <IoLogoWhatsapp size={20} />
-                <span className='font-semibold'>WhatsApp Notification</span>
+                <span className='font-semibold'>
+                  {t('roi.whatsAppNotification')}
+                </span>
               </div>
               <label className='relative inline-flex items-center cursor-pointer'>
                 <input
@@ -1215,14 +1226,14 @@ const ROIConfiguration = () => {
             </div>
             <div>
               <label className='block text-sm text-gray-400 mb-2'>
-                Enable WhatsApp Alerts
+                {t('roi.enableWhatsAppAlerts')}
               </label>
               <div className='flex gap-2'>
                 <input
                   type='tel'
                   value={whatsappNumber}
                   onChange={e => setWhatsappNumber(e.target.value)}
-                  placeholder='Enter WhatsApp Number'
+                  placeholder={t('roi.enterWhatsAppNumber')}
                   className='flex-1 bg-gray-700 border border-gray-600 rounded-lg py-2 px-3 text-white placeholder-gray-500 text-sm focus:outline-none focus:border-blue-500 transition-colors'
                 />
                 <button
@@ -1270,20 +1281,20 @@ const ROIConfiguration = () => {
 
       {/* Save Camera Button */}
       <div className='bg-[#30313F] flex justify-between items-center rounded-lg p-4 mb-6'>
-        <p className='text-white font-medium'>Save Camera</p>
+        <p className='text-white font-medium'>{t('roi.saveCamera')}</p>
 
         <div className='flex gap-3'>
           <button
             onClick={resetForm}
             className='bg-[#4D4D4D] text-sm text-white font-semibold py-2 px-6 rounded-full transition-colors hover:bg-gray-600'
           >
-            Clear
+            {t('roi.clear')}
           </button>
           <button
             onClick={handleSaveRoi}
             className='bg-[#3885CC] text-sm text-white font-semibold py-2 px-6 rounded-full transition-colors hover:bg-blue-600'
           >
-            {currentRoiId ? 'Update' : 'Save'} ROI
+            {currentRoiId ? t('roi.updateRoi') : t('roi.saveRoi')}
           </button>
         </div>
       </div>

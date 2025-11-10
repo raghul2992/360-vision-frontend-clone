@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 import { CardContent, Typography, Box, LinearProgress } from '@mui/material'
+import { useTranslation } from 'react-i18next'
 import {
   fetchAlerts,
   fetchStatusCountAlerts
@@ -8,6 +9,7 @@ import {
 
 export default function AlertStatusOverview () {
   const dispatch = useDispatch()
+  const { t } = useTranslation()
   const { statusCounts, isLoading, error, lastFetched } = useSelector(
     state => state.alerts
   )
@@ -31,8 +33,8 @@ export default function AlertStatusOverview () {
   const totalCount = readCount + unreadCount
 
   const triageData = [
-    { label: 'Read', count: readCount, color: '#4CAF50' },
-    { label: 'Unread', count: unreadCount, color: '#FF9800' }
+    { label: t('alerts.read'), count: readCount, color: '#4CAF50' },
+    { label: t('alerts.unread'), count: unreadCount, color: '#FF9800' }
   ]
 
   const StyledLinearProgress = ({ value, color }) => (
@@ -55,7 +57,7 @@ export default function AlertStatusOverview () {
     >
       <CardContent>
         <Typography variant='h6' color='#E0E0E0' gutterBottom>
-          Alert Status
+          {t('alerts.alert_status')}
         </Typography>
 
         {triageData.map((item, index) => {
@@ -84,12 +86,12 @@ export default function AlertStatusOverview () {
 
         {isLoading && (
           <Typography variant='body2' color='#A0A0A0' textAlign='center'>
-            Loading...
+            {t('alerts.loading_alerts')}
           </Typography>
         )}
         {error && (
           <Typography variant='body2' color='error' textAlign='center'>
-            {error}
+            {t('alerts.error_loading_alerts', { error })}
           </Typography>
         )}
       </CardContent>

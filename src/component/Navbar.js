@@ -29,11 +29,11 @@ const Navbar = () => {
   const { isConnected, error } = useWebSocket(wsUrl, tenantId)
 
   // Fetch notifications on mount
-  useEffect(() => {
-    if (tenantId) {
-      dispatch(fetchNotifications({ tenantId }))
-    }
-  }, [dispatch, tenantId])
+  // useEffect(() => {
+  //   if (tenantId) {
+  //     dispatch(fetchNotifications({ tenantId }))
+  //   }
+  // }, [dispatch, tenantId])
 
   // Update local WebSocket status
   useEffect(() => {

@@ -551,8 +551,10 @@ const AddCamera = () => {
                   value={cameraStatus}
                   onChange={e => setCameraStatus(e.target.value)}
                 >
-                  <option value='active'>Enable</option>
-                  <option value='inactive'>Disable</option>
+                  <option value='active'>Active</option>
+                  <option value='inactive'>Inactive</option>
+                  <option value='error'>Error</option>
+                  <option value='processing'>Processing</option>
                 </select>
                 <IoChevronDown
                   className='absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none'

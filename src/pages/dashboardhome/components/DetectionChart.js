@@ -1,7 +1,9 @@
 import React from 'react'
 import { PieChart } from '@mui/x-charts/PieChart'
+import { useTranslation } from 'react-i18next'
 
 export default function DetectionChart ({ title, data, total, label }) {
+  const { t } = useTranslation()
   // Transform your incoming data to match MUI PieChart format
   const chartData = data.map((item, index) => ({
     id: index,
@@ -50,7 +52,9 @@ export default function DetectionChart ({ title, data, total, label }) {
             textAlign: 'center'
           }}
         >
-          <p style={{ color: '#FFF', margin: 0 }}>Total: {total}</p>
+          <p style={{ color: '#FFF', margin: 0 }}>
+            {t('dashboard.total')}: {total}
+          </p>
         </div>
       </div>
     </div>

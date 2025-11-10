@@ -7,12 +7,14 @@ import {
   setFilters
 } from '../../features/alert/alertSlice'
 import { getLocations } from '../../features/locations/locationApiSlice'
+import { getCameras } from '../../features/cameras/cameraApiSlice'
 import Select from 'react-select'
 import DatePicker from 'react-datepicker'
 import 'react-datepicker/dist/react-datepicker.css'
 import format from 'date-fns/format'
+import setHours from 'date-fns/setHours'
+import setMinutes from 'date-fns/setMinutes'
 import { useTranslation } from 'react-i18next'
-import AlertStatusOverview from '../dashboardhome/components/AlertStatusOverview'
 
 const Alerts = () => {
   const { t } = useTranslation()
@@ -23,10 +25,13 @@ const Alerts = () => {
     state => state.alerts
   )
   const locations = useSelector(state => state.locationApi.locations)
+  const cameras = useSelector(state => state.cameraApi.cameras)
 
   // Filters
   const [priorityFilter, setPriorityFilter] = useState(null)
   const [selectedLocation, setSelectedLocation] = useState(null)
+  const [selectedCamera, setSelectedCamera] = useState(null)
+  const [readStatus, setReadStatus] = useState(null)
   const [dateRange, setDateRange] = useState([null, null])
   const [startDate, endDate] = dateRange
   const [alertList, setAlertList] = useState([])
@@ -38,6 +43,7 @@ const Alerts = () => {
 
   const loaderRef = useRef(null)
 
+  // Merge new alerts
   useEffect(() => {
     if (alerts && alerts.length > 0) {
       setAlertList(prev => {
@@ -59,15 +65,20 @@ const Alerts = () => {
         type: 'event_alert',
         limit: reset ? 10 : limit,
         skip: reset ? 0 : skip,
-        is_read: false, // Only fetch unread alerts initially
+        ...(readStatus !== null && { is_read: readStatus === 'read' }),
         ...(priorityFilter && {
           meta_filters: JSON.stringify({
             alert_priority: priorityFilter
           })
         }),
         ...(selectedLocation && { location_id: selectedLocation.value }),
-        ...(startDate && { created_after: format(startDate, 'yyyy-MM-dd') }),
-        ...(endDate && { created_before: format(endDate, 'yyyy-MM-dd') })
+        ...(selectedCamera && { camera_id: selectedCamera.value }),
+        ...(startDate && {
+          created_after: format(startDate, "yyyy-MM-dd'T'00:00:00")
+        }),
+        ...(endDate && {
+          created_before: format(endDate, "yyyy-MM-dd'T'23:59:59")
+        })
       }
 
       if (reset) dispatch(clearAlerts())
@@ -75,7 +86,7 @@ const Alerts = () => {
       const result = await dispatch(
         fetchAlerts({ tenantId: tenant_id, queryParams })
       )
-      console.log('initialize', result)
+
       if (result.payload && result.payload.length < limit) {
         setHasMore(false)
       } else {
@@ -88,11 +99,13 @@ const Alerts = () => {
       dispatch,
       tenant_id,
       selectedLocation,
+      selectedCamera,
       startDate,
       endDate,
       skip,
       limit,
-      priorityFilter
+      priorityFilter,
+      readStatus
     ]
   )
 
@@ -102,10 +115,21 @@ const Alerts = () => {
     setLimit(10)
     setHasMore(true)
     fetchAlertsData(true)
-    if (tenant_id) dispatch(getLocations(tenant_id))
-  }, [tenant_id, selectedLocation, startDate, endDate, priorityFilter])
+    if (tenant_id) {
+      dispatch(getLocations(tenant_id))
+      dispatch(getCameras({ tenantId: tenant_id }))
+    }
+  }, [
+    tenant_id,
+    selectedLocation,
+    selectedCamera,
+    startDate,
+    endDate,
+    priorityFilter,
+    readStatus
+  ])
 
-  // Infinite scroll
+  // Infinite scroll observer
   useEffect(() => {
     const observer = new IntersectionObserver(
       entries => {
@@ -115,27 +139,37 @@ const Alerts = () => {
       },
       { threshold: 1.0 }
     )
-
     if (loaderRef.current) observer.observe(loaderRef.current)
     return () => {
       if (loaderRef.current) observer.unobserve(loaderRef.current)
     }
   }, [hasMore, isLoading])
 
-  // Fetch when skip or limit changes
+  // Fetch on skip change
   useEffect(() => {
     if (skip > 0) fetchAlertsData()
   }, [skip, limit])
 
+  // Select options
   const priorityOptions = [
     { value: 'high', label: t('alerts.high_priority') },
     { value: 'medium', label: t('alerts.medium_priority') },
     { value: 'low', label: t('alerts.low_priority') }
   ]
 
+  const readOptions = [
+    { value: 'read', label: t('alerts.read_alerts') },
+    { value: 'unread', label: t('alerts.unread_alerts') }
+  ]
+
   const locationOptions = locations.map(location => ({
     value: location.id,
     label: location.name
+  }))
+
+  const cameraOptions = cameras.map(camera => ({
+    value: camera.id,
+    label: camera.name
   }))
 
   const customStyles = {
@@ -145,8 +179,8 @@ const Alerts = () => {
       borderColor: '#393A4A',
       color: 'white',
       borderRadius: '9999px',
-      paddingLeft: '1rem',
-      paddingRight: '1rem',
+      paddingLeft: '0.4rem',
+      paddingRight: '0.4rem',
       boxShadow: state.isFocused ? '0 0 0 1px #6366F1' : 'none',
       '&:hover': { borderColor: '#393A4A' }
     }),
@@ -186,6 +220,7 @@ const Alerts = () => {
               styles={customStyles}
             />
           </div>
+
           <div className='w-48'>
             <Select
               options={locationOptions}
@@ -196,7 +231,29 @@ const Alerts = () => {
               styles={customStyles}
             />
           </div>
+
+          <div className='w-52'>
+            <Select
+              options={cameraOptions}
+              onChange={opt => setSelectedCamera(opt)}
+              value={selectedCamera}
+              placeholder={t('alerts.camera_placeholder')}
+              isClearable
+              styles={customStyles}
+            />
+          </div>
+
           <div className='w-48'>
+            <Select
+              options={readOptions}
+              onChange={opt => setReadStatus(opt ? opt.value : null)}
+              placeholder={t('alerts.read_status_placeholder')}
+              isClearable
+              styles={customStyles}
+            />
+          </div>
+
+          <div className='w-56'>
             <DatePicker
               selectsRange
               startDate={startDate}
@@ -204,20 +261,14 @@ const Alerts = () => {
               onChange={update => setDateRange(update)}
               isClearable
               placeholderText={t('alerts.select_date_range')}
-              className='w-full px-4 py-2 rounded-full bg-[#393A4A] text-white placeholder-[#A0AEC0] focus:outline-none focus:ring-1 focus:ring-[#6366F1]'
+              className='w-full px-6 py-2 rounded-full bg-[#393A4A] text-white placeholder-[#A0AEC0] focus:outline-none focus:ring-1 focus:ring-[#6366F1]'
             />
           </div>
         </div>
 
-        {/* Alerts Section (Two-Column Layout) */}
+        {/* Alerts Section */}
         <div className='bg-[#2a2f45] w-full rounded-lg p-6'>
           <div className='flex flex-col lg:flex-row gap-6'>
-            {/* Left side — Alert Status Overview (30%) */}
-            {/* <div className='lg:w-[30%] w-full'>
-              <AlertStatusOverview />
-            </div> */}
-
-            {/* Right side — Alert List (70%) */}
             <div className='lg:w-[100%] w-full'>
               {alertList.length === 0 && !isLoading && !error && (
                 <div className='text-center py-16'>
@@ -236,13 +287,19 @@ const Alerts = () => {
               )}
 
               <div className='space-y-4 w-full max-h-[350px] overflow-y-auto scrollbar-thin scrollbar-thumb-[#3b405e] scrollbar-track-[#1f2333] hover:scrollbar-thumb-[#4a5070] rounded-lg pr-2'>
-                {alertList.map(alert => (
-                  <AlertItem
-                    key={alert.id}
-                    alert={alert}
-                    tenantId={tenant_id}
-                  />
-                ))}
+                {alertList.map(alert => {
+                  const timestamp = alert.created_at
+                    ? format(new Date(alert.created_at), 'yyyy-MM-dd HH:mm')
+                    : t('alerts.no_timestamp')
+                  return (
+                    <div key={alert.id}>
+                      <AlertItem alert={alert} tenantId={tenant_id} />
+                      <p className='text-xs text-gray-400 ml-2 mt-1'>
+                        {timestamp}
+                      </p>
+                    </div>
+                  )
+                })}
 
                 {isLoading && (
                   <div className='text-center py-4 text-gray-400 text-sm'>
