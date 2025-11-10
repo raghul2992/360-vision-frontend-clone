@@ -102,7 +102,6 @@ export default function DashboardOverview () {
     fetchCameras()
   }, [fetchCameras])
 
-  // ✅ Fetch alerts whenever filters change (date/location/camera)
   useEffect(() => {
     const tenantId = localStorage.getItem('tenant_id')
     if (!tenantId) return
@@ -137,7 +136,6 @@ export default function DashboardOverview () {
     dispatch(fetchAlerts({ tenantId, queryParams }))
   }, [dateRange, detectionLocation, detectionCamera, dispatch])
 
-  // ✅ Reset chart data when alerts empty
   useEffect(() => {
     if (alerts.length === 0) {
       setDetectionData([])
