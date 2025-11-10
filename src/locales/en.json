@@ -344,5 +344,11 @@
   "date_locale": "en-US",
   "date": {
     "of": "of"
+  },
+  "realtime_sync": {
+    "connected_title": "Realtime Sync with connected camera system",
+    "disconnected_title": "Realtime Sync Disconnected",
+    "connected_text": "Realtime Sync",
+    "disconnected_text": "Realtime Disconnected"
   }
 }

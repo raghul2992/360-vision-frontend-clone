@@ -253,7 +253,7 @@ const Alerts = () => {
             />
           </div>
 
-          <div className='w-56'>
+          <div className='w-64'>
             <DatePicker
               selectsRange
               startDate={startDate}
@@ -294,9 +294,6 @@ const Alerts = () => {
                   return (
                     <div key={alert.id}>
                       <AlertItem alert={alert} tenantId={tenant_id} />
-                      <p className='text-xs text-gray-400 ml-2 mt-1'>
-                        {timestamp}
-                      </p>
                     </div>
                   )
                 })}

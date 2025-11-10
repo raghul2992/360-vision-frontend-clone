@@ -14,7 +14,7 @@ import {
 import { Tooltip } from '@mui/material'
 
 const Navbar = () => {
-  const { i18n } = useTranslation()
+  const { t, i18n } = useTranslation()
   const [isOpen, setIsOpen] = useState(false)
   const [wsStatus, setWsStatus] = useState('disconnected') // Track status locally
 
@@ -58,8 +58,10 @@ const Navbar = () => {
         <Tooltip
           title={
             wsStatus === 'connected'
-              ? 'Realtime Sync with connected camera system'
-              : `Realtime Sync Disconnected ${error ? `- ${error}` : ''}`
+              ? t('realtime_sync.connected_title')
+              : `${t('realtime_sync.disconnected_title')} ${
+                  error ? `- ${error}` : ''
+                }`
           }
         >
           <div className='flex items-center gap-2'>
@@ -71,8 +73,8 @@ const Navbar = () => {
 
             <span className='text-xs text-gray-400'>
               {wsStatus === 'connected'
-                ? 'Realtime Sync'
-                : 'Realtime Disconnected'}
+                ? t('realtime_sync.connected_text')
+                : t('realtime_sync.disconnected_text')}
             </span>
           </div>
         </Tooltip>

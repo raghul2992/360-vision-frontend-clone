@@ -335,5 +335,11 @@
   "date_locale": "pt-BR",
   "date": {
     "of": "de"
+  },
+  "realtime_sync": {
+    "connected_title": "Sincronização em tempo real com o sistema de câmera conectado",
+    "disconnected_title": "Sincronização em tempo real desconectada",
+    "connected_text": "Sincronização em tempo real",
+    "disconnected_text": "Tempo real desconectado"
   }
 }
