@@ -134,7 +134,7 @@ const ROIConfiguration = () => {
   useEffect(() => {
     const effectiveCameraId = cameraId || cameraIdFromUrl
 
-    if (effectiveCameraId && tenantId && !addnew && !roiToEdit) {
+    if (effectiveCameraId && tenantId) {
       dispatch(getRois({ tenantId, cameraId: effectiveCameraId }))
     }
 
@@ -537,7 +537,9 @@ const ROIConfiguration = () => {
     setRoiName('')
     setDetectionType('ALL_DETECTION')
     setAlertPriority('High')
-    setPolygons([])
+    if (addnew) {
+      setPolygons([])
+    }
     setCurrentPolygon([])
     setIsDrawing(false)
     setIsDrawingRectangle(false)
@@ -571,17 +573,58 @@ const ROIConfiguration = () => {
 
       if (Array.isArray(parsed) && parsed.length > 0) {
         if (typeof parsed[0] === 'object' && 'polygon_points' in parsed[0]) {
-          return parsed.flatMap(polygonObj => {
+          const allRoiPolygons = []
+          parsed.forEach(polygonObj => {
+            const polygonArray = polygonObj.polygon_points
             if (
-              polygonObj.polygon_points &&
-              Array.isArray(polygonObj.polygon_points)
+              polygonArray &&
+              Array.isArray(polygonArray) &&
+              polygonArray.length >= 6
             ) {
-              return polygonObj.polygon_points
+              const polygonPoints = []
+              for (let i = 0; i < polygonArray.length; i += 2) {
+                if (i + 1 < polygonArray.length) {
+                  polygonPoints.push({
+                    x: polygonArray[i],
+                    y: polygonArray[i + 1]
+                  })
+                }
+              }
+              if (polygonPoints.length >= 3) {
+                allRoiPolygons.push(polygonPoints)
+              }
             }
-            return []
           })
+          return allRoiPolygons
         } else {
-          return parsed.flat()
+          // Old format: array of flat point arrays (e.g., [[x1,y1,...], [x1,y1,...]])
+          // Or potentially a single flat array [x1,y1,...] if the backend sends it that way.
+          // This block needs to be careful. If it's an array of arrays, each inner array is a polygon.
+          // If it's a single flat array, it's one polygon.
+          // The current `parsed.flat()` would combine them.
+          // Let's assume the 'old format' is `Array<Array<number>>` where inner array is flat points for one polygon.
+          const allRoiPolygons = []
+          parsed.forEach(polygonArray => {
+            if (
+              polygonArray &&
+              Array.isArray(polygonArray) &&
+              polygonArray.length >= 6
+            ) {
+              const polygonPoints = []
+              for (let i = 0; i < polygonArray.length; i += 2) {
+                if (i + 1 < polygonArray.length) {
+                  polygonPoints.push({
+                    x: polygonArray[i],
+                    y: polygonArray[i + 1]
+                  })
+                }
+              }
+              if (polygonPoints.length >= 3) {
+                allRoiPolygons.push(polygonPoints)
+              }
+            }
+          })
+          return allRoiPolygons
         }
       }
 
@@ -634,12 +677,7 @@ const ROIConfiguration = () => {
 
     return (
       <>
-        <Line
-          points={flatPoints}
-          stroke='#3b82f6'
-          strokeWidth={2}
-          dash={[5, 5]}
-        />
+        <Line points={flatPoints} stroke='#3b82f6' strokeWidth={2} />
         {stagePolygon.map((point, index) => (
           <Circle
             key={index}
@@ -680,7 +718,7 @@ const ROIConfiguration = () => {
           </p>
         </div>
         <button
-          onClick={() => navigate('/camera')}
+          onClick={() => navigate(`/add-camera?id=${cameraId}`)}
           className='bg-[#3885CC] hover:bg-blue-600 text-white font-semibold py-2 px-6 rounded-full flex items-center gap-2 transition-colors'
         >
           <IoArrowBackCircle size={20} className='inline-block' />
@@ -742,51 +780,52 @@ const ROIConfiguration = () => {
                 {rois.map(roi => {
                   if (roi.id === currentRoiId) return null
 
-                  const roiPoints = parseRoiPolygons(roi)
-                  console.log('ROI points for display:', roiPoints)
+                  const roiPolygons = parseRoiPolygons(roi)
+                  console.log('ROI polygons for display:', roiPolygons)
 
                   if (
-                    !roiPoints ||
-                    !Array.isArray(roiPoints) ||
-                    roiPoints.length === 0
+                    !roiPolygons ||
+                    !Array.isArray(roiPolygons) ||
+                    roiPolygons.length === 0
                   ) {
-                    console.log('Skipping ROI due to invalid points:', roi.id)
+                    console.log('Skipping ROI due to invalid polygons:', roi.id)
                     return null
                   }
 
-                  try {
-                    const pointsForDisplay = []
-                    for (let i = 0; i < roiPoints.length; i += 2) {
-                      if (i + 1 < roiPoints.length) {
-                        pointsForDisplay.push({
-                          x: roiPoints[i],
-                          y: roiPoints[i + 1]
-                        })
-                      }
-                    }
-
-                    if (pointsForDisplay.length === 0) {
-                      console.log('No valid points found for ROI:', roi.id)
+                  return roiPolygons.map((polygon, polyIndex) => {
+                    if (polygon.length < 3) {
+                      console.log(
+                        `Skipping polygon ${polyIndex} for ROI ${roi.id} due to insufficient points.`
+                      )
                       return null
                     }
+                    try {
+                      const stagePoints = getStagePolygon(polygon)
+                      const flatPoints = stagePoints.flatMap(p => [p.x, p.y])
 
-                    const stagePoints = getStagePolygon(pointsForDisplay)
-                    const flatPoints = stagePoints.flatMap(p => [p.x, p.y])
-
-                    return (
-                      <Line
-                        key={roi.id}
-                        points={!addnew && flatPoints}
-                        stroke='yellow'
-                        strokeWidth={3}
-                        closed={true}
-                        fill='rgba(255, 255, 0, 0.2)'
-                      />
-                    )
-                  } catch (error) {
-                    console.error('Error rendering ROI:', roi.id, error)
-                    return null
-                  }
+                      return (
+                        <Line
+                          key={`${roi.id}-${polyIndex}`}
+                          points={flatPoints}
+                          stroke={addnew ? 'rgba(255, 255, 0, 0.5)' : 'yellow'}
+                          strokeWidth={addnew ? 1 : 3}
+                          closed={true}
+                          fill={
+                            addnew
+                              ? 'rgba(255, 255, 0, 0.1)'
+                              : 'rgba(255, 255, 0, 0.2)'
+                          }
+                        />
+                      )
+                    } catch (error) {
+                      console.error(
+                        `Error rendering polygon ${polyIndex} for ROI:`,
+                        roi.id,
+                        error
+                      )
+                      return null
+                    }
+                  })
                 })}
               </Layer>
             </Stage>

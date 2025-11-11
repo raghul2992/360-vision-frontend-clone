@@ -311,6 +311,12 @@ const CameraGrid = () => {
                   <IoCopyOutline size={16} />
                 </button>
               </div>
+              {camera.status === 'error' && camera.meta?.error?.message && (
+                <p style={{ color: '#f87171' }} className='mt-2 text-xs'>
+                  <span className='text-sm'>Error: </span>
+                  {camera.meta.error.message}
+                </p>
+              )}
             </div>
 
             {/* Footer actions */}

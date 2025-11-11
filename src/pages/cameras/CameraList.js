@@ -99,31 +99,46 @@ const CameraList = () => {
     switch (status) {
       case 'active':
         return (
-          <div className='w-12 h-12 rounded-xl bg-green-500/20 flex items-center justify-center border border-green-500/30'>
+          <div
+            className='w-12 h-12 rounded-xl bg-green-500/20 flex items-center justify-center border border-green-500/30'
+            title='Active'
+          >
             <IoWifiOutline className='text-green-400' size={24} />
           </div>
         )
       case 'inactive':
         return (
-          <div className='w-12 h-12 rounded-xl bg-gray-500/20 flex items-center justify-center border border-gray-500/30'>
+          <div
+            className='w-12 h-12 rounded-xl bg-gray-500/20 flex items-center justify-center border border-gray-500/30'
+            title='Inactive'
+          >
             <IoBan className='text-gray-400' size={24} />
           </div>
         )
       case 'processing':
         return (
-          <div className='w-12 h-12 rounded-xl bg-orange-500/20 flex items-center justify-center border border-orange-500/30'>
+          <div
+            className='w-12 h-12 rounded-xl bg-orange-500/20 flex items-center justify-center border border-orange-500/30'
+            title='Processing'
+          >
             <FaCircleNotch className='text-orange-500 animate-spin' size={24} />
           </div>
         )
       case 'error':
         return (
-          <div className='w-12 h-12 rounded-xl bg-red-500/20 flex items-center justify-center border border-red-500/30'>
+          <div
+            className='w-12 h-12 rounded-xl bg-red-500/20 flex items-center justify-center border border-red-500/30'
+            title='Error'
+          >
             <IoCloseCircle className='text-red-400' size={24} />
           </div>
         )
       default:
         return (
-          <div className='w-12 h-12 rounded-xl bg-gray-500/20 flex items-center justify-center border border-gray-500/30'>
+          <div
+            className='w-12 h-12 rounded-xl bg-gray-500/20 flex items-center justify-center border border-gray-500/30'
+            title='Unknown Status'
+          >
             <IoWifiOutline className='text-gray-400' size={24} />
           </div>
         )
@@ -289,6 +304,12 @@ const CameraList = () => {
                     {camera.rtsp_url}
                   </span>
                 </div>
+                {camera.status === 'error' && camera.meta?.error?.message && (
+                  <p style={{ color: '#f87171' }} className='mt-2 text-xs'>
+                    <span className='text-sm'>Error: </span>
+                    {camera.meta.error.message}
+                  </p>
+                )}
               </div>
             </div>
             <div className='flex items-center gap-4'>
