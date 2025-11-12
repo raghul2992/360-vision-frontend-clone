@@ -2,14 +2,25 @@ import { createSlice, createAsyncThunk } from '@reduxjs/toolkit'
 import api from '../../utils/apihelper'
 
 // Get List of ROIs for a specific camera
+// Get List of ROIs for a specific camera
 export const getRois = createAsyncThunk(
   'rois/getRois',
-  async ({ tenantId, cameraId }, { rejectWithValue }) => {
+  async (
+    { tenantId, cameraId, id = null, skip = 0, limit = 100 },
+    { rejectWithValue }
+  ) => {
     try {
+      const params = new URLSearchParams()
+      if (id !== null) params.append('id', id)
+      params.append('skip', skip)
+      params.append('limit', limit)
+
       const response = await api.get(
-        `/api/v1/tenants/${tenantId}/camera/${cameraId}/roi/`
+        `/api/v1/tenants/${tenantId}/camera/${cameraId}/roi/?${params.toString()}`
       )
-      return response.data || response.data
+
+      // ROI API sometimes returns { data: [...] } or just an array
+      return response.data?.data || response.data
     } catch (error) {
       return rejectWithValue(
         error.response?.data?.message || 'Failed to fetch ROIs'

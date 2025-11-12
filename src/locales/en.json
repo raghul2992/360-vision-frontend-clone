@@ -350,5 +350,11 @@
     "disconnected_title": "Realtime Sync Disconnected",
     "connected_text": "Realtime Sync",
     "disconnected_text": "Realtime Disconnected"
+  },
+  "call_popup": {
+    "title": "Notification Contacts",
+    "status": "Status",
+    "contact_info": "Contact Info",
+    "no_recipients": "No recipients configured."
   }
 }

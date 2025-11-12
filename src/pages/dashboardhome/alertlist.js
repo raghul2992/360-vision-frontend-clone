@@ -1,9 +1,11 @@
 import React, { useState } from 'react'
 import { useDispatch } from 'react-redux'
 import { updateAlertAPI } from '../../features/alert/alertSlice'
-import { IoAddCircleOutline, IoRemove } from 'react-icons/io5'
+import { getRois } from '../../features/cameras/roilistslice'
+import { IoAddCircleOutline, IoRemove, IoCallOutline } from 'react-icons/io5'
 import { useTranslation } from 'react-i18next'
 import { formatDateTime } from '../../utils/datehelper'
+import CallPopup from '../../component/CallPopup'
 
 const AlertItem = ({ alert, tenantId }) => {
   const { t } = useTranslation()
@@ -12,6 +14,8 @@ const AlertItem = ({ alert, tenantId }) => {
   const [isRead, setIsRead] = useState(
     alert.is_read === true || alert.is_read === 'true'
   )
+  const [showCallPopup, setShowCallPopup] = useState(false)
+  const [callRecipients, setCallRecipients] = useState([])
 
   const getPriorityBorderColor = priority => {
     switch (priority?.toLowerCase()) {
@@ -26,8 +30,11 @@ const AlertItem = ({ alert, tenantId }) => {
     }
   }
 
-  const toggleExpand = () => {
-    setIsExpanded(prev => !prev)
+  const toggleExpand = async () => {
+    const newExpand = !isExpanded
+    setIsExpanded(newExpand)
+
+    // ✅ mark as read if unread
     if (!isRead) {
       dispatch(
         updateAlertAPI({
@@ -36,7 +43,40 @@ const AlertItem = ({ alert, tenantId }) => {
           data: { is_read: 'true' }
         })
       )
-      setIsRead(true) // update local state for UI
+      setIsRead(true)
+    }
+  }
+
+  // ✅ Show Call Popup (without expanding)
+  const handleOpenCallPopup = async alert => {
+    try {
+      const roiRes = await dispatch(
+        getRois({
+          tenantId,
+          cameraId: alert.camera_id,
+          id: alert.meta?.roi_id, // ✅ Fetch only this ROI
+          skip: 0,
+          limit: 1
+        })
+      ).unwrap()
+
+      console.log('ROI Response:', roiRes)
+
+      // ROI API can return single object or array
+      const roiData = Array.isArray(roiRes) ? roiRes[0] : roiRes
+
+      // ✅ Validate and extract all notification configs (call, whatsapp, email)
+      if (roiData && roiData.notification_config) {
+        setCallRecipients(roiData.notification_config)
+      } else {
+        setCallRecipients({})
+      }
+
+      setShowCallPopup(true)
+    } catch (err) {
+      console.error('Error fetching ROI:', err)
+      setCallRecipients({})
+      setShowCallPopup(true)
     }
   }
 
@@ -48,11 +88,9 @@ const AlertItem = ({ alert, tenantId }) => {
     return t('alerts.medium_priority')
   }
 
-  // Extract meta data safely
   const {
     camera_name = 'N/A',
     roi_name = 'N/A',
-    detection_type,
     alert_priority,
     confidence_score,
     frame_clip,
@@ -64,6 +102,7 @@ const AlertItem = ({ alert, tenantId }) => {
 
   return (
     <>
+      {/* Alert Card */}
       <div
         className={`bg-white rounded-full w-full flex flex-col mb-4 hover:shadow-lg transition-shadow ${
           !isRead ? 'border-l-4 border-blue-500' : ''
@@ -108,7 +147,7 @@ const AlertItem = ({ alert, tenantId }) => {
           <div className='flex items-center gap-5'>
             <div className='flex items-center gap-3 rounded-r-full h-full'>
               <span
-                className={` px-3 py-1 text-xs font-semibold rounded-full ${
+                className={`px-3 py-1 text-xs font-semibold rounded-full ${
                   !isRead
                     ? 'bg-blue-600 text-white'
                     : 'bg-gray-300 text-gray-700'
@@ -116,6 +155,19 @@ const AlertItem = ({ alert, tenantId }) => {
               >
                 {!isRead ? t('alerts.unread') : t('alerts.read')}
               </span>
+
+              {/* ✅ Call Button */}
+              <button
+                onClick={() => {
+                  handleOpenCallPopup(alert)
+                }}
+                className='p-2 bg-green-600 hover:bg-green-700 rounded-full transition-colors'
+                title={t('alerts.call_recipients')}
+              >
+                <IoCallOutline className='text-white text-xl' />
+              </button>
+
+              {/* ✅ Expand Button */}
               <button
                 onClick={toggleExpand}
                 className='p-2 bg-[#3a3d4d] rounded-full transition-colors'
@@ -131,6 +183,7 @@ const AlertItem = ({ alert, tenantId }) => {
         </div>
       </div>
 
+      {/* Expanded Details */}
       {isExpanded && (
         <div className='bg-white rounded-lg p-6 border border-gray-200 mt-2 mb-4 shadow-sm'>
           <div className='grid grid-cols-2 gap-6'>
@@ -206,6 +259,14 @@ const AlertItem = ({ alert, tenantId }) => {
             </p>
           </div>
         </div>
+      )}
+
+      {/* ✅ Call Popup */}
+      {showCallPopup && (
+        <CallPopup
+          recipients={callRecipients}
+          onClose={() => setShowCallPopup(false)}
+        />
       )}
     </>
   )

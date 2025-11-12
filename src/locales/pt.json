@@ -341,5 +341,11 @@
     "disconnected_title": "Sincronização em tempo real desconectada",
     "connected_text": "Sincronização em tempo real",
     "disconnected_text": "Tempo real desconectado"
+  },
+  "call_popup": {
+    "title": "Contatos de Notificação",
+    "status": "Status",
+    "contact_info": "Informação de Contato",
+    "no_recipients": "Nenhum destinatário configurado."
   }
 }
