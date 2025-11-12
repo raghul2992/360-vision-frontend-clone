@@ -293,7 +293,7 @@ const CameraList = () => {
                 <h3 className='font-semibold text-base mb-1'>{camera.name}</h3>
                 <div className='flex items-center gap-2 text-sm text-gray-400'>
                   <IoLocationOutline className='w-4 h-4' />
-                  <span>
+                  <span className='max-w-[50%]'>
                     Location:{' '}
                     {locations.find(loc => loc.id === camera.location_id)
                       ?.name || 'N/A'}

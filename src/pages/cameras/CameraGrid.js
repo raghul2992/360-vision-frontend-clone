@@ -320,13 +320,13 @@ const CameraGrid = () => {
             </div>
 
             {/* Footer actions */}
-            <div className='flex justify-between items-center pt-4 border-t border-gray-700/50 mt-auto'>
-              <Link className='flex items-center'>
+            <div className='flex justify-end items-center pt-4 border-t border-gray-700/50 mt-auto'>
+              {/* <Link className='flex items-center'>
                 <button className='flex items-center gap-1.5 text-gray-400 hover:text-white transition-colors text-sm'>
                   <IoRadio size={16} />
                   {t('cameraGrid.roiButton') || 'ROI'}
                 </button>
-              </Link>
+              </Link> */}
               <div className='flex gap-3'>
                 <Link
                   to={`/add-camera?id=${camera.id}`}
