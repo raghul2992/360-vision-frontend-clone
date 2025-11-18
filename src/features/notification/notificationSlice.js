@@ -104,7 +104,10 @@ const notificationSlice = createSlice({
         ...action.payload,
         is_read: false,
         id: action.payload?.id || Date.now(),
-        created_at: action.payload.created_at || new Date().toISOString()
+        created_at: action.payload.created_at || new Date().toISOString(),
+        name: action.payload.name || null,
+        number: action.payload.number || null,
+        email: action.payload.email || null
       }
       const exists = state.notifications.some(n => n.id === newNotification.id)
       if (!exists) {

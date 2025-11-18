@@ -93,8 +93,14 @@ const ROIConfiguration = () => {
   const [callNotification, setCallNotification] = useState(false)
   const [whatsappNotification, setWhatsappNotification] = useState(false)
   const [emailAddress, setEmailAddress] = useState('')
+  const [emailAddressError, setEmailAddressError] = useState('')
+  const [emailName, setEmailName] = useState('')
   const [phoneNumber, setPhoneNumber] = useState('')
+  const [phoneNumberError, setPhoneNumberError] = useState('')
+  const [callName, setCallName] = useState('')
   const [whatsappNumber, setWhatsappNumber] = useState('')
+  const [whatsappNumberError, setWhatsappNumberError] = useState('')
+  const [whatsappName, setWhatsappName] = useState('')
   const [emailRecipients, setEmailRecipients] = useState([])
   const [callRecipients, setCallRecipients] = useState([])
   const [whatsappRecipients, setWhatsappRecipients] = useState([])
@@ -108,8 +114,12 @@ const ROIConfiguration = () => {
 
   // ROI Settings
   const [roiName, setRoiName] = useState('')
+  const [roiNameError, setRoiNameError] = useState('')
   const [detectionType, setDetectionType] = useState('ALL_DETECTION')
-  const [alertPriority, setAlertPriority] = useState('High')
+  const [alertPriority, setAlertPriority] = useState('High') // Stores the English value
+  const [displayAlertPriority, setDisplayAlertPriority] = useState(
+    t('roi.high')
+  ) // Stores the translated value for display
   const [currentRoiId, setCurrentRoiId] = useState(currentRoi_Id)
 
   // New detection config states
@@ -150,10 +160,10 @@ const ROIConfiguration = () => {
       toast.error(error)
     }
     if (operationSuccess) {
-      dispatch(getRois({ tenantId, cameraId }))
+      // The getRois dispatch is now handled directly in handleSaveRoi after creation/update
       dispatch(clearRoiOperationSuccess())
     }
-  }, [error, operationSuccess, dispatch, tenantId, cameraId])
+  }, [error, operationSuccess, dispatch])
 
   // Get scale factors for coordinate conversion
   const getScaleFactors = () => {
@@ -343,26 +353,41 @@ const ROIConfiguration = () => {
       })
   }
 
-  const handleSaveRoi = () => {
+  const handleSaveRoi = async () => {
     if (!cameraId) {
       toast.error('Please save the camera first before configuring ROIs.')
       return
     }
-    if (!roiName.trim() || polygons.length === 0) {
-      toast.error(
-        'Please provide an ROI name and draw at least one polygon area.'
-      )
+    if (!roiName.trim()) {
+      toast.error(t('roi.roiNameRequired'))
+      setRoiNameError(t('roi.roiNameRequired'))
+      return
+    }
+    if (polygons.length === 0) {
+      toast.error(t('roi.polygonRequired'))
       return
     }
 
     // Transform polygons to the new format
     const transformedPolygons = transformPolygonsFormat(polygons)
 
+    const alertPriorityMap = {
+      [t('roi.high').toLowerCase()]: 'high',
+      [t('roi.medium').toLowerCase()]: 'medium',
+      [t('roi.low').toLowerCase()]: 'low',
+      high: 'high', // Fallback for direct English values
+      medium: 'medium',
+      low: 'low'
+    }
+
+    const priorityToSend =
+      alertPriorityMap[displayAlertPriority.toLowerCase()] || 'high' // Default to 'high' if not found
+
     const roiData = {
       name: roiName.trim(),
       frame_url: snapshot,
       polygons: transformedPolygons,
-      alert_priority: alertPriority.toLowerCase(),
+      alert_priority: priorityToSend,
       detection_type: detectionType,
       detection_config: (() => {
         if (detectionType === 'VEHICLE_QUEUE_DETECTION') {
@@ -386,15 +411,24 @@ const ROIConfiguration = () => {
       notification_config: {
         whatsapp: {
           enabled: whatsappNotification,
-          recipients: whatsappRecipients
+          recipients: whatsappRecipients.map(r => ({
+            number: r.number,
+            name: r.name
+          }))
         },
         email: {
           enabled: emailNotification,
-          recipients: emailRecipients
+          recipients: emailRecipients.map(r => ({
+            email: r.email,
+            name: r.name
+          }))
         },
         call: {
           enabled: callNotification,
-          recipients: callRecipients
+          recipients: callRecipients.map(r => ({
+            number: r.number,
+            name: r.name
+          }))
         }
       },
       status: roiToEdit ? status : 'active',
@@ -406,15 +440,29 @@ const ROIConfiguration = () => {
     console.log('Transformed polygons data:', transformedPolygons)
 
     if (currentRoiId) {
-      dispatch(updateRoi({ tenantId, cameraId, roiId: currentRoiId, roiData }))
-      toast.success('ROI updated successfully!')
-      navigate(`/add-camera?id=${cameraId}`)
+      const res = await dispatch(
+        updateRoi({ tenantId, cameraId, roiId: currentRoiId, roiData })
+      )
+      console.log('roi edit response', res)
+
+      if (res.meta.requestStatus === 'fulfilled') {
+        toast.success('ROI updated successfully!')
+        await dispatch(getRois({ tenantId, cameraId })) // Refresh ROIs after update
+        navigate(`/add-camera?id=${cameraId}`)
+      } else {
+        // toast.error(res.payload || 'Failed to update ROI.')
+      }
     } else {
-      dispatch(createRoi({ tenantId, cameraId, roiData }))
-      toast.success('ROI created successfully!')
-      resetForm()
-      setCurrentRoiId(null)
-      navigate(`/add-camera?id=${cameraId}`)
+      const res = await dispatch(createRoi({ tenantId, cameraId, roiData }))
+      if (res.meta.requestStatus === 'fulfilled') {
+        toast.success('ROI created successfully!')
+        resetForm()
+        setCurrentRoiId(null)
+        await dispatch(getRois({ tenantId, cameraId })) // Refresh ROIs after creation
+        navigate(`/add-camera?id=${cameraId}`)
+      } else {
+        // toast.error(res.payload || 'Failed to create ROI.')
+      }
     }
   }
 
@@ -424,9 +472,10 @@ const ROIConfiguration = () => {
     setCurrentRoiId(roi.id)
     setRoiName(roi.name)
     setDetectionType(roi.detection_type)
-    setAlertPriority(
-      roi.alert_priority.charAt(0).toUpperCase() + roi.alert_priority.slice(1)
-    )
+    // Set the internal alertPriority state to the English value from the backend
+    setAlertPriority(roi.alert_priority)
+    // Set the displayAlertPriority to the translated value
+    setDisplayAlertPriority(t(`roi.${roi.alert_priority.toLowerCase()}`))
 
     // Set the snapshot URL from the ROI being edited
     setSnapshotUrl(`${SNAPSHOT_DIR}/${roi.frame_url}`)
@@ -502,11 +551,26 @@ const ROIConfiguration = () => {
 
     // Populate notification states
     setEmailNotification(roi.notification_config?.email?.enabled || false)
-    setEmailRecipients(roi.notification_config?.email?.recipients || [])
+    setEmailRecipients(
+      roi.notification_config?.email?.recipients?.map(r => ({
+        email: r.email,
+        name: r.name || ''
+      })) || []
+    )
     setWhatsappNotification(roi.notification_config?.whatsapp?.enabled || false)
-    setWhatsappRecipients(roi.notification_config?.whatsapp?.recipients || [])
+    setWhatsappRecipients(
+      roi.notification_config?.whatsapp?.recipients?.map(r => ({
+        number: r.number,
+        name: r.name || ''
+      })) || []
+    )
     setCallNotification(roi.notification_config?.call?.enabled || false)
-    setCallRecipients(roi.notification_config?.call?.recipients || [])
+    setCallRecipients(
+      roi.notification_config?.call?.recipients?.map(r => ({
+        number: r.number,
+        name: r.name || ''
+      })) || []
+    )
 
     // Populate detection sensitivity states based on detection type
     if (roi.detection_type === 'VEHICLE_QUEUE_DETECTION') {
@@ -536,7 +600,8 @@ const ROIConfiguration = () => {
   const resetForm = () => {
     setRoiName('')
     setDetectionType('ALL_DETECTION')
-    setAlertPriority('High')
+    setAlertPriority('High') // Reset to English 'High'
+    setDisplayAlertPriority(t('roi.high')) // Reset display to translated 'High'
     if (addnew) {
       setPolygons([])
     }
@@ -965,10 +1030,22 @@ const ROIConfiguration = () => {
               <input
                 type='text'
                 value={roiName}
-                onChange={e => setRoiName(e.target.value)}
+                onChange={e => {
+                  setRoiName(e.target.value)
+                  if (e.target.value.trim()) {
+                    setRoiNameError('')
+                  }
+                }}
                 placeholder={t('roi.roiNamePlaceholder')}
-                className='w-full bg-gray-700 border border-gray-600 rounded-lg py-2 px-4 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 transition-colors'
+                className={`w-full bg-gray-700 border rounded-lg py-2 px-4 text-white placeholder-gray-500 focus:outline-none transition-colors ${
+                  roiNameError
+                    ? 'border-red-500'
+                    : 'border-gray-600 focus:border-blue-500'
+                }`}
               />
+              {roiNameError && (
+                <p className='text-red-500 text-xs mt-1'>{roiNameError}</p>
+              )}
             </div>
 
             <div className='grid grid-cols-2 gap-4'>
@@ -998,13 +1075,13 @@ const ROIConfiguration = () => {
                   {t('roi.alertPriority')}
                 </label>
                 <select
-                  value={alertPriority}
-                  onChange={e => setAlertPriority(e.target.value)}
+                  value={displayAlertPriority}
+                  onChange={e => setDisplayAlertPriority(e.target.value)}
                   className='w-full bg-gray-700 border border-gray-600 rounded-lg py-2 px-4 text-white focus:outline-none focus:border-blue-500 transition-colors appearance-none'
                 >
-                  <option>{t('roi.high')}</option>
-                  <option>{t('roi.medium')}</option>
-                  <option>{t('roi.low')}</option>
+                  <option value={t('roi.high')}>{t('roi.high')}</option>
+                  <option value={t('roi.medium')}>{t('roi.medium')}</option>
+                  <option value={t('roi.low')}>{t('roi.low')}</option>
                 </select>
               </div>
             </div>
@@ -1124,31 +1201,72 @@ const ROIConfiguration = () => {
               <label className='block text-sm text-gray-400 mb-2'>
                 {t('roi.enableEmailAlerts')}
               </label>
-              <div className='flex gap-2'>
+              <div className='flex flex-col gap-2'>
                 <input
-                  type='email'
-                  value={emailAddress}
-                  onChange={e => setEmailAddress(e.target.value)}
-                  placeholder={t('roi.enterEmailAddress')}
+                  type='text'
+                  value={emailName}
+                  onChange={e => setEmailName(e.target.value)}
+                  placeholder={t('roi.enterName')}
                   className='flex-1 bg-gray-700 border border-gray-600 rounded-lg py-2 px-3 text-white placeholder-gray-500 text-sm focus:outline-none focus:border-blue-500 transition-colors'
                 />
-                <button
-                  onClick={() => {
-                    if (
-                      emailAddress.trim() &&
-                      !emailRecipients.includes(emailAddress.trim())
-                    ) {
+                <div className='flex gap-2'>
+                  <input
+                    type='email'
+                    value={emailAddress}
+                    onChange={e => {
+                      setEmailAddress(e.target.value)
+                      if (e.target.value.trim()) {
+                        setEmailAddressError('')
+                      }
+                    }}
+                    placeholder={t('roi.enterEmailAddress')}
+                    className={`flex-1 bg-gray-700 border rounded-lg py-2 px-3 text-white placeholder-gray-500 text-sm focus:outline-none transition-colors ${
+                      emailAddressError
+                        ? 'border-red-500'
+                        : 'border-gray-600 focus:border-blue-500'
+                    }`}
+                  />
+                  <button
+                    onClick={() => {
+                      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+                      if (
+                        !emailAddress.trim() ||
+                        !emailRegex.test(emailAddress.trim())
+                      ) {
+                        setEmailAddressError(t('roi.invalidEmailFormat'))
+                        return
+                      }
+                      if (!emailName.trim()) {
+                        toast.error(t('roi.nameRequired'))
+                        return
+                      }
+                      if (
+                        emailRecipients.some(
+                          r => r.email === emailAddress.trim()
+                        )
+                      ) {
+                        toast.error(t('roi.emailAlreadyAdded'))
+                        return
+                      }
+
                       setEmailRecipients([
                         ...emailRecipients,
-                        emailAddress.trim()
+                        { email: emailAddress.trim(), name: emailName.trim() }
                       ])
                       setEmailAddress('')
-                    }
-                  }}
-                  className='bg-[#3885CC] hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg transition-colors'
-                >
-                  +
-                </button>
+                      setEmailName('')
+                      setEmailAddressError('')
+                    }}
+                    className='bg-[#3885CC] hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg transition-colors'
+                  >
+                    +
+                  </button>
+                </div>
+                {emailAddressError && (
+                  <p className='text-red-500 text-xs mt-1'>
+                    {emailAddressError}
+                  </p>
+                )}
               </div>
               <div className='mt-2 flex flex-wrap gap-2'>
                 {emailRecipients.map((recipient, idx) => (
@@ -1156,11 +1274,13 @@ const ROIConfiguration = () => {
                     key={idx}
                     className='bg-gray-600 text-white text-xs px-2 py-1 rounded-full flex items-center gap-1'
                   >
-                    {recipient}
+                    {recipient.name} ({recipient.email})
                     <button
                       onClick={() =>
                         setEmailRecipients(
-                          emailRecipients.filter(r => r !== recipient)
+                          emailRecipients.filter(
+                            r => r.email !== recipient.email
+                          )
                         )
                       }
                       className='text-red-400 hover:text-red-600'
@@ -1196,28 +1316,44 @@ const ROIConfiguration = () => {
               <label className='block text-sm text-gray-400 mb-2'>
                 {t('roi.enableCallAlerts')}
               </label>
-              <div className='flex gap-2'>
+              <div className='flex flex-col gap-2'>
                 <input
-                  type='tel'
-                  value={phoneNumber}
-                  onChange={e => setPhoneNumber(e.target.value)}
-                  placeholder={t('roi.enterPhoneNumber')}
+                  type='text'
+                  value={callName}
+                  onChange={e => setCallName(e.target.value)}
+                  placeholder={t('roi.enterName')}
                   className='flex-1 bg-gray-700 border border-gray-600 rounded-lg py-2 px-3 text-white placeholder-gray-500 text-sm focus:outline-none focus:border-blue-500 transition-colors'
                 />
-                <button
-                  onClick={() => {
-                    if (
-                      phoneNumber.trim() &&
-                      !callRecipients.includes(phoneNumber.trim())
-                    ) {
-                      setCallRecipients([...callRecipients, phoneNumber.trim()])
-                      setPhoneNumber('')
-                    }
-                  }}
-                  className='bg-[#3885CC] hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg transition-colors'
-                >
-                  +
-                </button>
+                <div className='flex gap-2'>
+                  <input
+                    type='tel'
+                    value={phoneNumber}
+                    onChange={e => setPhoneNumber(e.target.value)}
+                    placeholder={t('roi.enterPhoneNumber')}
+                    className='flex-1 bg-gray-700 border border-gray-600 rounded-lg py-2 px-3 text-white placeholder-gray-500 text-sm focus:outline-none focus:border-blue-500 transition-colors'
+                  />
+                  <button
+                    onClick={() => {
+                      if (
+                        phoneNumber.trim() &&
+                        callName.trim() &&
+                        !callRecipients.some(
+                          r => r.number === phoneNumber.trim()
+                        )
+                      ) {
+                        setCallRecipients([
+                          ...callRecipients,
+                          { number: phoneNumber.trim(), name: callName.trim() }
+                        ])
+                        setPhoneNumber('')
+                        setCallName('')
+                      }
+                    }}
+                    className='bg-[#3885CC] hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg transition-colors'
+                  >
+                    +
+                  </button>
+                </div>
               </div>
               <div className='mt-2 flex flex-wrap gap-2'>
                 {callRecipients.map((recipient, idx) => (
@@ -1225,11 +1361,13 @@ const ROIConfiguration = () => {
                     key={idx}
                     className='bg-gray-600 text-white text-xs px-2 py-1 rounded-full flex items-center gap-1'
                   >
-                    {recipient}
+                    {recipient.name} ({recipient.number})
                     <button
                       onClick={() =>
                         setCallRecipients(
-                          callRecipients.filter(r => r !== recipient)
+                          callRecipients.filter(
+                            r => r.number !== recipient.number
+                          )
                         )
                       }
                       className='text-red-400 hover:text-red-600'
@@ -1267,31 +1405,78 @@ const ROIConfiguration = () => {
               <label className='block text-sm text-gray-400 mb-2'>
                 {t('roi.enableWhatsAppAlerts')}
               </label>
-              <div className='flex gap-2'>
+              <div className='flex flex-col gap-2'>
                 <input
-                  type='tel'
-                  value={whatsappNumber}
-                  onChange={e => setWhatsappNumber(e.target.value)}
-                  placeholder={t('roi.enterWhatsAppNumber')}
+                  type='text'
+                  value={whatsappName}
+                  onChange={e => setWhatsappName(e.target.value)}
+                  placeholder={t('roi.enterName')}
                   className='flex-1 bg-gray-700 border border-gray-600 rounded-lg py-2 px-3 text-white placeholder-gray-500 text-sm focus:outline-none focus:border-blue-500 transition-colors'
                 />
-                <button
-                  onClick={() => {
-                    if (
-                      whatsappNumber.trim() &&
-                      !whatsappRecipients.includes(whatsappNumber.trim())
-                    ) {
+                <div className='flex gap-2'>
+                  <input
+                    type='tel'
+                    value={whatsappNumber}
+                    onChange={e => {
+                      setWhatsappNumber(e.target.value)
+                      if (e.target.value.trim()) {
+                        setWhatsappNumberError('')
+                      }
+                    }}
+                    placeholder={t('roi.enterWhatsAppNumber')}
+                    className={`flex-1 bg-gray-700 border rounded-lg py-2 px-3 text-white placeholder-gray-500 text-sm focus:outline-none transition-colors ${
+                      whatsappNumberError
+                        ? 'border-red-500'
+                        : 'border-gray-600 focus:border-blue-500'
+                    }`}
+                  />
+                  <button
+                    onClick={() => {
+                      const phoneRegex = /^\+?[1-9]\d{1,14}$/ // E.164 format regex
+                      if (
+                        !whatsappNumber.trim() ||
+                        !phoneRegex.test(whatsappNumber.trim())
+                      ) {
+                        toast.error(t('roi.invalidPhoneNumberFormat'))
+                        setWhatsappNumberError(
+                          t('roi.invalidPhoneNumberFormat')
+                        )
+                        return
+                      }
+                      if (!whatsappName.trim()) {
+                        toast.error(t('roi.nameRequired'))
+                        return
+                      }
+                      if (
+                        whatsappRecipients.some(
+                          r => r.number === whatsappNumber.trim()
+                        )
+                      ) {
+                        toast.error(t('roi.phoneNumberAlreadyAdded'))
+                        return
+                      }
+
                       setWhatsappRecipients([
                         ...whatsappRecipients,
-                        whatsappNumber.trim()
+                        {
+                          number: whatsappNumber.trim(),
+                          name: whatsappName.trim()
+                        }
                       ])
                       setWhatsappNumber('')
-                    }
-                  }}
-                  className='bg-[#3885CC] hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg transition-colors'
-                >
-                  +
-                </button>
+                      setWhatsappName('')
+                      setWhatsappNumberError('')
+                    }}
+                    className='bg-[#3885CC] hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg transition-colors'
+                  >
+                    +
+                  </button>
+                </div>
+                {whatsappNumberError && (
+                  <p className='text-red-500 text-xs mt-1'>
+                    {whatsappNumberError}
+                  </p>
+                )}
               </div>
               <div className='mt-2 flex flex-wrap gap-2'>
                 {whatsappRecipients.map((recipient, idx) => (
@@ -1299,11 +1484,13 @@ const ROIConfiguration = () => {
                     key={idx}
                     className='bg-gray-600 text-white text-xs px-2 py-1 rounded-full flex items-center gap-1'
                   >
-                    {recipient}
+                    {recipient.name} ({recipient.number})
                     <button
                       onClick={() =>
                         setWhatsappRecipients(
-                          whatsappRecipients.filter(r => r !== recipient)
+                          whatsappRecipients.filter(
+                            r => r.number !== recipient.number
+                          )
                         )
                       }
                       className='text-red-400 hover:text-red-600'

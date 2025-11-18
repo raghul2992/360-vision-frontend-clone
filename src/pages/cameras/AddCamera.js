@@ -90,7 +90,7 @@ const AddCamera = () => {
       setIsCameraSaved(true)
       setIsConnectionTested(true)
       setCameraId(parseInt(cameraId)) // Set the camera ID for editing case
-      console.log('roi list', roiList)
+      console.log('roi list', roiList, cameras)
     }
   }, [dispatch, cameraId, tenantId])
 
@@ -120,7 +120,7 @@ const AddCamera = () => {
     if (error) {
       toast.error(error)
     }
-  }, [])
+  }, [error])
 
   // Reset flags when form data changes for new cameras
   useEffect(() => {
@@ -254,7 +254,7 @@ const AddCamera = () => {
         console.log(err)
         setIsTestingConnection(false)
         setIsConnectionTested(false)
-        toast.error(err)
+        // The error is now handled by the useEffect, but we still need to return false for the async flow
         return false
       })
     return false
@@ -628,7 +628,12 @@ const AddCamera = () => {
             </div>
           </div> */}
         </div>
-
+        {cameras.status === 'error' && cameras.meta?.error?.message && (
+          <p style={{ color: '#f87171' }} className='mt-2 text-xs'>
+            <span className='text-sm'>Error: </span>
+            {cameras.meta.error.message}
+          </p>
+        )}
         {/* Test Connection Section */}
         <div className='mt-8 pt-6 border-t border-gray-700/50'>
           <div className='flex justify-between items-center'>
@@ -651,6 +656,7 @@ const AddCamera = () => {
                   )} */}
                 </p>
               )}
+
               {!cameraId && isConnectionTested && (
                 <p className='text-green-400 text-sm mt-1'>
                   ✓ Connection tested successfully

@@ -220,7 +220,7 @@
     "areas": "Áreas",
     "mode": "Modo",
     "loading": "Carregando...",
-    "captureFrame": "Capturar Quadro",
+    "captureFrame": "Obter Novo Quadro",
     "completePolygon": "Completar Polígono",
     "clearAll": "Limpar Tudo",
     "drawNewArea": "Desenhar Nova Área",
@@ -251,6 +251,7 @@
     "emailNotification": "Notificação por E-mail",
     "enableEmailAlerts": "Ativar Alertas por E-mail",
     "enterEmailAddress": "Digite o endereço de e-mail",
+    "enterName": "Digite o nome",
     "callNotification": "Notificação por Chamada",
     "enableCallAlerts": "Ativar Alertas por Chamada",
     "enterPhoneNumber": "Digite o número de telefone",
@@ -260,7 +261,14 @@
     "saveCamera": "Salvar Câmera",
     "clear": "Limpar",
     "updateRoi": "Atualizar ROI",
-    "saveRoi": "Salvar ROI"
+    "saveRoi": "Salvar ROI",
+    "roiNameRequired": "O nome do ROI é obrigatório.",
+    "polygonRequired": "Por favor, desenhe pelo menos uma área de polígono.",
+    "invalidEmailFormat": "Formato de e-mail inválido.",
+    "nameRequired": "O nome é obrigatório.",
+    "emailAlreadyAdded": "Este endereço de e-mail já foi adicionado.",
+    "invalidPhoneNumberFormat": "Formato de número de telefone inválido. Use o formato E.164 (ex., +5511999999999).",
+    "phoneNumberAlreadyAdded": "Este número de telefone já foi adicionado."
   },
   "alerts": {
     "title": "Alertas",

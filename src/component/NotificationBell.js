@@ -229,6 +229,15 @@ const NotificationBell = ({ unreadCount }) => {
                     >
                       {notification.title || notification.message}
                     </p>
+                    {(notification.name ||
+                      notification.number ||
+                      notification.email) && (
+                      <p className='text-xs text-gray-400 mt-1'>
+                        {notification.name ||
+                          notification.number ||
+                          notification.email}
+                      </p>
+                    )}
                     <p className='text-xs text-gray-400 mt-1'>
                       {new Date(notification.created_at).toLocaleString()}
                     </p>

@@ -9,17 +9,26 @@ const CallPopup = ({ recipients, onClose }) => {
 
   // ✅ Format all types of recipients
   const formattedRecipients = [
-    ...(recipients?.whatsapp?.recipients?.map(num => ({
+    ...(recipients?.whatsapp?.recipients?.map(r => ({
       type: 'whatsapp',
-      contact: num
+      contact: r.contact,
+      name: r.name,
+      number: r.number,
+      email: r.email
     })) || []),
-    ...(recipients?.call?.recipients?.map(num => ({
+    ...(recipients?.call?.recipients?.map(r => ({
       type: 'call',
-      contact: num
+      contact: r.contact,
+      name: r.name,
+      number: r.number,
+      email: r.email
     })) || []),
-    ...(recipients?.email?.recipients?.map(email => ({
+    ...(recipients?.email?.recipients?.map(r => ({
       type: 'email',
-      contact: email
+      contact: r.contact,
+      name: r.name,
+      number: r.number,
+      email: r.email
     })) || [])
   ]
 
@@ -80,7 +89,12 @@ const CallPopup = ({ recipients, onClose }) => {
               >
                 {getIcon(item.type)}
                 <div className='text-gray-700 font-medium text-sm break-words'>
-                  {item.contact}
+                  {item.name && <p>{item.name}</p>}
+                  {item.number && <p>{item.number}</p>}
+                  {item.email && <p>{item.email}</p>}
+                  {!item.name && !item.number && !item.email && (
+                    <p>{item.contact}</p>
+                  )}
                 </div>
               </div>
             ))

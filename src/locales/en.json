@@ -260,7 +260,14 @@
     "saveCamera": "Save Camera",
     "clear": "Clear",
     "updateRoi": "Update ROI",
-    "saveRoi": "Save ROI"
+    "saveRoi": "Save ROI",
+    "roiNameRequired": "ROI Name is required.",
+    "polygonRequired": "Please draw at least one polygon area.",
+    "invalidEmailFormat": "Invalid email format.",
+    "nameRequired": "Name is required.",
+    "emailAlreadyAdded": "This email address is already added.",
+    "invalidPhoneNumberFormat": "Invalid phone number format. Please use E.164 format (e.g., +1234567890).",
+    "phoneNumberAlreadyAdded": "This phone number is already added."
   },
   "alerts": {
     "title": "Alerts",
