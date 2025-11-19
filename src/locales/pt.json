@@ -108,6 +108,15 @@
     "editButton": "Editar",
     "roiButton": "ROI",
     "deleteButton": "Excluir",
+    "loading": "Carregando câmeras...",
+    "noCameras": "Nenhuma câmera encontrada",
+    "deletePopup": {
+      "title": "Confirmar Exclusão",
+      "message": "Tem certeza de que deseja excluir a câmera \"{{cameraName}}\"?",
+      "warning": "Esta ação não pode ser desfeita e todas as configurações de ROI associadas serão perdidas.",
+      "cancelButton": "Cancelar",
+      "deleteButton": "Excluir Câmera"
+    },
     "status": {
       "active": "Ativo",
       "offline": "Offline",
@@ -151,13 +160,18 @@
     "whatsapp": "Notificação por WhatsApp",
     "emailPlaceholder": "Digite o endereço de e-mail",
     "smsPlaceholder": "Digite o número de telefone",
-    "whatsappPlaceholder": "Digite o número de telefone",
-    "notificationBell": {
-      "title": "Notificações",
-      "mark_all_as_read": "Marcar todos como lidos",
-      "loading_notifications": "Carregando notificações...",
-      "error_loading_notifications": "Erro: {{error}}",
-      "no_notifications": "Nenhuma notificação."
+    "whatsappPlaceholder": "Digite o número de telefone"
+  },
+  "notificationBell": {
+    "title": "Notificações",
+    "emptyState": "Sem notificações.",
+    "errorMessage": "Erro: {{error}}",
+    "loadingMessage": "Carregando notificações...",
+    "loadMoreButton": "Carregar Mais",
+    "noMoreNotifications": "Não há mais notificações",
+    "status": {
+      "unread": "Não Lida",
+      "read": "Lida"
     }
   },
   "cameraList": {
@@ -173,7 +187,15 @@
     "cameraLocation": "{{location}} | {{streamUrl}}",
     "editButton": "Editar",
     "deleteButton": "Excluir",
-    "noCameras": "Nenhuma câmera encontrada"
+    "noCameras": "Nenhuma câmera encontrada",
+    "loading": "Carregando câmeras...",
+    "deletePopup": {
+      "title": "Confirmar Exclusão",
+      "message": "Tem certeza de que deseja excluir a câmera \"{{cameraName}}\"?",
+      "warning": "Esta ação não pode ser desfeita e todas as configurações de ROI associadas serão perdidas.",
+      "cancelButton": "Cancelar",
+      "deleteButton": "Excluir Câmera"
+    }
   },
   "addCamera": {
     "editTitle": "Editar Câmera",
@@ -183,22 +205,64 @@
     "backButton": "Voltar",
     "editCameraDetails": "Editar Detalhes da Câmera",
     "addCameraDetails": "Adicionar Detalhes da Câmera",
-    "cameraNotFound": "Câmera não encontrada.",
     "updateSuccess": "Câmera atualizada com sucesso!",
     "updateError": "Falha ao atualizar a câmera.",
     "createSuccess": "Câmera adicionada com sucesso!",
     "createError": "Falha ao adicionar a câmera.",
-    "testConnectionSuccess": "Conexão de teste bem-sucedida!",
     "testConnectionError": "Falha na conexão de teste.",
     "saveCameraFirst": "Por favor, salve a câmera primeiro para obter um instantâneo.",
     "snapshotSuccess": "Instantâneo recuperado com sucesso!",
-    "snapshotError": "Falha ao obter instantâneo.",
     "testingConnection": "Testando Conexão...",
     "cancelButton": "Cancelar",
     "savingChanges": "Salvando Alterações...",
     "addingCamera": "Adicionando Câmera...",
     "saveChangesButton": "Salvar Alterações",
-    "addCameraButton": "Adicionar Câmera"
+    "addCameraButton": "Enviar",
+    "cameraNotFound": "Câmera não encontrada.",
+    "cameraNameRequired": "O nome da câmera é obrigatório",
+    "locationRequired": "A localização é obrigatória",
+    "rtspUrlRequired": "A URL RTSP é obrigatória",
+    "cameraUpdateSuccess": "Câmera atualizada com sucesso!",
+    "cameraUpdateFailed": "Falha ao atualizar a câmera.",
+    "cameraAddSuccess": "Câmera adicionada com sucesso!",
+    "cameraAddFailed": "Falha ao adicionar a câmera.",
+    "rtspUrlWarning": "Por favor, insira a URL RTSP primeiro",
+    "testingConnectionMessage": "Testando a conexão da sua câmera RTSP... Por favor, aguarde alguns segundos",
+    "testConnectionSuccess": "Conexão bem-sucedida!",
+    "saveCameraBeforeRoi": "Por favor, salve a câmera primeiro antes de adicionar ROI.",
+    "testConnectionBeforeRoi": "Por favor, teste a conexão primeiro antes de adicionar ROI.",
+    "cameraIdNotFound": "ID da câmera não encontrado. Por favor, salve a câmera primeiro.",
+    "retrievingFrame": "Recuperando quadro RTSP...",
+    "frameRetrievedSuccess": "Quadro recuperado com sucesso!",
+    "snapshotError": "Falha ao obter instantâneo.",
+    "roiDeleteSuccess": "ROI excluído com sucesso!",
+    "roiDeleteFailed": "Falha ao excluir ROI.",
+    "locationCreateSuccess": "Localização \"{{name}}\" criada com sucesso!",
+    "locationCreateFailed": "Falha ao criar localização.",
+    "cameraIdOrTenantIdNotFound": "ID da Câmera ou ID do Inquilino não encontrado",
+    "roiStatusUpdateSuccess": "ROI {{status}} com sucesso!",
+    "roiStatusUpdateFailed": "Falha ao atualizar o status do ROI",
+    "confirmDeletionTitle": "Confirmar Exclusão",
+    "confirmDeletionMessage": "Tem certeza de que deseja excluir este ROI?",
+    "connectionTestedSuccessfully": "✓ Conexão testada com sucesso",
+    "cameraSavedSuccessfully": "Câmera Salva com Sucesso",
+    "noCameraSaved": "Nenhuma Câmera Salva",
+    "canNowAddRois": "Agora você pode adicionar ROIs para esta câmera.",
+    "saveCameraFirstToAddRois": "Por favor, salve a câmera primeiro para adicionar ROIs.",
+    "addRoiButton": "Adicionar ROI",
+    "pleaseSaveCameraFirst": "Por favor, salve a câmera primeiro",
+    "cameraIdNotAvailable": "ID da Câmera não disponível. Por favor, tente salvar novamente.",
+    "noRoiFound": "Nenhum ROI encontrado",
+    "noRoiForThisCamera": "Você não tem nenhum ROI para esta câmera.",
+    "roiListTitle": "Lista de ROI",
+    "roiNameHeader": "Nome do ROI",
+    "detectionTypeHeader": "Tipo de Detecção",
+    "alertPriorityHeader": "Prioridade do Alerta",
+    "enableDisableHeader": "Ativar/Desativar",
+    "notificationsHeader": "Notificações",
+    "emailNotifications": "Notificações por E-mail",
+    "callNotifications": "Notificações por Chamada",
+    "whatsappNotifications": "Notificações por WhatsApp"
   },
   "success_display": {
     "title": "Enviar E-mail",
@@ -319,7 +383,14 @@
     "read": "Lido",
     "read_alerts": "Alertas Lidos",
     "unread_alerts": "Alertas Não Lidos",
-    "camera_placeholder": "Câmera"
+    "camera_placeholder": "Câmera",
+    "camera": "Câmera",
+    "confidence": "Confiança",
+    "messages": {
+      "vehicle_queue_detection": "Fila detectada pela Câmera {{camera}}.",
+      "vehicle_dwell_time": "Tempo de permanência do veículo detectado pela Câmera {{camera}}.",
+      "attendant_absence_on_pump": "Ausência de atendente detectada pela Câmera {{camera}}."
+    }
   },
   "statistics": {
     "cars": "Carros",
@@ -340,7 +411,7 @@
     "alert_priority_breakdown": "Detalhamento da Prioridade de Alerta",
     "total": "Total"
   },
-  "date_locale": "pt-BR",
+  "date_locale": "pt",
   "date": {
     "of": "de"
   },
@@ -355,5 +426,23 @@
     "status": "Status",
     "contact_info": "Informação de Contato",
     "no_recipients": "Nenhum destinatário configurado."
+  },
+  "common": {
+    "delete": "Excluir",
+    "cancel": "Cancelar",
+    "active": "Ativo",
+    "inactive": "Inativo",
+    "error": "Erro",
+    "processing": "Processando",
+    "connectionSuccessful": "✓ Conexão bem-sucedida",
+    "connectionFailed": "✗ Conexão falhou",
+    "submit": "Enviar",
+    "enabled": "ativado",
+    "disabled": "desativado",
+    "status": "Status",
+    "actions": "Ações",
+    "enable": "Ativar",
+    "disable": "Desativar",
+    "edit": "Editar"
   }
 }

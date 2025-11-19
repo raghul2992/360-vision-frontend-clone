@@ -7,6 +7,7 @@ import {
 } from '../features/notification/notificationSlice'
 import { FaBell } from 'react-icons/fa'
 import eventEmitter from '../utils/eventEmitter'
+import { useTranslation } from 'react-i18next'
 
 const NotificationBell = ({ unreadCount }) => {
   const dispatch = useDispatch()
@@ -14,6 +15,8 @@ const NotificationBell = ({ unreadCount }) => {
     state => state.notifications
   )
   const tenantId = localStorage.getItem('tenant_id')
+
+  const { t } = useTranslation()
 
   const [isOpen, setIsOpen] = useState(false)
   const [isPulsing, setIsPulsing] = useState(false)
@@ -199,17 +202,24 @@ const NotificationBell = ({ unreadCount }) => {
         <div className='absolute right-5 mt-2 min-w-[500px] bg-gray-800 rounded-lg shadow-lg z-20 max-h-[350px] flex flex-col'>
           {/* Header */}
           <div className='sticky top-0 bg-gray-800 p-4 border-b border-gray-700 flex justify-between items-center z-10'>
-            <h3 className='text-lg font-semibold text-white'>Notifications</h3>
+            <h3 className='text-lg font-semibold text-white'>
+              {t('notificationBell.title')}
+            </h3>
           </div>
 
           {/* Scrollable Content */}
           <div className='flex-1 overflow-y-auto scrollbar-thin'>
             {notificationList.length === 0 && !isLoading && !error && (
-              <p className='p-4 text-gray-400 text-sm'>No notifications.</p>
+              <p className='p-4 text-gray-400 text-sm'>
+                {' '}
+                {t('notificationBell.emptyState')}
+              </p>
             )}
 
             {error && (
-              <p className='p-4 text-red-400 text-sm'>Error: {error}</p>
+              <p className='p-4 text-red-400 text-sm'>
+                {t('notificationBell.errorMessage', { error })}
+              </p>
             )}
 
             <ul className='divide-y divide-gray-700'>
@@ -251,7 +261,9 @@ const NotificationBell = ({ unreadCount }) => {
                         : 'bg-gray-600 text-gray-200'
                     }`}
                   >
-                    {!notification.is_read ? 'Unread' : 'Read'}
+                    {!notification.is_read
+                      ? t('notificationBell.status.unread')
+                      : t('notificationBell.status.read')}
                   </span>
                 </li>
               ))}
@@ -260,7 +272,7 @@ const NotificationBell = ({ unreadCount }) => {
             {/* Loading */}
             {isLoading && (
               <div className='text-center py-4 text-gray-400 text-sm'>
-                Loading notifications...
+                {t('notificationBell.loadingMessage')}
               </div>
             )}
 
@@ -273,7 +285,7 @@ const NotificationBell = ({ unreadCount }) => {
                   onClick={loadMore}
                   className='px-4 py-2 bg-gray-700 text-white rounded hover:bg-gray-600 transition text-sm'
                 >
-                  Load More
+                  {t('notificationBell.loadMoreButton')}{' '}
                 </button>
               </div>
             )}
@@ -281,7 +293,7 @@ const NotificationBell = ({ unreadCount }) => {
             {/* End */}
             {!hasMore && notificationList.length > 0 && (
               <div className='text-center py-4 text-gray-400 text-sm'>
-                No more notifications
+                {t('notificationBell.noMoreNotifications')}
               </div>
             )}
           </div>

@@ -2,11 +2,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useDispatch } from 'react-redux'
 import { updateCameraStatusFromWebSocket } from '../features/cameras/cameraApiSlice'
-import {
-  addNotification,
-  fetchNotifications
-} from '../features/notification/notificationSlice'
-import { toast } from 'react-toastify'
+import { addAlert } from '../features/alert/alertSlice'
 import eventEmitter from '../utils/eventEmitter'
 
 const useWebSocket = (url, tenant_id, reconnectInterval = 2000) => {
@@ -47,29 +43,23 @@ const useWebSocket = (url, tenant_id, reconnectInterval = 2000) => {
         const receivedMessage = JSON.parse(event.data)
         console.log('Received WebSocket message:', receivedMessage)
         setMessage(receivedMessage)
+        eventEmitter.emit('websocketMessage', receivedMessage) // Emit custom event
 
         if (receivedMessage.type === 'camera_status') {
           dispatch(updateCameraStatusFromWebSocket(receivedMessage.data))
-          // toast.info()
           console.log('dispatch')
           dispatch(
-            fetchNotifications({
-              tenant_id: tenant_id,
-              queryParams: { type: 'camera_status' }
-            })
-          )
-          toast.info(receivedMessage.message || 'New Notification!')
-          eventEmitter.emit('newNotification')
-        } else if (receivedMessage.type === 'event_alert') {
-          dispatch(addNotification(receivedMessage.data))
-          dispatch(
-            fetchNotifications({
-              tenant_id: tenant_id,
-              queryParams: { type: 'event_alert' }
+            addAlert({
+              id: receivedMessage.data.id || Date.now(),
+              title: receivedMessage.message || 'Camera Status Update',
+              message: receivedMessage.message,
+              type: 'camera_status',
+              meta: receivedMessage.data,
+              is_read: false,
+              created_at: new Date().toISOString()
             })
           )
           eventEmitter.emit('newNotification')
-          toast.info(receivedMessage.data.message || 'New Notification!')
         }
       } catch (e) {
         console.error('Failed to parse WebSocket message:', e)

@@ -3,7 +3,7 @@ import { useSelector, useDispatch } from 'react-redux'
 import AlertItem from './alertlist'
 import {
   fetchAlerts,
-  clearAlerts,
+  resetAlerts,
   setFilters
 } from '../../features/alert/alertSlice'
 import { getLocations } from '../../features/locations/locationApiSlice'
@@ -21,7 +21,7 @@ const Alerts = () => {
   const tenant_id = localStorage.getItem('tenant_id')
   const dispatch = useDispatch()
 
-  const { alerts, unreadCount, isLoading, error } = useSelector(
+  const { alerts, unreadCount, isLoading, error, filters } = useSelector(
     state => state.alerts
   )
   const locations = useSelector(state => state.locationApi.locations)
@@ -34,7 +34,6 @@ const Alerts = () => {
   const [readStatus, setReadStatus] = useState(null)
   const [dateRange, setDateRange] = useState([null, null])
   const [startDate, endDate] = dateRange
-  const [alertList, setAlertList] = useState([])
 
   // Pagination
   const [limit, setLimit] = useState(10)
@@ -43,28 +42,18 @@ const Alerts = () => {
 
   const loaderRef = useRef(null)
 
-  // Merge new alerts
-  useEffect(() => {
-    if (alerts && alerts.length > 0) {
-      setAlertList(prev => {
-        const newAlerts = alerts.filter(
-          alert => !prev.some(existing => existing.id === alert.id)
-        )
-        return [...prev, ...newAlerts]
-      })
-    } else {
-      setAlertList([])
-    }
-  }, [alerts])
-
   // Fetch Alerts
   const fetchAlertsData = useCallback(
     async (reset = false) => {
       if (!tenant_id) return
+
+      const currentSkip = reset ? 0 : skip
+      const currentLimit = limit
+
       const queryParams = {
         type: 'event_alert',
-        limit: reset ? 10 : limit,
-        skip: reset ? 0 : skip,
+        limit: currentLimit,
+        skip: currentSkip,
         ...(readStatus !== null && { is_read: readStatus === 'read' }),
         ...(priorityFilter && {
           meta_filters: JSON.stringify({
@@ -81,16 +70,19 @@ const Alerts = () => {
         })
       }
 
-      if (reset) dispatch(clearAlerts())
+      if (reset) {
+        dispatch(resetAlerts())
+        setSkip(0)
+      }
 
       const result = await dispatch(
-        fetchAlerts({ tenantId: tenant_id, queryParams })
+        fetchAlerts({ tenantId: tenant_id, queryParams, reset })
       )
 
-      if (result.payload && result.payload.length < limit) {
-        setHasMore(false)
+      if (result.payload && result.payload.results) {
+        setHasMore(result.payload.results.length === currentLimit)
       } else {
-        setHasMore(true)
+        setHasMore(false)
       }
 
       dispatch(setFilters({ tenantId: tenant_id }))
@@ -112,7 +104,6 @@ const Alerts = () => {
   // Initial load + filters
   useEffect(() => {
     setSkip(0)
-    setLimit(10)
     setHasMore(true)
     fetchAlertsData(true)
     if (tenant_id) {
@@ -134,7 +125,7 @@ const Alerts = () => {
     const observer = new IntersectionObserver(
       entries => {
         if (entries[0].isIntersecting && hasMore && !isLoading) {
-          setSkip(prev => prev + 10)
+          setSkip(prev => prev + limit)
         }
       },
       { threshold: 1.0 }
@@ -143,12 +134,17 @@ const Alerts = () => {
     return () => {
       if (loaderRef.current) observer.unobserve(loaderRef.current)
     }
-  }, [hasMore, isLoading])
+  }, [hasMore, isLoading, limit])
 
   // Fetch on skip change
   useEffect(() => {
-    if (skip > 0) fetchAlertsData()
-  }, [skip, limit])
+    if (
+      skip > 0 ||
+      (skip === 0 && alerts.length === 0 && !isLoading && hasMore)
+    ) {
+      fetchAlertsData()
+    }
+  }, [skip, limit, filters])
 
   // Select options
   const priorityOptions = [
@@ -270,7 +266,7 @@ const Alerts = () => {
         <div className='bg-[#2a2f45] w-full rounded-lg p-6'>
           <div className='flex flex-col lg:flex-row gap-6'>
             <div className='lg:w-[100%] w-full'>
-              {alertList.length === 0 && !isLoading && !error && (
+              {alerts.length === 0 && !isLoading && !error && (
                 <div className='text-center py-16'>
                   <p className='text-gray-400 text-sm'>
                     {t('alerts.no_alerts_at_this_time')}
@@ -287,7 +283,7 @@ const Alerts = () => {
               )}
 
               <div className='space-y-4 w-full max-h-[350px] overflow-y-auto scrollbar-thin scrollbar-thumb-[#3b405e] scrollbar-track-[#1f2333] hover:scrollbar-thumb-[#4a5070] rounded-lg pr-2'>
-                {alertList.map(alert => {
+                {alerts.map(alert => {
                   const timestamp = alert.created_at
                     ? format(new Date(alert.created_at), 'yyyy-MM-dd HH:mm')
                     : t('alerts.no_timestamp')
@@ -304,7 +300,7 @@ const Alerts = () => {
                   </div>
                 )}
 
-                {!hasMore && !isLoading && alertList.length > 0 && (
+                {!hasMore && !isLoading && alerts.length > 0 && (
                   <div className='text-center py-4 text-gray-400 text-sm'>
                     No more data
                   </div>

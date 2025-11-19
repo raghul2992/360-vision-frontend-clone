@@ -159,7 +159,7 @@ const alertSlice = createSlice({
       state.unreadCount = 0
     },
 
-    clearAlerts: state => {
+    resetAlerts: state => {
       state.alerts = []
       state.unreadCount = 0
       state.lastFetched = null
@@ -205,10 +205,17 @@ const alertSlice = createSlice({
               : !!n.is_read
         }))
 
-        // Sort alerts by creation date (descending)
-        state.alerts = normalizedAlerts.sort(
-          (a, b) => new Date(b.created_at) - new Date(a.created_at)
-        )
+        // If reset is true, replace alerts; otherwise, append
+        if (action.meta.arg.reset) {
+          state.alerts = normalizedAlerts
+        } else {
+          const newAlerts = normalizedAlerts.filter(
+            alert => !state.alerts.some(existing => existing.id === alert.id)
+          )
+          state.alerts = [...state.alerts, ...newAlerts].sort(
+            (a, b) => new Date(b.created_at) - new Date(a.created_at)
+          )
+        }
 
         // Update unread count
         state.unreadCount = state.alerts.filter(n => !n.is_read).length
@@ -277,7 +284,7 @@ export const {
   addAlert,
   markAlertAsRead,
   markAllAlertsAsRead,
-  clearAlerts,
+  resetAlerts,
   removeAlert,
   setFilters
 } = alertSlice.actions

@@ -108,6 +108,14 @@
     "editButton": "Edit",
     "roiButton": "ROI",
     "deleteButton": "Delete",
+    "loading": "Loading cameras...",
+    "deletePopup": {
+      "title": "Confirm Deletion",
+      "message": "Are you sure you want to delete the camera \"{{cameraName}}\"?",
+      "warning": "This action cannot be undone and all associated ROI configurations will be lost.",
+      "cancelButton": "Cancel",
+      "deleteButton": "Delete Camera"
+    },
     "status": {
       "active": "Active",
       "offline": "Offline",
@@ -151,13 +159,17 @@
     "whatsapp": "WhatsApp Notification",
     "emailPlaceholder": "Enter Email address",
     "smsPlaceholder": "Enter Phone Number",
-    "whatsappPlaceholder": "Enter Phone Number",
-    "notificationBell": {
-      "title": "Notifications",
-      "mark_all_as_read": "Mark all as read",
-      "loading_notifications": "Loading notifications...",
-      "error_loading_notifications": "Error: {{error}}",
-      "no_notifications": "No notifications."
+    "whatsappPlaceholder": "Enter Phone Number"
+  },
+  "notificationBell": {
+    "title": "Notifications",
+    "mark_all_as_read": "Mark all as read",
+    "loading_notifications": "Loading notifications...",
+    "error_loading_notifications": "Error: {{error}}",
+    "no_notifications": "No notifications.",
+    "status": {
+      "unread": "Unread",
+      "read": "Read"
     }
   },
   "cameraList": {
@@ -173,7 +185,15 @@
     "cameraLocation": "{{location}} | {{streamUrl}}",
     "editButton": "Edit",
     "deleteButton": "Delete",
-    "noCameras": "No Camera Found"
+    "noCameras": "No Camera Found",
+    "loading": "Loading cameras...",
+    "deletePopup": {
+      "title": "Confirm Deletion",
+      "message": "Are you sure you want to delete the camera \"{{cameraName}}\"?",
+      "warning": "This action cannot be undone and all associated ROI configurations will be lost.",
+      "cancelButton": "Cancel",
+      "deleteButton": "Delete Camera"
+    }
   },
   "addCamera": {
     "editTitle": "Edit Camera",
@@ -198,7 +218,52 @@
     "savingChanges": "Saving Changes...",
     "addingCamera": "Submit Camera...",
     "saveChangesButton": "Save Changes",
-    "addCameraButton": "Submit"
+    "addCameraButton": "Submit",
+    "cameraNotFound": "Camera not found.",
+    "cameraNameRequired": "Camera name is required",
+    "locationRequired": "Location is required",
+    "rtspUrlRequired": "RTSP URL is required",
+    "cameraUpdateSuccess": "Camera updated successfully!",
+    "cameraUpdateFailed": "Failed to update camera.",
+    "cameraAddSuccess": "Camera added successfully!",
+    "cameraAddFailed": "Failed to add camera.",
+    "rtspUrlWarning": "Please enter RTSP URL first",
+    "testingConnectionMessage": "Testing your RTSP camera connection...Please wait for few seconds",
+    "testConnectionSuccess": "Connection successful!",
+    "saveCameraBeforeRoi": "Please save the camera first before adding ROI.",
+    "testConnectionBeforeRoi": "Please test the connection first before adding ROI.",
+    "cameraIdNotFound": "Camera ID not found. Please save the camera first.",
+    "retrievingFrame": "Retrieving RTSP frame...",
+    "frameRetrievedSuccess": "Frame retrieved successfully!",
+    "snapshotError": "Failed to get snapshot.",
+    "roiDeleteSuccess": "ROI deleted successfully!",
+    "roiDeleteFailed": "Failed to delete ROI.",
+    "locationCreateSuccess": "Location \"{{name}}\" created successfully!",
+    "locationCreateFailed": "Failed to create location.",
+    "cameraIdOrTenantIdNotFound": "Camera ID or Tenant ID not found",
+    "roiStatusUpdateSuccess": "ROI {{status}} successfully!",
+    "roiStatusUpdateFailed": "Failed to update ROI status",
+    "confirmDeletionTitle": "Confirm Deletion",
+    "confirmDeletionMessage": "Are you sure you want to delete this ROI?",
+    "connectionTestedSuccessfully": "✓ Connection tested successfully",
+    "cameraSavedSuccessfully": "Camera Saved Successfully",
+    "noCameraSaved": "No Camera Saved",
+    "canNowAddRois": "You can now add ROIs for this camera.",
+    "saveCameraFirstToAddRois": "Please save the camera first to add ROIs.",
+    "addRoiButton": "Add ROI",
+    "pleaseSaveCameraFirst": "Please save the camera first",
+    "cameraIdNotAvailable": "Camera ID not available. Please try saving again.",
+    "noRoiFound": "No ROI found",
+    "noRoiForThisCamera": "You do not have any ROI for this camera.",
+    "roiListTitle": "ROI List",
+    "roiNameHeader": "ROI Name",
+    "detectionTypeHeader": "Detection Type",
+    "alertPriorityHeader": "Alert Priority",
+    "enableDisableHeader": "Enable/Disable",
+    "notificationsHeader": "Notifications",
+    "emailNotifications": "Email Notifications",
+    "callNotifications": "Call Notifications",
+    "whatsappNotifications": "WhatsApp Notifications"
   },
   "success_display": {
     "title": "Send E-mail",
@@ -327,7 +392,12 @@
     "read": "Read",
     "read_alerts": "Read Alerts",
     "unread_alerts": "Unread Alerts",
-    "camera_placeholder": "Camera"
+    "camera_placeholder": "Camera",
+    "messages": {
+      "vehicle_queue_detection": "Queue detected by Camera {{camera}}.",
+      "vehicle_dwell_time": "Vehicle dwell time detected by Camera {{camera}}.",
+      "attendant_absence_on_pump": "Attendant absence detected by Camera {{camera}}."
+    }
   },
   "statistics": {
     "cars": "Cars",
@@ -363,5 +433,21 @@
     "status": "Status",
     "contact_info": "Contact Info",
     "no_recipients": "No recipients configured."
+  },
+  "common": {
+    "delete": "Delete",
+    "cancel": "Cancel",
+    "active": "Active",
+    "inactive": "Inactive",
+    "error": "Error",
+    "processing": "Processing",
+    "submit": "Submit",
+    "enabled": "enabled",
+    "disabled": "disabled",
+    "status": "Status",
+    "actions": "Actions",
+    "enable": "Enable",
+    "disable": "Disable",
+    "edit": "Edit"
   }
 }

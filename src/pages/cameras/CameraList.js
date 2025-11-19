@@ -152,7 +152,9 @@ const CameraList = () => {
         <div className='fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4'>
           <div className='bg-[#2A2B36] rounded-xl p-6 max-w-md w-full border border-gray-700/50'>
             <div className='flex justify-between items-center mb-4'>
-              <h3 className='text-lg font-semibold'>Confirm Deletion</h3>
+              <h3 className='text-lg font-semibold'>
+                {t('cameraGrid.deletePopup.title')}
+              </h3>
               <button
                 onClick={handleDeleteCancel}
                 className='text-gray-400 hover:text-white transition-colors'
@@ -163,15 +165,12 @@ const CameraList = () => {
 
             <div className='mb-6'>
               <p className='text-gray-300'>
-                Are you sure you want to delete the camera{' '}
-                <span className='font-semibold text-white'>
-                  "{deletePopup.cameraName}"
-                </span>
-                ?
+                {t('cameraGrid.deletePopup.message', {
+                  cameraName: deletePopup.cameraName
+                })}
               </p>
               <p className='text-sm text-red-400 mt-2'>
-                This action cannot be undone and all associated ROI
-                configurations will be lost.
+                {t('cameraGrid.deletePopup.warning')}
               </p>
             </div>
 
@@ -180,14 +179,14 @@ const CameraList = () => {
                 onClick={handleDeleteCancel}
                 className='px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors'
               >
-                Cancel
+                {t('cameraGrid.deletePopup.cancelButton')}
               </button>
               <button
                 onClick={handleDeleteConfirm}
                 className='px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors flex items-center gap-2'
               >
                 <IoTrashOutline size={16} />
-                Delete Camera
+                {t('cameraGrid.deletePopup.deleteButton')}
               </button>
             </div>
           </div>
