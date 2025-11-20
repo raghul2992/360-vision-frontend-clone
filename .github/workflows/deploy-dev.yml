@@ -1,4 +1,4 @@
-name: Deploy FrontEnd - Dev Env
+name: Deploy FrontEnd - Dev
 
 on:
   push:
