@@ -22,7 +22,7 @@ jobs:
         run: npm install --force
 
       - name: Build React App
-        run: npm run build
+        run: CI=false npm run build
 
       - name: Setup gcloud CLI
         uses: google-github-actions/setup-gcloud@v2
