@@ -33,6 +33,10 @@ import {
 } from '../../features/cameras/roilistslice'
 import useImage from 'use-image'
 import { getCameraSnapshot } from '../../features/cameras/cameraApiSlice'
+import {
+  convertTimeSlotsLocalToUTC,
+  convertTimeSlotsUTCToLocal
+} from '../../utils/datehelper'
 
 const ROIConfiguration = () => {
   const { t } = useTranslation()
@@ -66,6 +70,13 @@ const ROIConfiguration = () => {
   const SNAPSHOT_URL = `${SNAPSHOT_DIR}/${snapshot}`
   const [snapshotUrl, setSnapshotUrl] = useState(SNAPSHOT_URL)
   const [image] = useImage(snapshotUrl)
+
+  /** @type {Record<string, string>} */
+  const dwellDescriptions = {
+    VEHICLE_DWELL_TIME: t('roi.dwellTimeSecondsDescription'),
+    CELLPHONE_DETECTION: t('roi.cellphoneDwellTimeDescription'),
+    SUSPICIOUS_LOITERING: t('roi.suspiciousLoiteringDescription')
+  }
 
   const [stageDimensions, setStageDimensions] = useState({
     width: 1100,
@@ -127,6 +138,8 @@ const ROIConfiguration = () => {
   const [queueDwellTimeSeconds, setQueueDwellTimeSeconds] = useState(8)
   const [dwellTimeSeconds, setDwellTimeSeconds] = useState(15)
   const [attendantAbsenceDwellTime, setAttendantAbsenceDwellTime] = useState(6)
+  const [targetedHourSlots, setTargetedHourSlots] = useState([])
+  const [newTimeSlot, setNewTimeSlot] = useState(['', ''])
 
   const searchParams = new URLSearchParams(location.search)
   const cameraIdFromUrl = searchParams.get('cameraId')
@@ -383,6 +396,8 @@ const ROIConfiguration = () => {
     const priorityToSend =
       alertPriorityMap[displayAlertPriority.toLowerCase()] || 'high' // Default to 'high' if not found
 
+    const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone
+
     const roiData = {
       name: roiName.trim(),
       frame_url: snapshot,
@@ -404,6 +419,28 @@ const ROIConfiguration = () => {
         if (detectionType === 'ATTENDANT_ABSENCE_ON_PUMP') {
           return {
             dwell_time_seconds: attendantAbsenceDwellTime
+          }
+        }
+        if (detectionType === 'CELLPHONE_DETECTION') {
+          return {
+            dwell_time_seconds: dwellTimeSeconds
+          }
+        }
+        if (detectionType === 'RESTRICTED_AREA_BREACH_DETECTION') {
+          return {
+            targeted_hour_slots: convertTimeSlotsLocalToUTC(
+              targetedHourSlots,
+              userTimeZone
+            )
+          }
+        }
+        if (detectionType === 'SUSPICIOUS_LOITERING') {
+          return {
+            dwell_time_seconds: dwellTimeSeconds,
+            targeted_hour_slots: convertTimeSlotsLocalToUTC(
+              targetedHourSlots,
+              userTimeZone
+            )
           }
         }
         return {}
@@ -584,8 +621,23 @@ const ROIConfiguration = () => {
       setAttendantAbsenceDwellTime(
         roi.detection_config?.dwell_time_seconds || 6
       )
-    } else {
-      // Default or other detection types, no specific config to load
+    } else if (roi.detection_type === 'CELLPHONE_DETECTION') {
+      setDwellTimeSeconds(roi.detection_config?.dwell_time_seconds || 15)
+    } else if (roi.detection_type === 'RESTRICTED_AREA_BREACH_DETECTION') {
+      const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone
+      const localTimeSlots = convertTimeSlotsUTCToLocal(
+        roi.detection_config?.targeted_hour_slots,
+        userTimeZone
+      )
+      setTargetedHourSlots(localTimeSlots || [])
+    } else if (roi.detection_type === 'SUSPICIOUS_LOITERING') {
+      setDwellTimeSeconds(roi.detection_config?.dwell_time_seconds || 15)
+      const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone
+      const localTimeSlots = convertTimeSlotsUTCToLocal(
+        roi.detection_config?.targeted_hour_slots,
+        userTimeZone
+      )
+      setTargetedHourSlots(localTimeSlots || [])
     }
 
     // Enable drawing mode for adding new polygons
@@ -621,6 +673,8 @@ const ROIConfiguration = () => {
     setQueueDwellTimeSeconds(8)
     setDwellTimeSeconds(15)
     setAttendantAbsenceDwellTime(6)
+    setTargetedHourSlots([])
+    setNewTimeSlot(['', ''])
     setCurrentRoiId(null)
   }
 
@@ -1068,6 +1122,15 @@ const ROIConfiguration = () => {
                   <option value='ATTENDANT_ABSENCE_ON_PUMP'>
                     {t('roi.attendantAbsenceOnPump')}
                   </option>
+                  <option value='CELLPHONE_DETECTION'>
+                    Cellphone Detection
+                  </option>
+                  <option value='RESTRICTED_AREA_BREACH_DETECTION'>
+                    Restricted Area Breach Detection
+                  </option>
+                  <option value='SUSPICIOUS_LOITERING'>
+                    Suspicious Loitering
+                  </option>
                 </select>
               </div>
               <div>
@@ -1095,7 +1158,13 @@ const ROIConfiguration = () => {
           {t('roi.detectionConfiguration')}
         </h2>
         <p className='text-sm text-gray-400 mb-6'>
-          {t('roi.detectionConfigurationDescription')}
+          {detectionType === 'CELLPHONE_DETECTION' &&
+            'Configure settings for cellphone detection.'}
+          {detectionType === 'SUSPICIOUS_LOITERING' &&
+            'Configure settings for suspicious loitering.'}
+          {detectionType !== 'CELLPHONE_DETECTION' &&
+            detectionType !== 'SUSPICIOUS_LOITERING' &&
+            t('roi.detectionConfigurationDescription')}
         </p>
         <div className='grid grid-cols-2 gap-x-12 gap-y-6'>
           {/* Vehicle Queue Detection Fields */}
@@ -1135,14 +1204,18 @@ const ROIConfiguration = () => {
           )}
 
           {/* Vehicle Dwell Time Fields */}
-          {detectionType === 'VEHICLE_DWELL_TIME' && (
+          {(detectionType === 'VEHICLE_DWELL_TIME' ||
+            detectionType === 'CELLPHONE_DETECTION' ||
+            detectionType === 'SUSPICIOUS_LOITERING') && (
             <div>
               <label className='block text-sm text-gray-400 mb-2'>
                 {t('roi.dwellTimeSeconds')}
               </label>
+
               <p className='text-xs text-gray-500 mb-2'>
-                {t('roi.dwellTimeSecondsDescription')}
+                {dwellDescriptions[detectionType]}
               </p>
+
               <input
                 type='number'
                 value={dwellTimeSeconds}
@@ -1169,6 +1242,70 @@ const ROIConfiguration = () => {
                 }
                 className='w-full bg-gray-700 border border-gray-600 rounded-lg py-2 px-4 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 transition-colors'
               />
+            </div>
+          )}
+          {/* Targeted Hour Slots */}
+          {(detectionType === 'RESTRICTED_AREA_BREACH_DETECTION' ||
+            detectionType === 'SUSPICIOUS_LOITERING') && (
+            <div>
+              <label className='block text-sm text-gray-400 mb-2'>
+                {t('roi.targetedHourSlots')}
+              </label>
+              <p className='text-xs text-gray-500 mb-2'>
+                {t('roi.defineTimeSlots')}
+              </p>
+              <div className='flex items-center gap-2 mb-2'>
+                <input
+                  type='time'
+                  value={newTimeSlot[0]}
+                  onChange={e =>
+                    setNewTimeSlot([e.target.value, newTimeSlot[1]])
+                  }
+                  className='w-full bg-gray-700 border border-gray-600 rounded-lg py-2 px-4 text-white time-input'
+                />
+                <span>to</span>
+                <input
+                  type='time'
+                  value={newTimeSlot[1]}
+                  onChange={e =>
+                    setNewTimeSlot([newTimeSlot[0], e.target.value])
+                  }
+                  className='w-full bg-gray-700 border border-gray-600 rounded-lg py-2 px-4 text-white time-input'
+                />
+                <button
+                  onClick={() => {
+                    if (newTimeSlot[0] && newTimeSlot[1]) {
+                      setTargetedHourSlots([...targetedHourSlots, newTimeSlot])
+                      setNewTimeSlot(['', ''])
+                    }
+                  }}
+                  className='bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg'
+                >
+                  Add
+                </button>
+              </div>
+              <div>
+                {targetedHourSlots.map((slot, index) => (
+                  <div
+                    key={index}
+                    className='flex items-center justify-between bg-gray-700 rounded-lg p-2 mt-2'
+                  >
+                    <span>
+                      {slot[0]} - {slot[1]}
+                    </span>
+                    <button
+                      onClick={() => {
+                        const newSlots = [...targetedHourSlots]
+                        newSlots.splice(index, 1)
+                        setTargetedHourSlots(newSlots)
+                      }}
+                      className='text-red-500 hover:text-red-700'
+                    >
+                      Remove
+                    </button>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
         </div>

@@ -37,3 +37,7 @@ body {
   background-color: #4a5070;
   /* hover:scrollbar-thumb-[#4a5070] */
 }
+
+.time-input::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+}

@@ -311,6 +311,8 @@
     "dwellTimeSeconds": "Tempo de Permanência (segundos)",
     "dwellTimeSecondsDescription": "Especifique a duração que um veículo deve permanecer parado para acionar um alerta de tempo de permanência. (ex., 15 segundos)",
     "attendantAbsenceDwellTimeDescription": "Defina o tempo máximo que um atendente pode estar ausente da área da bomba antes que um alerta seja acionado. (ex., 6 segundos)",
+    "cellphoneDwellTimeDescription": "O tempo mínimo que uma pessoa deve segurar/utilizar um telemóvel antes da deteção.",
+    "suspiciousLoiteringDescription": "O número de segundos que alguém deve permanecer na área para ser considerado como comportamento suspeito.",
     "notifications": "Notificações",
     "emailNotification": "Notificação por E-mail",
     "enableEmailAlerts": "Ativar Alertas por E-mail",
@@ -375,6 +377,7 @@
     "connected": "Conectado",
     "priority_placeholder": "Prioridade",
     "location_placeholder": "Localização",
+    "date_range": "Intervalo de Datas",
     "select_date_range": "Selecionar Intervalo de Datas",
     "latest_alerts": "Alertas",
     "error": "Erro",
@@ -402,6 +405,9 @@
   "dashboard": {
     "camera_health_overview": "Visão Geral da Saúde da Câmera",
     "select_location": "Selecionar Localização",
+    "location": "Localização",
+    "camera": "Câmera",
+    "select_location_first": "Selecione a localização primeiro",
     "active_good": "Ativo (Bom)",
     "inactive_concern": "Inativo (Preocupação)",
     "processing": "Processando",
@@ -409,7 +415,10 @@
     "select_camera": "Selecionar Câmera",
     "detection_type_breakdown": "Detalhamento do Tipo de Detecção",
     "alert_priority_breakdown": "Detalhamento da Prioridade de Alerta",
-    "total": "Total"
+    "total": "Total",
+    "analytics_overview": "Visão Geral da Análise",
+    "detection_analytics": "Análise de Detecção",
+    "priority_analytics": "Análise de Prioridade"
   },
   "date_locale": "pt",
   "date": {
