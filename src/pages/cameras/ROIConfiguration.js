@@ -135,9 +135,9 @@ const ROIConfiguration = () => {
 
   // New detection config states
   const [queueCountThreshold, setQueueCountThreshold] = useState(1)
-  const [queueDwellTimeSeconds, setQueueDwellTimeSeconds] = useState(8)
-  const [dwellTimeSeconds, setDwellTimeSeconds] = useState(15)
-  const [attendantAbsenceDwellTime, setAttendantAbsenceDwellTime] = useState(6)
+  const [queueDwellTimeSeconds, setQueueDwellTimeSeconds] = useState(120)
+  const [dwellTimeSeconds, setDwellTimeSeconds] = useState(120)
+  const [attendantAbsenceDwellTime, setAttendantAbsenceDwellTime] = useState(60)
   const [targetedHourSlots, setTargetedHourSlots] = useState([])
   const [newTimeSlot, setNewTimeSlot] = useState(['', ''])
 
@@ -361,6 +361,8 @@ const ROIConfiguration = () => {
     )
       .unwrap()
       .then(result => {
+        console.log(result.frame_url)
+
         setSnapshotUrl(`${SNAPSHOT_DIR}/${result.frame_url}`)
         toast.success('Frame retrieved successfully!')
       })
@@ -400,7 +402,7 @@ const ROIConfiguration = () => {
 
     const roiData = {
       name: roiName.trim(),
-      frame_url: snapshot,
+      frame_url: snapshotUrl,
       polygons: transformedPolygons,
       alert_priority: priorityToSend,
       detection_type: detectionType,
@@ -515,7 +517,7 @@ const ROIConfiguration = () => {
     setDisplayAlertPriority(t(`roi.${roi.alert_priority.toLowerCase()}`))
 
     // Set the snapshot URL from the ROI being edited
-    setSnapshotUrl(`${SNAPSHOT_DIR}/${roi.frame_url}`)
+    setSnapshotUrl(`${roi.frame_url}`)
 
     // Parse the polygons
     try {
@@ -1315,6 +1317,128 @@ const ROIConfiguration = () => {
       <div className='bg-[#30313F] rounded-lg p-6 mb-6'>
         <h2 className='text-xl font-bold mb-6'>{t('roi.notifications')}</h2>
         <div className='grid grid-cols-3 gap-6'>
+          {/* WhatsApp Notification */}
+          <div className='bg-gray-900 rounded-lg p-4 border border-gray-700'>
+            <div className='flex items-center justify-between mb-4'>
+              <div className='flex items-center gap-2'>
+                <IoLogoWhatsapp size={20} />
+                <span className='font-semibold'>
+                  {t('roi.whatsAppNotification')}
+                </span>
+              </div>
+              <label className='relative inline-flex items-center cursor-pointer'>
+                <input
+                  type='checkbox'
+                  checked={whatsappNotification}
+                  onChange={() =>
+                    setWhatsappNotification(!whatsappNotification)
+                  }
+                  className='sr-only peer'
+                />
+                <div className="w-11 h-6 bg-gray-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-500"></div>
+              </label>
+            </div>
+            <div>
+              <label className='block text-sm text-gray-400 mb-2'>
+                {t('roi.enableWhatsAppAlerts')}
+              </label>
+              <div className='flex flex-col gap-2'>
+                <input
+                  type='text'
+                  value={whatsappName}
+                  onChange={e => setWhatsappName(e.target.value)}
+                  placeholder={t('roi.enterName')}
+                  className='flex-1 bg-gray-700 border border-gray-600 rounded-lg py-2 px-3 text-white placeholder-gray-500 text-sm focus:outline-none focus:border-blue-500 transition-colors'
+                />
+                <div className='flex gap-2'>
+                  <input
+                    type='tel'
+                    value={whatsappNumber}
+                    onChange={e => {
+                      setWhatsappNumber(e.target.value)
+                      if (e.target.value.trim()) {
+                        setWhatsappNumberError('')
+                      }
+                    }}
+                    placeholder={t('roi.enterWhatsAppNumber')}
+                    className={`flex-1 bg-gray-700 border rounded-lg py-2 px-3 text-white placeholder-gray-500 text-sm focus:outline-none transition-colors ${
+                      whatsappNumberError
+                        ? 'border-red-500'
+                        : 'border-gray-600 focus:border-blue-500'
+                    }`}
+                  />
+                  <button
+                    onClick={() => {
+                      const phoneRegex = /^\+?[1-9]\d{1,14}$/ // E.164 format regex
+                      if (
+                        !whatsappNumber.trim() ||
+                        !phoneRegex.test(whatsappNumber.trim())
+                      ) {
+                        toast.error(t('roi.invalidPhoneNumberFormat'))
+                        setWhatsappNumberError(
+                          t('roi.invalidPhoneNumberFormat')
+                        )
+                        return
+                      }
+                      if (!whatsappName.trim()) {
+                        toast.error(t('roi.nameRequired'))
+                        return
+                      }
+                      if (
+                        whatsappRecipients.some(
+                          r => r.number === whatsappNumber.trim()
+                        )
+                      ) {
+                        toast.error(t('roi.phoneNumberAlreadyAdded'))
+                        return
+                      }
+
+                      setWhatsappRecipients([
+                        ...whatsappRecipients,
+                        {
+                          number: whatsappNumber.trim(),
+                          name: whatsappName.trim()
+                        }
+                      ])
+                      setWhatsappNumber('')
+                      setWhatsappName('')
+                      setWhatsappNumberError('')
+                    }}
+                    className='bg-[#3885CC] hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg transition-colors'
+                  >
+                    +
+                  </button>
+                </div>
+                {whatsappNumberError && (
+                  <p className='text-red-500 text-xs mt-1'>
+                    {whatsappNumberError}
+                  </p>
+                )}
+              </div>
+              <div className='mt-2 flex flex-wrap gap-2'>
+                {whatsappRecipients.map((recipient, idx) => (
+                  <span
+                    key={idx}
+                    className='bg-gray-600 text-white text-xs px-2 py-1 rounded-full flex items-center gap-1'
+                  >
+                    {recipient.name} ({recipient.number})
+                    <button
+                      onClick={() =>
+                        setWhatsappRecipients(
+                          whatsappRecipients.filter(
+                            r => r.number !== recipient.number
+                          )
+                        )
+                      }
+                      className='text-red-400 hover:text-red-600'
+                    >
+                      x
+                    </button>
+                  </span>
+                ))}
+              </div>
+            </div>
+          </div>
           {/* Email Notification */}
           <div className='bg-gray-900 rounded-lg p-4 border border-gray-700'>
             <div className='flex items-center justify-between mb-4'>
@@ -1503,129 +1627,6 @@ const ROIConfiguration = () => {
                       onClick={() =>
                         setCallRecipients(
                           callRecipients.filter(
-                            r => r.number !== recipient.number
-                          )
-                        )
-                      }
-                      className='text-red-400 hover:text-red-600'
-                    >
-                      x
-                    </button>
-                  </span>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* WhatsApp Notification */}
-          <div className='bg-gray-900 rounded-lg p-4 border border-gray-700'>
-            <div className='flex items-center justify-between mb-4'>
-              <div className='flex items-center gap-2'>
-                <IoLogoWhatsapp size={20} />
-                <span className='font-semibold'>
-                  {t('roi.whatsAppNotification')}
-                </span>
-              </div>
-              <label className='relative inline-flex items-center cursor-pointer'>
-                <input
-                  type='checkbox'
-                  checked={whatsappNotification}
-                  onChange={() =>
-                    setWhatsappNotification(!whatsappNotification)
-                  }
-                  className='sr-only peer'
-                />
-                <div className="w-11 h-6 bg-gray-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-500"></div>
-              </label>
-            </div>
-            <div>
-              <label className='block text-sm text-gray-400 mb-2'>
-                {t('roi.enableWhatsAppAlerts')}
-              </label>
-              <div className='flex flex-col gap-2'>
-                <input
-                  type='text'
-                  value={whatsappName}
-                  onChange={e => setWhatsappName(e.target.value)}
-                  placeholder={t('roi.enterName')}
-                  className='flex-1 bg-gray-700 border border-gray-600 rounded-lg py-2 px-3 text-white placeholder-gray-500 text-sm focus:outline-none focus:border-blue-500 transition-colors'
-                />
-                <div className='flex gap-2'>
-                  <input
-                    type='tel'
-                    value={whatsappNumber}
-                    onChange={e => {
-                      setWhatsappNumber(e.target.value)
-                      if (e.target.value.trim()) {
-                        setWhatsappNumberError('')
-                      }
-                    }}
-                    placeholder={t('roi.enterWhatsAppNumber')}
-                    className={`flex-1 bg-gray-700 border rounded-lg py-2 px-3 text-white placeholder-gray-500 text-sm focus:outline-none transition-colors ${
-                      whatsappNumberError
-                        ? 'border-red-500'
-                        : 'border-gray-600 focus:border-blue-500'
-                    }`}
-                  />
-                  <button
-                    onClick={() => {
-                      const phoneRegex = /^\+?[1-9]\d{1,14}$/ // E.164 format regex
-                      if (
-                        !whatsappNumber.trim() ||
-                        !phoneRegex.test(whatsappNumber.trim())
-                      ) {
-                        toast.error(t('roi.invalidPhoneNumberFormat'))
-                        setWhatsappNumberError(
-                          t('roi.invalidPhoneNumberFormat')
-                        )
-                        return
-                      }
-                      if (!whatsappName.trim()) {
-                        toast.error(t('roi.nameRequired'))
-                        return
-                      }
-                      if (
-                        whatsappRecipients.some(
-                          r => r.number === whatsappNumber.trim()
-                        )
-                      ) {
-                        toast.error(t('roi.phoneNumberAlreadyAdded'))
-                        return
-                      }
-
-                      setWhatsappRecipients([
-                        ...whatsappRecipients,
-                        {
-                          number: whatsappNumber.trim(),
-                          name: whatsappName.trim()
-                        }
-                      ])
-                      setWhatsappNumber('')
-                      setWhatsappName('')
-                      setWhatsappNumberError('')
-                    }}
-                    className='bg-[#3885CC] hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg transition-colors'
-                  >
-                    +
-                  </button>
-                </div>
-                {whatsappNumberError && (
-                  <p className='text-red-500 text-xs mt-1'>
-                    {whatsappNumberError}
-                  </p>
-                )}
-              </div>
-              <div className='mt-2 flex flex-wrap gap-2'>
-                {whatsappRecipients.map((recipient, idx) => (
-                  <span
-                    key={idx}
-                    className='bg-gray-600 text-white text-xs px-2 py-1 rounded-full flex items-center gap-1'
-                  >
-                    {recipient.name} ({recipient.number})
-                    <button
-                      onClick={() =>
-                        setWhatsappRecipients(
-                          whatsappRecipients.filter(
                             r => r.number !== recipient.number
                           )
                         )
