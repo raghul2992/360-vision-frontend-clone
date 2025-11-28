@@ -590,7 +590,7 @@ const AddCamera = () => {
           {/* RTSP URL */}
           <div>
             <label className='block text-white mb-2 text-sm font-medium'>
-              {t('cameraSetup.rtspUrlLabel')} *
+              {t('cameraSetup.rtspUrlLabel')}
             </label>
             <input
               type='text'

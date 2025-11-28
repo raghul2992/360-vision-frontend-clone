@@ -1135,13 +1135,13 @@ const ROIConfiguration = () => {
                     {t('roi.attendantAbsenceOnPump')}
                   </option>
                   <option value='CELLPHONE_DETECTION'>
-                    Cellphone Detection
+                    {t('roi.cellphoneDetection')}
                   </option>
                   <option value='RESTRICTED_AREA_BREACH_DETECTION'>
-                    Restricted Area Breach Detection
+                    {t('roi.restrictedAreaBreachDetection')}
                   </option>
                   <option value='SUSPICIOUS_LOITERING'>
-                    Suspicious Loitering
+                    {t('roi.suspiciousLoitering')}
                   </option>
                 </select>
               </div>

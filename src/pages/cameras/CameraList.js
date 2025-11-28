@@ -293,7 +293,7 @@ const CameraList = () => {
                 <div className='flex items-center gap-2 text-sm text-gray-400'>
                   <IoLocationOutline className='w-4 h-4' />
                   <span className='max-w-[50%]'>
-                    Location:{' '}
+                    {t('cameraGrid.locationLabel')}:{' '}
                     {locations.find(loc => loc.id === camera.location_id)
                       ?.name || 'N/A'}
                   </span>

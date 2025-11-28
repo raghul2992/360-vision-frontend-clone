@@ -34,7 +34,7 @@ const WIDGETS = [
     widget_name: 'alert_timeline',
     component: AlertTimelineWidget,
     titleKey: 'dashboard.alert_timeline',
-    description: 'View the alert timeline grouped by hour',
+    descriptionKey: 'dashboard.alert_timeline_desc',
     dataKey: 'alertTimeline',
     totalKey: 'totalAlerts'
   },
@@ -42,8 +42,7 @@ const WIDGETS = [
     widget_name: 'alert_type_breakdown',
     component: AlertTypeBreakdownWidget,
     titleKey: 'dashboard.alert_type_breakdown',
-    description:
-      'Get the breakdown of alerts by detection_type for a pie chart',
+    descriptionKey: 'dashboard.alert_type_breakdown_desc',
     dataKey: 'alertTypeBreakdown',
     totalKey: 'totalAlertTypeBreakdown'
   },
@@ -51,7 +50,7 @@ const WIDGETS = [
     widget_name: 'priority',
     component: DetectionChart,
     titleKey: 'dashboard.priority_analytics',
-    description: 'Monitor alert priorities to focus on critical events',
+    descriptionKey: 'dashboard.priority_desc',
     dataKey: 'priorityData',
     totalKey: 'totalAlerts',
     chartProps: { showPercentages: true }
@@ -60,7 +59,7 @@ const WIDGETS = [
     widget_name: 'top_problematic_rois',
     component: TopProblematicRoisWidget,
     titleKey: 'dashboard.top_problematic_rois',
-    description: 'Get the Top N most problematic ROIs based on alert count.',
+    descriptionKey: 'dashboard.top_problematic_rois_desc',
     dataKey: 'topProblematicRois'
   }
 ]
@@ -90,7 +89,9 @@ const AddWidgetModal = ({ widgets, onAddWidget, onClose }) => {
               onClick={() => onAddWidget(widget.widget_name)}
               className='bg-[#1a1d29] rounded-lg p-6 cursor-pointer hover:bg-[#393A4A] transition-colors border border-transparent hover:border-[#6366F1]'
             >
-              <p className='text-gray-400 text-sm'>{widget.description}</p>
+              <p className='text-gray-400 text-sm'>
+                {t(widget.descriptionKey)}
+              </p>
             </div>
           ))}
         </div>
@@ -891,13 +892,15 @@ export default function DashboardOverview () {
           </ResponsiveGridLayout>
         ) : (
           <div className='bg-[#2a2f45] rounded-xl p-12 text-center flex flex-col justify-center items-center'>
-            <p className='text-gray-400 text-lg mb-4'>No widgets added yet</p>
+            <p className='text-gray-400 text-lg mb-4'>
+              {t('dashboard.no_widgets_yet')}
+            </p>
             <button
               onClick={() => setIsModalOpen(true)}
               className='flex items-center gap-2 bg-[#3885CC] text-white font-semibold py-2.5 px-5 rounded-full transition-colors'
             >
               <FiPlus size={20} />
-              <span>Add Your First Widget</span>
+              <span>{t('dashboard.add_first_widget')}</span>
             </button>
           </div>
         )}

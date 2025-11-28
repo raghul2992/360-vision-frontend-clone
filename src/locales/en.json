@@ -78,7 +78,7 @@
     "locationLabel": "Location",
     "locationPlaceholder": "e.g., Select your location",
     "locationDescription": "Give your camera a descriptive name",
-    "rtspUrlLabel": "RTSP URL",
+    "rtspUrlLabel": "URL RTSP *",
     "rtspUrlPlaceholder": "rtsp://Camera-IP-address:port/Stream",
     "rtspUrlDescription": "Enter the RTSP URL provided by your camera manufacturer or system administrator.",
     "cameraTypeLabel": "Camera Type",
@@ -104,6 +104,7 @@
     "onlineButton": "On-line",
     "alertButton": "Alert",
     "offlineButton": "Off-line",
+    "locationLabel": "Location",
     "streamUrlLabel": "Stream URL",
     "editButton": "Edit",
     "roiButton": "ROI",
@@ -342,8 +343,8 @@
     "emailAlreadyAdded": "This email address is already added.",
     "invalidPhoneNumberFormat": "Invalid phone number format. Please use E.164 format (e.g., +1234567890).",
     "phoneNumberAlreadyAdded": "This phone number is already added.",
-    "targetedHourSlots": "Targeted Hour Slots",
-    "defineTimeSlots": "Define time slots for detection."
+    "targetedHourSlots": "Slots de Horário Alvo",
+    "defineTimeSlots": "Definir Slots de Tempo"
   },
   "alerts": {
     "title": "Alerts",
@@ -448,7 +449,12 @@
     "top_problematic_rois": "Top Problematic ROIs",
     "top_problematic_rois_desc": "Get the Top N most problematic ROIs based on alert count.",
     "no_data_available": "No data available",
-    "alerts": "Alerts"
+    "alerts": "Alerts",
+    "alert_timeline_desc": "View the alert timeline grouped by hour",
+    "alert_type_breakdown_desc": "Get the breakdown of alerts by detection_type for a pie chart",
+    "priority_desc": "Monitor alert priorities to focus on critical events",
+    "no_widgets_yet": "No widgets added yet",
+    "add_first_widget": "Add Your First Widget"
   },
   "date_locale": "en-US",
   "date": {
