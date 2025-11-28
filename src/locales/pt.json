@@ -78,7 +78,7 @@
     "locationLabel": "Localização",
     "locationPlaceholder": "ex., Selecione sua localização",
     "locationDescription": "Dê um nome descritivo à sua câmera",
-    "rtspUrlLabel": "URL RTSP",
+    "rtspUrlLabel": "URL RTSP *",
     "rtspUrlPlaceholder": "rtsp://endereço-IP-da-câmera:porta/Stream",
     "rtspUrlDescription": "Insira a URL RTSP fornecida pelo fabricante da sua câmera ou pelo administrador do sistema.",
     "cameraTypeLabel": "Tipo de Câmera",
@@ -104,7 +104,8 @@
     "onlineButton": "On-line",
     "alertButton": "Alerta",
     "offlineButton": "Off-line",
-    "streamUrlLabel": "URL do Stream",
+    "locationLabel": "Localização",
+    "streamUrlLabel": "URL de Transmissão",
     "editButton": "Editar",
     "roiButton": "ROI",
     "deleteButton": "Excluir",
@@ -340,7 +341,9 @@
     "nameRequired": "O nome é obrigatório.",
     "emailAlreadyAdded": "Este endereço de e-mail já foi adicionado.",
     "invalidPhoneNumberFormat": "Formato de número de telefone inválido. Use o formato E.164 (ex., +5511999999999).",
-    "phoneNumberAlreadyAdded": "Este número de telefone já foi adicionado."
+    "phoneNumberAlreadyAdded": "Este número de telefone já foi adicionado.",
+    "targetedHourSlots": "Slots de Horário Alvo",
+    "defineTimeSlots": "Definir Slots de Tempo"
   },
   "alerts": {
     "title": "Alertas",
@@ -371,8 +374,12 @@
     "high_priority": "Alta",
     "medium_priority": "Média",
     "low_priority": "Baixa",
+    "priority_high": "Prioridade Alta",
+    "priority_medium": "Prioridade Média",
+    "priority_low": "Prioridade Baixa",
     "read_status": "Lido",
     "unread_status": "Não Lido",
+    "information": "INFORMAÇÕES",
     "unit": "Unidade",
     "time": "Hora",
     "comments": "COMENTÁRIOS",
@@ -433,7 +440,12 @@
     "alert_timeline": "Linha do Tempo de Alerta",
     "alert_type_breakdown": "Detalhamento do Tipo de Alerta",
     "top_problematic_rois": "ROIs Mais Problemáticas",
-    "top_problematic_rois_desc": "Obtenha as N ROIs mais problemáticas com base na contagem de alertas."
+    "top_problematic_rois_desc": "Obtenha as N ROIs mais problemáticas com base na contagem de alertas.",
+    "alert_timeline_desc": "Ver a linha do tempo de alertas agrupados por hora",
+    "alert_type_breakdown_desc": "Obter a quebra de alertas por tipo de detecção para um gráfico de pizza",
+    "priority_desc": "Monitorar prioridades de alerta para focar em eventos críticos",
+    "no_widgets_yet": "Nenhum widget adicionado ainda",
+    "add_first_widget": "Adicione Seu Primeiro Widget"
   },
   "date_locale": "pt",
   "date": {

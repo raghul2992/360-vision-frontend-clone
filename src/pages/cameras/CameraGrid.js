@@ -273,7 +273,7 @@ const CameraGrid = () => {
                   {camera.name}
                 </h2>
                 <p className='text-sm text-gray-400 truncate'>
-                  Location:{' '}
+                  {t('cameraGrid.locationLabel')}:{' '}
                   {locations.find(
                     loc => loc.id?.toString() === camera.location_id?.toString()
                   )?.name || 'N/A'}
