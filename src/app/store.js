@@ -6,6 +6,7 @@ import cameraApiReducer from '../features/cameras/cameraApiSlice'
 import locationApiReducer from '../features/locations/locationApiSlice'
 import notificationReducer from '../features/notification/notificationSlice'
 import alertReducer from '../features/alert/alertSlice'
+import widgetApiReducer from '../features/widgets/widgetApiSlice'
 
 export const store = configureStore({
   reducer: {
@@ -14,7 +15,8 @@ export const store = configureStore({
     cameraApi: cameraApiReducer,
     locationApi: locationApiReducer,
     notifications: notificationReducer,
-    alerts: alertReducer
+    alerts: alertReducer,
+    widgetApi: widgetApiReducer
   }
 })
 

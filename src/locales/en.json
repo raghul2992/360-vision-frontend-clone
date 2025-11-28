@@ -263,7 +263,9 @@
     "notificationsHeader": "Notifications",
     "emailNotifications": "Email Notifications",
     "callNotifications": "Call Notifications",
-    "whatsappNotifications": "WhatsApp Notifications"
+    "whatsappNotifications": "WhatsApp Notifications",
+    "currentStatusLabel": "Current Status",
+    "statusControlLabel": "Set Status"
   },
   "success_display": {
     "title": "Send E-mail",
@@ -298,8 +300,12 @@
     "roiNamePlaceholder": "e.g., Camera 01 | Petrobras Gas Station - South Zone",
     "detectionType": "Detection Type",
     "vehicleQueueDetection": "Vehicle Queue Detection",
+    "personQueueDetection": "Person Queue Detection",
     "vehicleDwellTime": "Vehicle Dwell Time",
     "attendantAbsenceOnPump": "Attendant Absence On Pump",
+    "cellphoneDetection": "Cellphone Detection",
+    "restrictedAreaBreachDetection": "Restricted Area Breach Detection",
+    "suspiciousLoitering": "Suspicious Loitering",
     "alertPriority": "Alert Priority",
     "high": "High",
     "medium": "Medium",
@@ -401,8 +407,12 @@
     "camera_placeholder": "Camera",
     "messages": {
       "vehicle_queue_detection": "Queue detected by Camera {{camera}}.",
+      "person_queue_detection": "Person queue detected by Camera {{camera}}.",
       "vehicle_dwell_time": "Vehicle dwell time detected by Camera {{camera}}.",
-      "attendant_absence_on_pump": "Attendant absence detected by Camera {{camera}}."
+      "attendant_absence_on_pump": "Attendant absence detected by Camera {{camera}}.",
+      "restricted_area_breach_detection": "Restricted area breach detected by Camera {{camera}}.",
+      "cellphone_detection": "Cellphone usage detected by Camera {{camera}}.",
+      "suspicious_loitering": "Suspicious loitering detected by Camera {{camera}}."
     }
   },
   "statistics": {
@@ -428,7 +438,14 @@
     "total": "Total",
     "analytics_overview": "Analytics Overview",
     "detection_analytics": "Detection Analytics",
-    "priority_analytics": "Priority Analytics"
+    "priority_analytics": "Priority Analytics",
+    "add_widget": "Add Widget",
+    "alert_timeline": "Alert Timeline",
+    "alert_type_breakdown": "Alert Type Breakdown",
+    "top_problematic_rois": "Top Problematic ROIs",
+    "top_problematic_rois_desc": "Get the Top N most problematic ROIs based on alert count.",
+    "no_data_available": "No data available",
+    "alerts": "Alerts"
   },
   "date_locale": "en-US",
   "date": {
@@ -460,6 +477,7 @@
     "actions": "Actions",
     "enable": "Enable",
     "disable": "Disable",
-    "edit": "Edit"
+    "edit": "Edit",
+    "unknown": "Unknown"
   }
 }
