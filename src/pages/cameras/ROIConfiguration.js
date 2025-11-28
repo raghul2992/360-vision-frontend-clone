@@ -75,7 +75,8 @@ const ROIConfiguration = () => {
   const dwellDescriptions = {
     VEHICLE_DWELL_TIME: t('roi.dwellTimeSecondsDescription'),
     CELLPHONE_DETECTION: t('roi.cellphoneDwellTimeDescription'),
-    SUSPICIOUS_LOITERING: t('roi.suspiciousLoiteringDescription')
+    SUSPICIOUS_LOITERING: t('roi.suspiciousLoiteringDescription'),
+    PERSON_QUEUE_DETECTION: t('roi.queueDwellTimeSecondsDescription')
   }
 
   const [stageDimensions, setStageDimensions] = useState({
@@ -407,7 +408,10 @@ const ROIConfiguration = () => {
       alert_priority: priorityToSend,
       detection_type: detectionType,
       detection_config: (() => {
-        if (detectionType === 'VEHICLE_QUEUE_DETECTION') {
+        if (
+          detectionType === 'VEHICLE_QUEUE_DETECTION' ||
+          detectionType === 'PERSON_QUEUE_DETECTION'
+        ) {
           return {
             queue_count_threshold: queueCountThreshold,
             queue_dwell_time_seconds: queueDwellTimeSeconds
@@ -612,7 +616,10 @@ const ROIConfiguration = () => {
     )
 
     // Populate detection sensitivity states based on detection type
-    if (roi.detection_type === 'VEHICLE_QUEUE_DETECTION') {
+    if (
+      roi.detection_type === 'VEHICLE_QUEUE_DETECTION' ||
+      roi.detection_type === 'PERSON_QUEUE_DETECTION'
+    ) {
       setQueueCountThreshold(roi.detection_config?.queue_count_threshold || 1)
       setQueueDwellTimeSeconds(
         roi.detection_config?.queue_dwell_time_seconds || 8
@@ -672,7 +679,7 @@ const ROIConfiguration = () => {
     setWhatsappRecipients([])
     setWhatsappNumber('')
     setQueueCountThreshold(1)
-    setQueueDwellTimeSeconds(8)
+    setQueueDwellTimeSeconds(30)
     setDwellTimeSeconds(15)
     setAttendantAbsenceDwellTime(6)
     setTargetedHourSlots([])
@@ -1118,6 +1125,9 @@ const ROIConfiguration = () => {
                   <option value='VEHICLE_QUEUE_DETECTION'>
                     {t('roi.vehicleQueueDetection')}
                   </option>
+                  <option value='PERSON_QUEUE_DETECTION'>
+                    {t('roi.personQueueDetection')}
+                  </option>
                   <option value='VEHICLE_DWELL_TIME'>
                     {t('roi.vehicleDwellTime')}
                   </option>
@@ -1169,8 +1179,9 @@ const ROIConfiguration = () => {
             t('roi.detectionConfigurationDescription')}
         </p>
         <div className='grid grid-cols-2 gap-x-12 gap-y-6'>
-          {/* Vehicle Queue Detection Fields */}
-          {detectionType === 'VEHICLE_QUEUE_DETECTION' && (
+          {/* Vehicle/Person Queue Detection Fields */}
+          {(detectionType === 'VEHICLE_QUEUE_DETECTION' ||
+            detectionType === 'PERSON_QUEUE_DETECTION') && (
             <>
               <div>
                 <label className='block text-sm text-gray-400 mb-2'>

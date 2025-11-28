@@ -262,7 +262,9 @@
     "notificationsHeader": "Notificações",
     "emailNotifications": "Notificações por E-mail",
     "callNotifications": "Notificações por Chamada",
-    "whatsappNotifications": "Notificações por WhatsApp"
+    "whatsappNotifications": "Notificações por WhatsApp",
+    "currentStatusLabel": "Status Atual",
+    "statusControlLabel": "Definir Status"
   },
   "success_display": {
     "title": "Enviar E-mail",
@@ -296,8 +298,12 @@
     "roiNamePlaceholder": "ex., Câmera 01 | Posto Petrobras - Zona Sul",
     "detectionType": "Tipo de Detecção",
     "vehicleQueueDetection": "Detecção de Fila de Veículos",
+    "personQueueDetection": "Detecção de Fila de Pessoas",
     "vehicleDwellTime": "Tempo de Permanência do Veículo",
     "attendantAbsenceOnPump": "Ausência de Atendente na Bomba",
+    "cellphoneDetection": "Detecção de Telemóvel",
+    "restrictedAreaBreachDetection": "Detecção de Violação de Área Restrita",
+    "suspiciousLoitering": "Vadiagem Suspeita",
     "alertPriority": "Prioridade de Alerta",
     "high": "Alta",
     "medium": "Média",
@@ -391,8 +397,12 @@
     "confidence": "Confiança",
     "messages": {
       "vehicle_queue_detection": "Fila detectada pela Câmera {{camera}}.",
+      "person_queue_detection": "Fila de pessoas detectada pela Câmera {{camera}}.",
       "vehicle_dwell_time": "Tempo de permanência do veículo detectado pela Câmera {{camera}}.",
-      "attendant_absence_on_pump": "Ausência de atendente detectada pela Câmera {{camera}}."
+      "attendant_absence_on_pump": "Ausência de atendente detectada pela Câmera {{camera}}.",
+      "restricted_area_breach_detection": "Violação de área restrita detectada pela Câmera {{camera}}.",
+      "cellphone_detection": "Utilização de telemóvel detectada pela Câmera {{camera}}.",
+      "suspicious_loitering": "Vadiagem suspeita detectada pela Câmera {{camera}}."
     }
   },
   "statistics": {
@@ -418,7 +428,12 @@
     "total": "Total",
     "analytics_overview": "Visão Geral da Análise",
     "detection_analytics": "Análise de Detecção",
-    "priority_analytics": "Análise de Prioridade"
+    "priority_analytics": "Análise de Prioridade",
+    "add_widget": "Adicionar Widget",
+    "alert_timeline": "Linha do Tempo de Alerta",
+    "alert_type_breakdown": "Detalhamento do Tipo de Alerta",
+    "top_problematic_rois": "ROIs Mais Problemáticas",
+    "top_problematic_rois_desc": "Obtenha as N ROIs mais problemáticas com base na contagem de alertas."
   },
   "date_locale": "pt",
   "date": {
@@ -452,6 +467,7 @@
     "actions": "Ações",
     "enable": "Ativar",
     "disable": "Desativar",
-    "edit": "Editar"
+    "edit": "Editar",
+    "unknown": "Desconhecido"
   }
 }

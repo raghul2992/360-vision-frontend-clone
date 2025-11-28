@@ -2,12 +2,23 @@ import React, { useEffect } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 import { CardContent, Typography, Box, LinearProgress } from '@mui/material'
 import { useTranslation } from 'react-i18next'
+import format from 'date-fns/format'
+import FilterDropdown from '../../../component/FilterDropdown'
 import {
   fetchAlerts,
   fetchStatusCountAlerts
 } from '../../../features/alert/alertSlice'
 
-export default function AlertStatusOverview () {
+export default function AlertStatusOverview ({
+  locationOptions,
+  cameraOptions,
+  selectedLocation,
+  setSelectedLocation,
+  selectedCamera,
+  setSelectedCamera,
+  dateRange,
+  setDateRange
+}) {
   const dispatch = useDispatch()
   const { t } = useTranslation()
   const { statusCounts, isLoading, error, lastFetched } = useSelector(
@@ -18,15 +29,35 @@ export default function AlertStatusOverview () {
     const tenantId = localStorage.getItem('tenant_id')
     if (!tenantId) return
 
+    const [start, end] = dateRange || []
+    const isDateCleared =
+      !start ||
+      !end ||
+      !(start instanceof Date) ||
+      !(end instanceof Date) ||
+      isNaN(start) ||
+      isNaN(end)
+
+    const queryParams = {}
+
+    if (!isDateCleared) {
+      queryParams.created_after = format(start, "yyyy-MM-dd'T'00:00:00")
+      queryParams.created_before = format(end, "yyyy-MM-dd'T'23:59:59")
+    }
+
+    if (selectedLocation?.value)
+      queryParams.location_id = selectedLocation.value
+    if (selectedCamera?.value) queryParams.camera_id = selectedCamera.value
+
     dispatch(
       fetchStatusCountAlerts({
         tenantId,
-        queryParams: {}
+        queryParams
       })
     )
     console.log('1', statusCounts)
     console.log('check', isLoading, lastFetched)
-  }, [dispatch])
+  }, [dispatch, dateRange, selectedLocation, selectedCamera])
 
   const readCount = statusCounts.read
   const unreadCount = statusCounts.unread
@@ -56,9 +87,21 @@ export default function AlertStatusOverview () {
       className='border-[#FFF] border-[1px]'
     >
       <CardContent>
-        <Typography variant='h6' color='#E0E0E0' gutterBottom>
-          {t('alerts.alert_status')}
-        </Typography>
+        <div className='flex justify-between items-center mb-4'>
+          <Typography variant='h6' color='#E0E0E0'>
+            {t('alerts.alert_status')}
+          </Typography>
+          <FilterDropdown
+            locationOptions={locationOptions}
+            cameraOptions={cameraOptions}
+            selectedLocation={selectedLocation}
+            setSelectedLocation={setSelectedLocation}
+            selectedCamera={selectedCamera}
+            setSelectedCamera={setSelectedCamera}
+            dateRange={dateRange}
+            setDateRange={setDateRange}
+          />
+        </div>
 
         {triageData.map((item, index) => {
           const percentage =

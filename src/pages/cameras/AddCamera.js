@@ -13,8 +13,16 @@ import {
   IoCallOutline,
   IoChatbubbleOutline,
   IoEyeOffOutline,
-  IoChevronDown
+  IoChevronDown,
+  IoCheckmarkCircle,
+  IoCloseCircle,
+  IoAlertCircle,
+  IoSyncCircleOutline,
+  IoVideocamOutline,
+  IoWifiOutline,
+  IoBan
 } from 'react-icons/io5'
+import { FaCircleNotch } from 'react-icons/fa'
 import {
   createCamera,
   updateCamera,
@@ -73,6 +81,7 @@ const AddCamera = () => {
   const [cameraId, setCameraId] = useState(current_cameraId) // Store new camera ID
   const [isAddingRoi, setIsAddingRoi] = useState(false)
   const [cameraStatus, setCameraStatus] = useState('active') // Camera enable/disable state
+  const [cameraErrorMessage, setCameraErrorMessage] = useState(null)
 
   // Fetch locations on component mount
   useEffect(() => {
@@ -108,6 +117,7 @@ const AddCamera = () => {
         setUsername(cameraToEdit.username || '')
         setPassword(cameraToEdit.password || '')
         setCameraStatus(cameraToEdit.status || 'inactive') // Set camera status
+        setCameraErrorMessage(cameraToEdit.meta?.error_message || null) // Set potential error message
       } else {
         toast.error(t('addCamera.cameraNotFound'))
         navigate('/camera')
@@ -431,6 +441,61 @@ const AddCamera = () => {
       })
   }
 
+  // Utility function to determine status display details
+  const getStatusDisplay = status => {
+    switch (status) {
+      case 'active':
+        return {
+          icon: IoWifiOutline,
+          text: t('common.active'),
+          color: 'text-green-400'
+        }
+      case 'inactive':
+        return {
+          icon: IoBan,
+          text: t('common.inactive'),
+          color: 'text-gray-400'
+        }
+      case 'error':
+        return {
+          icon: IoCloseCircle,
+          text: t('common.error'),
+          color: 'text-red-400'
+        }
+      case 'processing':
+        return {
+          icon: FaCircleNotch,
+          text: t('common.processing'),
+          color: 'text-yellow-400 animate-spin'
+        }
+      default:
+        return {
+          icon: IoBan,
+          text: t('common.unknown'),
+          color: 'text-gray-400'
+        }
+    }
+  }
+
+  // Component to display the camera status
+  const CameraStatusDisplay = ({ status, errorMessage }) => {
+    const { icon: Icon, text, color } = getStatusDisplay(status)
+
+    return (
+      <div className='flex items-center gap-1'>
+        <Icon size={20} className={color} />
+        <div>
+          <span className={`text-sm font-medium ${color}`}>{text}</span>
+          {status === 'error' && errorMessage && (
+            <p className='text-xs text-red-400 mt-1 max-w-xs truncate'>
+              {t('common.error')}: {errorMessage}
+            </p>
+          )}
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className={`p-8 ${bgcolors.dark} text-white min-h-screen`}>
       {showConfirm && (
@@ -461,7 +526,8 @@ const AddCamera = () => {
       )}
       <div className='flex justify-between items-center mb-8'>
         <div>
-          <h1 className='text-3xl font-bold'>
+          <h1 className='text-3xl font-bold flex items-center gap-3'>
+            <IoVideocamOutline size={32} className='text-[#3885CC]' />
             {cameraId ? t('addCamera.editTitle') : t('addCamera.addTitle')}
           </h1>
           <p className='text-gray-400 mt-1'>
@@ -537,27 +603,41 @@ const AddCamera = () => {
             />
           </div>
 
-          {/* Camera Status Dropdown */}
+          {/* Camera Status Display and Control */}
           {cameraId && (
-            <div>
-              <label className='block text-white mb-2 text-sm font-medium'>
-                Camera Status
-              </label>
-              <div className='relative'>
-                <select
-                  className='w-full bg-[#3A3B47] border border-gray-600/50 rounded-lg py-2.5 px-4 pr-10 text-white focus:outline-none focus:border-gray-500 text-sm appearance-none cursor-pointer'
-                  value={cameraStatus}
-                  onChange={e => setCameraStatus(e.target.value)}
-                >
-                  <option value='active'>{t('common.active')}</option>
-                  <option value='inactive'>{t('common.inactive')}</option>
-                  <option value='error'>{t('common.error')}</option>
-                  <option value='processing'>{t('common.processing')}</option>
-                </select>
-                <IoChevronDown
-                  className='absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none'
-                  size={16}
-                />
+            <div className='flex flex-col'>
+              {/* Dropdown for setting overall Active/Inactive status */}
+              <div className=''>
+                <label className='block text-white mb-2 text-sm font-medium'>
+                  {t('addCamera.statusControlLabel')}
+                </label>
+                <div className='relative'>
+                  <select
+                    className='w-full bg-[#3A3B47] border border-gray-600/50 rounded-lg py-2.5 px-4 pr-10 text-white focus:outline-none focus:border-gray-500 text-sm appearance-none cursor-pointer'
+                    value={
+                      cameraStatus === 'active' || cameraStatus === 'processing'
+                        ? 'active'
+                        : 'inactive'
+                    }
+                    onChange={e =>
+                      // The camera status is simplified to active/inactive based on dropdown selection
+                      setCameraStatus(
+                        e.target.value === 'active' ? 'active' : 'inactive'
+                      )
+                    }
+                  >
+                    <option value='active'>
+                      {t('common.active')} ({t('common.enable')})
+                    </option>
+                    <option value='inactive'>
+                      {t('common.inactive')} ({t('common.disable')})
+                    </option>
+                  </select>
+                  <IoChevronDown
+                    className='absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none'
+                    size={16}
+                  />
+                </div>
               </div>
             </div>
           )}
@@ -636,9 +716,16 @@ const AddCamera = () => {
         <div className='mt-8 pt-6 border-t border-gray-700/50'>
           <div className='flex justify-between items-center'>
             <div>
-              <h3 className='text-lg font-semibold'>
-                {t('cameraSetup.connectionStatusTitle')}
-              </h3>
+              <div className='flex gap-2 items-center justify-center'>
+                <label className='block text-white text-sm font-medium'>
+                  {t('addCamera.currentStatusLabel')}
+                </label>
+                {/* Display Current Status (Active, Inactive, Error, Processing) */}
+                <CameraStatusDisplay
+                  status={cameraStatus}
+                  errorMessage={cameraErrorMessage}
+                />
+              </div>
               {testConnectionResult && (
                 <></>
                 // <p

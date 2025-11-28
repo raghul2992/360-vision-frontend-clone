@@ -1,0 +1,119 @@
+import React from 'react'
+import { useSelector } from 'react-redux'
+import { useTranslation } from 'react-i18next'
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  Cell
+} from 'recharts'
+import ListSkeletonLoader from '../../../component/ListSkeletonLoader'
+
+const TopProblematicRoisWidget = ({ isLoading: propIsLoading }) => {
+  const { t } = useTranslation()
+  const { topProblematicRois, error } = useSelector(state => state.widgetApi)
+  const isLoading = propIsLoading // external loading flag
+
+  // Prepare data
+  let chartData = []
+  if (topProblematicRois && topProblematicRois.length > 0) {
+    chartData = topProblematicRois.slice(0, 4).map(item => ({
+      name: item.roi_name,
+      AlertCount: item.alert_count
+    }))
+  }
+
+  const getRangeColor = value => {
+    if (value >= 0 && value <= 10) return '#10b981'
+    if (value > 10 && value <= 30) return '#f59e0b'
+    if (value > 30 && value <= 60) return '#3b82f6'
+    return '#ef4444'
+  }
+
+  // Label styles
+  const whiteTextStyle = {
+    fontSize: 12,
+    fill: 'white',
+    fontFamily: 'Roboto, sans-serif'
+  }
+
+  // Tooltip
+  const CustomTooltip = ({ active, payload, label }) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className='p-2 bg-[#333a52] border border-gray-600 rounded shadow-lg text-white text-xs'>
+          <p className='font-bold'>{label}</p>
+          <p className='mt-1'>
+            {t('dashboard.alerts')}: {payload[0].value}
+          </p>
+        </div>
+      )
+    }
+    return null
+  }
+
+  return (
+    <>
+      {isLoading && (
+        <div className='flex items-center justify-center h-full'>
+          <ListSkeletonLoader rows={4} height='h-8' />
+        </div>
+      )}
+
+      {error && (
+        <p className='text-red-500'>
+          {t('Error')}: {error}
+        </p>
+      )}
+
+      {!isLoading && !error && (
+        <>
+          {chartData.length === 0 ? (
+            <p className='mt-8 text-white'>
+              {t('dashboard.no_data_available')}
+            </p>
+          ) : (
+            <ResponsiveContainer width='100%' height='100%'>
+              <BarChart
+                data={chartData}
+                margin={{ top: 20, right: -30, left: -30, bottom: 5 }}
+                className='w-full'
+              >
+                <CartesianGrid strokeDasharray='3 3' stroke='#3f4664' />
+
+                <XAxis
+                  dataKey='name'
+                  tick={whiteTextStyle}
+                  stroke='white'
+                  height={30}
+                  interval={0}
+                  angle={-15}
+                  textAnchor='end'
+                />
+
+                <YAxis tick={whiteTextStyle} stroke='white' />
+
+                <Tooltip content={<CustomTooltip />} />
+
+                <Bar dataKey='AlertCount' name={t('dashboard.alerts')}>
+                  {chartData.map((entry, index) => (
+                    <Cell
+                      key={`cell-${index}`}
+                      fill={getRangeColor(entry.AlertCount)} // ⭐ APPLY RANGE COLOR
+                    />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          )}
+        </>
+      )}
+    </>
+  )
+}
+
+export default TopProblematicRoisWidget
