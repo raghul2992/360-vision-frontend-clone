@@ -6,7 +6,7 @@ on:
 
 jobs:
   build-deploy:
-    name: Build and Deploy to Dev
+    name: Build and Deploy to Prod
     runs-on: [self-hosted, linux]
     steps:
       - name: Checkout Code
@@ -41,6 +41,6 @@ jobs:
           project_id: ${{ secrets.GCP_PROJECT_ID_LIVE }}
           export_default_credentials: true
       
-      - name: Deploy to GCS (Dev)
+      - name: Deploy to GCS (Prod)
         run: gsutil -m rsync -R build/ gs://sst-frontend-prod
 
