@@ -8,7 +8,7 @@ import { formatDateTime } from '../../utils/datehelper'
 import CallPopup from '../../component/CallPopup'
 
 const AlertItem = ({ alert, tenantId }) => {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const dispatch = useDispatch()
 
   const [isExpanded, setIsExpanded] = useState(false)
@@ -86,7 +86,8 @@ const AlertItem = ({ alert, tenantId }) => {
     confidence_score,
     frame_clip,
     notes,
-    detection_type
+    detection_type,
+    enriched_message
   } = alert.meta || {}
 
   // -------------------------
@@ -268,11 +269,13 @@ const AlertItem = ({ alert, tenantId }) => {
           </div>
 
           <div>
-            <h3 className='text-gray-800 text-lg font-semibold mb-3'>
+            <h3 className='text-gray-800 text-lg font-semibold mb-2'>
               {t('alerts.comments')}:
             </h3>
             <p className='text-gray-600 leading-relaxed'>
-              {notes || t('alerts.default_comment')}
+              {(enriched_message && enriched_message[i18n.language]) ||
+                notes ||
+                t('alerts.default_comment')}
             </p>
           </div>
         </div>
