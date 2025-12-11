@@ -45,17 +45,40 @@
     "password_length": "Password must be at least 8 characters",
     "password_mismatch": "Passwords do not match"
   },
-  "reset_password": {
-    "title": "Reset Password",
-    "subtitle": "Enter your email to receive a password reset",
-    "reset_password_heading": "Reset Password",
+  "forgot_password": {
+    "title": "Forgot Password",
+    "subtitle": "Enter your email to receive a password reset link.",
     "email": "E-mail",
     "email_placeholder": "Enter your email",
     "send_reset_link": "Send Reset Link",
+    "sending_link": "Sending Link...",
+    "email_required": "Email is required",
+    "reset_link_sent": "Password reset link sent successfully! Please check your email.",
+    "reset_error": "Failed to send reset link. Please try again.",
+    "email_sent_info": "If an account with that email exists, we have sent a password reset link. Please check your email and follow the instructions.",
+    "back_to_login": "Back to Sign In",
+    "remember_password": "Remember your password?",
+    "sign_in_here": "Sign in here"
+  },
+  "reset_password": {
+    "title": "Reset Password",
+    "subtitle": "Enter your new password to reset your account.",
+    "reset_password_heading": "Set New Password",
+    "new_password": "New Password",
+    "new_password_placeholder": "Enter your new password",
+    "confirm_new_password": "Confirm New Password",
+    "confirm_new_password_placeholder": "Confirm your new password",
+    "reset_password_button": "Reset Password",
     "back_to_login": "Back to Sign In",
     "remember_password": "Remember your password?",
     "sign_in_here": "Sign in here",
-    "success_message": "If an account with that email exists, we have sent a password reset link."
+    "invalid_token": "Invalid or missing reset token.",
+    "all_fields_required": "All fields are required",
+    "password_mismatch": "Passwords do not match",
+    "password_length": "Password must be at least 8 characters",
+    "password_reset_success": "Password reset successfully! You can now log in with your new password.",
+    "reset_error": "Failed to reset password. Please try again.",
+    "success_message": "Your password has been reset successfully. You can now sign in with your new password."
   },
   "auth_page": {
     "welcome": "Welcome to SST",
@@ -266,7 +289,13 @@
     "callNotifications": "Call Notifications",
     "whatsappNotifications": "WhatsApp Notifications",
     "currentStatusLabel": "Current Status",
-    "statusControlLabel": "Set Status"
+    "statusControlLabel": "Set Status",
+    "addressLabel": "Address",
+    "addressPlaceholder": "Enter camera address",
+    "selectLocationOnMap": "Select Location on Map",
+    "selectedCoordinates": "Selected Coordinates",
+    "locationCoordinatesRequired": "Please select a location on the map.",
+    "addressRequired": "Please enter an address."
   },
   "success_display": {
     "title": "Send E-mail",
@@ -304,7 +333,7 @@
     "personQueueDetection": "Person Queue Detection",
     "vehicleDwellTime": "Vehicle Dwell Time",
     "attendantAbsenceOnPump": "Attendant Absence On Pump",
-    "cellphoneDetection": "Cellphone Detection",
+    "attendantCellphoneDetection": "Attendant Cellphone Detection",
     "restrictedAreaBreachDetection": "Restricted Area Breach Detection",
     "suspiciousLoitering": "Suspicious Loitering",
     "alertPriority": "Alert Priority",
@@ -344,7 +373,8 @@
     "invalidPhoneNumberFormat": "Invalid phone number format. Please use E.164 format (e.g., +1234567890).",
     "phoneNumberAlreadyAdded": "This phone number is already added.",
     "targetedHourSlots": "Slots de Horário Alvo",
-    "defineTimeSlots": "Definir Slots de Tempo"
+    "defineTimeSlots": "Definir Slots de Tempo",
+    "notificationsubtext": "Contacts will appear on your alert section under dashboard for quick reference only—no direct notifications will be sent."
   },
   "alerts": {
     "title": "Alerts",
@@ -415,8 +445,17 @@
       "vehicle_dwell_time": "Vehicle dwell time detected by Camera {{camera}}.",
       "attendant_absence_on_pump": "Attendant absence detected by Camera {{camera}}.",
       "restricted_area_breach_detection": "Restricted area breach detected by Camera {{camera}}.",
-      "cellphone_detection": "Cellphone usage detected by Camera {{camera}}.",
+      "attendant_cellphone_detection": "Cellphone usage detected by Camera {{camera}}.",
       "suspicious_loitering": "Suspicious loitering detected by Camera {{camera}}."
+    },
+    "detection_titles": {
+      "vehicle_queue_detection": "Vehicle Queue Detection",
+      "person_queue_detection": "Person Queue Detection",
+      "vehicle_dwell_time": "Vehicle Dwell Time",
+      "attendant_absence_on_pump": "Attendant Absence On Pump",
+      "restricted_area_breach_detection": "Restricted Area Breach Detection",
+      "attendant_cellphone_detection": "Attendant Cellphone Detection",
+      "suspicious_loitering": "Suspicious Loitering"
     }
   },
   "statistics": {
@@ -451,7 +490,7 @@
     "no_data_available": "No data available",
     "alerts": "Alerts",
     "alert_timeline_desc": "View the alert timeline grouped by hour",
-    "alert_type_breakdown_desc": "Get the breakdown of alerts by detection_type for a pie chart",
+    "alert_type_breakdown_desc": "Get the breakdown of alerts by detection type for a pie chart",
     "priority_desc": "Monitor alert priorities to focus on critical events",
     "no_widgets_yet": "No widgets added yet",
     "add_first_widget": "Add Your First Widget"
@@ -487,6 +526,60 @@
     "enable": "Enable",
     "disable": "Disable",
     "edit": "Edit",
-    "unknown": "Unknown"
+    "unknown": "Unknown",
+    "saving": "Saving..."
+  },
+  "location": {
+    "management": {
+      "title": "Location Management",
+      "description": "Manage all physical locations.",
+      "addLocationButton": "Add Location"
+    },
+    "map": {
+      "title": "Live Location Map",
+      "error": "Error loading maps",
+      "loading": "Map Loading..."
+    },
+    "loading": "Loading Location Management...",
+    "modal": {
+      "edit": "Edit Location",
+      "create": "Create New Location"
+    },
+    "form": {
+      "select_coordinates": "Select Coordinates",
+      "marker_color": "Marker Color",
+      "marker_icon": "Marker Icon",
+      "search_location": "Search Location (Updates All Fields)",
+      "search_placeholder": "Search address or place to locate on map",
+      "name": "Name",
+      "name_placeholder": "Enter location name",
+      "address": "Address",
+      "address_placeholder": "Enter address",
+      "latitude": "Latitude",
+      "longitude": "Longitude",
+      "timezone": "Timezone",
+      "timezone_placeholder": "Timezone (e.g., America/Sao_Paulo)"
+    },
+    "pin": {
+      "default": "Default Pin",
+      "store": "Store",
+      "gas_station": "Gas Station",
+      "office": "Office",
+      "factory": "Factory"
+    },
+    "action": {
+      "update": "Update Location",
+      "create": "Create Location"
+    },
+    "validation": {
+      "required_fields": "Please fill all required fields."
+    },
+    "update": {
+      "no_changes": "No changes to update.",
+      "success": "Location updated successfully!"
+    },
+    "create": {
+      "success": "Location created successfully!"
+    }
   }
 }

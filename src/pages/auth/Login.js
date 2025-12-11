@@ -26,20 +26,24 @@ const LoginPage = ({ callbackScreen }) => {
     i18n.changeLanguage(lng)
   }
 
-  useEffect(() => {
-    if (success) {
-      // toast.success()
-      navigate('/dashboard')
-      // navigate('/camera')
-    }
-    if (error) {
-      console.log(error)
-      toast.error(error)
-    }
-  }, [success, error, navigate, t])
+  // useEffect(() => {
+  //   if (success && localStorage.getItem('tenant_id')) {
+  //     // toast.success()
+  //     navigate('/dashboard')
+  //     // navigate('/camera')
+  //   }
+  //   if (error) {
+  //     console.log(error)
+  //     toast.error(error)
+  //   }
+  // }, [success, error, navigate, t])
 
-  const handleLogin = () => {
-    dispatch(loginUser({ email, password }))
+  const handleLogin = async () => {
+    const res = await dispatch(loginUser({ email, password }))
+    console.log(res.payload.status)
+    if (res.payload.status == 200) {
+      navigate('/dashboard')
+    }
   }
 
   return (
@@ -75,7 +79,7 @@ const LoginPage = ({ callbackScreen }) => {
         />
       </div>
       <div className='self-start p-1 mb-1 '>
-        <Link to={'/reset-password'}>
+        <Link to={'/forgot-password'}>
           <ButtonComponent
             children={t('login.forgot_password')}
             className={`${fontWeights.semibold}`}

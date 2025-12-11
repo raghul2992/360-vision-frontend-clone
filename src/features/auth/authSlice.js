@@ -89,14 +89,31 @@ export const logoutUser = createAsyncThunk(
 // Forgot password
 export const forgotPassword = createAsyncThunk(
   'auth/forgotPassword',
-  async ({ tenant_id, email }, { rejectWithValue }) => {
+  async ({ email, redirect_url }, { rejectWithValue }) => {
     try {
-      const response = await api.post(
-        `/api/v1/tenants/${tenant_id}/users/password/forgot`,
-        {
-          email
-        }
-      )
+      const response = await api.post(`/api/v1/password/forgot`, {
+        email,
+        redirect_url
+      })
+      return response
+    } catch (error) {
+      if (error.response && error.response.data?.message) {
+        return rejectWithValue(error.response.data.message)
+      }
+      return rejectWithValue(error.message)
+    }
+  }
+)
+
+// Reset password
+export const resetPassword = createAsyncThunk(
+  'auth/resetPassword',
+  async ({ token, new_password }, { rejectWithValue }) => {
+    try {
+      const response = await api.post(`/api/v1/password/reset`, {
+        token,
+        new_password
+      })
       return response
     } catch (error) {
       if (error.response && error.response.data?.message) {
@@ -211,6 +228,21 @@ const authSlice = createSlice({
       .addCase(forgotPassword.rejected, (state, action) => {
         state.isLoading = false
         state.error = action.payload
+      })
+      // Reset password cases
+      .addCase(resetPassword.pending, state => {
+        state.isLoading = true
+        state.error = null
+        state.success = false
+      })
+      .addCase(resetPassword.fulfilled, (state, action) => {
+        state.isLoading = false
+        state.success = true
+      })
+      .addCase(resetPassword.rejected, (state, action) => {
+        state.isLoading = false
+        state.error = action.payload
+        state.success = false
       })
   }
 })

@@ -80,13 +80,14 @@ const AddCamera = () => {
   const [isCameraSaved, setIsCameraSaved] = useState(false)
   const [cameraId, setCameraId] = useState(current_cameraId) // Store new camera ID
   const [isAddingRoi, setIsAddingRoi] = useState(false)
-  const [cameraStatus, setCameraStatus] = useState('active') // Camera enable/disable state
+  const [cameraStatus, setCameraStatus] = useState('inactive') // Camera enable/disable state
   const [cameraErrorMessage, setCameraErrorMessage] = useState(null)
 
   // Fetch locations on component mount
   useEffect(() => {
+    console.log('tenant id', tenantId)
     if (tenantId) {
-      dispatch(getLocations(tenantId))
+      dispatch(getLocations({ tenantId }))
     }
   }, [dispatch, tenantId])
 
@@ -196,6 +197,7 @@ const AddCamera = () => {
       camera_type: 'ip',
       status: cameraStatus, // Include camera status
       location_id: parseInt(location),
+      // location_id: 300,
       meta: {}
     }
 
@@ -219,6 +221,7 @@ const AddCamera = () => {
       dispatch(createCamera({ tenantId, cameraData }))
         .unwrap()
         .then(result => {
+          console.log(result)
           toast.success(t('addCamera.cameraAddSuccess'))
           setIsCameraSaved(true)
           console.log(result)
@@ -228,7 +231,8 @@ const AddCamera = () => {
           }
         })
         .catch(err => {
-          toast.error(err || t('addCamera.cameraAddFailed'))
+          console.log(err)
+          // toast.error(err || t('addCamera.cameraAddFailed'))
         })
     }
   }
@@ -258,6 +262,7 @@ const AddCamera = () => {
         console.log(err)
         setIsTestingConnection(false)
         setIsConnectionTested(false)
+        toast.error(err.message)
         // The error is now handled by the useEffect, but we still need to return false for the async flow
         return false
       })

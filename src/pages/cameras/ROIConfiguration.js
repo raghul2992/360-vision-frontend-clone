@@ -74,7 +74,7 @@ const ROIConfiguration = () => {
   /** @type {Record<string, string>} */
   const dwellDescriptions = {
     VEHICLE_DWELL_TIME: t('roi.dwellTimeSecondsDescription'),
-    CELLPHONE_DETECTION: t('roi.cellphoneDwellTimeDescription'),
+    ATTENDANT_CELLPHONE_DETECTION: t('roi.cellphoneDwellTimeDescription'),
     SUSPICIOUS_LOITERING: t('roi.suspiciousLoiteringDescription'),
     PERSON_QUEUE_DETECTION: t('roi.queueDwellTimeSecondsDescription')
   }
@@ -427,7 +427,7 @@ const ROIConfiguration = () => {
             dwell_time_seconds: attendantAbsenceDwellTime
           }
         }
-        if (detectionType === 'CELLPHONE_DETECTION') {
+        if (detectionType === 'ATTENDANT_CELLPHONE_DETECTION') {
           return {
             dwell_time_seconds: dwellTimeSeconds
           }
@@ -630,7 +630,7 @@ const ROIConfiguration = () => {
       setAttendantAbsenceDwellTime(
         roi.detection_config?.dwell_time_seconds || 6
       )
-    } else if (roi.detection_type === 'CELLPHONE_DETECTION') {
+    } else if (roi.detection_type === 'ATTENDANT_CELLPHONE_DETECTION') {
       setDwellTimeSeconds(roi.detection_config?.dwell_time_seconds || 15)
     } else if (roi.detection_type === 'RESTRICTED_AREA_BREACH_DETECTION') {
       const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone
@@ -1134,8 +1134,8 @@ const ROIConfiguration = () => {
                   <option value='ATTENDANT_ABSENCE_ON_PUMP'>
                     {t('roi.attendantAbsenceOnPump')}
                   </option>
-                  <option value='CELLPHONE_DETECTION'>
-                    {t('roi.cellphoneDetection')}
+                  <option value='ATTENDANT_CELLPHONE_DETECTION'>
+                    {t('roi.attendantCellphoneDetection')}
                   </option>
                   <option value='RESTRICTED_AREA_BREACH_DETECTION'>
                     {t('roi.restrictedAreaBreachDetection')}
@@ -1170,11 +1170,11 @@ const ROIConfiguration = () => {
           {t('roi.detectionConfiguration')}
         </h2>
         <p className='text-sm text-gray-400 mb-6'>
-          {detectionType === 'CELLPHONE_DETECTION' &&
+          {detectionType === 'ATTENDANT_CELLPHONE_DETECTION' &&
             'Configure settings for cellphone detection.'}
           {detectionType === 'SUSPICIOUS_LOITERING' &&
             'Configure settings for suspicious loitering.'}
-          {detectionType !== 'CELLPHONE_DETECTION' &&
+          {detectionType !== 'ATTENDANT_CELLPHONE_DETECTION' &&
             detectionType !== 'SUSPICIOUS_LOITERING' &&
             t('roi.detectionConfigurationDescription')}
         </p>
@@ -1218,7 +1218,7 @@ const ROIConfiguration = () => {
 
           {/* Vehicle Dwell Time Fields */}
           {(detectionType === 'VEHICLE_DWELL_TIME' ||
-            detectionType === 'CELLPHONE_DETECTION' ||
+            detectionType === 'ATTENDANT_CELLPHONE_DETECTION' ||
             detectionType === 'SUSPICIOUS_LOITERING') && (
             <div>
               <label className='block text-sm text-gray-400 mb-2'>
@@ -1326,7 +1326,10 @@ const ROIConfiguration = () => {
 
       {/* Notifications Section */}
       <div className='bg-[#30313F] rounded-lg p-6 mb-6'>
-        <h2 className='text-xl font-bold mb-6'>{t('roi.notifications')}</h2>
+        <h2 className='text-xl font-bold mb-1'>{t('roi.notifications')}</h2>
+        <p className='text-xs text-gray-500 leading-relaxed mb-2'>
+          {t('roi.notificationsubtext')}
+        </p>
         <div className='grid grid-cols-3 gap-6'>
           {/* WhatsApp Notification */}
           <div className='bg-gray-900 rounded-lg p-4 border border-gray-700'>
