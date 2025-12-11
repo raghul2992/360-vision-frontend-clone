@@ -522,6 +522,19 @@
       "description": "Gerencie todas as localizações físicas.",
       "addLocationButton": "Adicionar Localização"
     },
+    "list": {
+      "title": "Lista de Localizações",
+      "name": "Nome da Localização",
+      "status": "Status",
+      "actions": "Ações",
+      "loading": "Carregando localizações...",
+      "noData": "Nenhuma localização encontrada. Clique em \"Adicionar Localização\"."
+    },
+    "delete": {
+      "title": "Excluir {{name}}",
+      "message": "Tem certeza de que deseja excluir permanentemente \"{{name}}\"?",
+      "confirm": "Confirmar Exclusão"
+    },
     "map": {
       "title": "Mapa de Localização em Tempo Real",
       "error": "Erro ao carregar mapas",

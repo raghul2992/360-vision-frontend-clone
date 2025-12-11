@@ -190,6 +190,16 @@ export default function DashboardOverview () {
     return {}
   }
 
+  // Function to refresh tenant data
+  const refreshTenantData = useCallback(() => {
+    const tenantId = localStorage.getItem('tenant_id')
+    if (tenantId) {
+      // Reset the ref to allow new API call
+      hasRequestedTenant.current = false
+      dispatch(getTenant({ tenant_id: tenantId, skip: 0, limit: 100 }))
+    }
+  }, [dispatch])
+
   // Fetch tenant data on mount (GET only once)
   useEffect(() => {
     const tenantId = localStorage.getItem('tenant_id')
@@ -268,9 +278,13 @@ export default function DashboardOverview () {
 
       dispatch(updateWidgetLayout({ tenantId, layout: apiLayout }))
         .unwrap()
+        .then(() => {
+          // Refresh tenant data after successful layout update
+          refreshTenantData()
+        })
         .catch(error => console.error('Failed to save layout:', error))
     },
-    [dispatch, hasInitialized]
+    [dispatch, hasInitialized, refreshTenantData]
   )
 
   // Add widget
@@ -300,6 +314,7 @@ export default function DashboardOverview () {
     setLayout(newLayout)
     setActiveWidgets([...activeWidgets, newWidget])
 
+    // Immediately save layout to API
     saveLayoutToApi(newLayout)
     setIsModalOpen(false)
   }
@@ -314,6 +329,7 @@ export default function DashboardOverview () {
     setLayout(newLayout)
     setActiveWidgets(newActiveWidgets)
 
+    // Immediately save layout to API
     saveLayoutToApi(newLayout)
   }
 

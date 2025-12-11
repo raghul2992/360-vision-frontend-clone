@@ -7,6 +7,7 @@ import AddCamera from './pages/cameras/AddCamera'
 import ROIConfiguration from './pages/cameras/ROIConfiguration'
 // import CameraList from './pages/cameras/CameraList'
 import CameraPage from './pages/cameras/CameraPage'
+import LocationManagementPage from './pages/locations/LocationManagementPage'
 import DashboardHome from './pages/dashboardhome/DashboardHome'
 
 export const routes = [
@@ -28,6 +29,10 @@ export const routes = [
       {
         path: '/dashboard',
         element: <DashboardHome />
+      },
+      {
+        path: '/location',
+        element: <LocationManagementPage />
       },
       {
         path: '/camera',

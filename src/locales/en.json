@@ -535,6 +535,19 @@
       "description": "Manage all physical locations.",
       "addLocationButton": "Add Location"
     },
+    "list": {
+      "title": "Location List",
+      "name": "Location Name",
+      "status": "Status",
+      "actions": "Actions",
+      "loading": "Loading locations...",
+      "noData": "No locations found. Click \"Add Location\"."
+    },
+    "delete": {
+      "title": "Delete {{name}}",
+      "message": "Are you sure you want to permanently delete \"{{name}}\"?",
+      "confirm": "Confirm Deletion"
+    },
     "map": {
       "title": "Live Location Map",
       "error": "Error loading maps",
