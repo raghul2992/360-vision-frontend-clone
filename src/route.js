@@ -1,5 +1,6 @@
 import AuthPage from './pages/auth'
 import ResetPasswordPage from './pages/auth/reset-password'
+import ForgotPasswordPage from './pages/auth/ForgotPassword'
 import Dashboard from './pages/dashboard'
 // import CameraGrid from './pages/cameras/CameraGrid'
 import AddCamera from './pages/cameras/AddCamera'
@@ -16,6 +17,10 @@ export const routes = [
   {
     path: '/reset-password',
     element: <ResetPasswordPage />
+  },
+  {
+    path: '/forgot-password',
+    element: <ForgotPasswordPage />
   },
   {
     element: <Dashboard />,

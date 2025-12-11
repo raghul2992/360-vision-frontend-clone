@@ -45,17 +45,40 @@
     "password_length": "A senha deve ter pelo menos 8 caracteres",
     "password_mismatch": "As senhas não coincidem"
   },
-  "reset_password": {
-    "title": "Redefinir Senha",
-    "subtitle": "Digite seu e-mail para receber uma redefinição de senha",
-    "reset_password_heading": "Redefinir Senha",
+  "forgot_password": {
+    "title": "Esqueceu a Senha",
+    "subtitle": "Digite seu e-mail para receber um link de redefinição de senha.",
     "email": "E-mail",
     "email_placeholder": "Digite seu e-mail",
     "send_reset_link": "Enviar Link de Redefinição",
+    "sending_link": "Enviando Link...",
+    "email_required": "E-mail é obrigatório",
+    "reset_link_sent": "Link de redefinição de senha enviado com sucesso! Por favor, verifique seu e-mail.",
+    "reset_error": "Falha ao enviar link de redefinição. Por favor, tente novamente.",
+    "email_sent_info": "Se uma conta com esse e-mail existir, enviamos um link de redefinição de senha. Por favor, verifique seu e-mail e siga as instruções.",
+    "back_to_login": "Voltar para Entrar",
+    "remember_password": "Lembra sua senha?",
+    "sign_in_here": "Entre aqui"
+  },
+  "reset_password": {
+    "title": "Redefinir Senha",
+    "subtitle": "Insira sua nova senha para redefinir sua conta.",
+    "reset_password_heading": "Definir Nova Senha",
+    "new_password": "Nova Senha",
+    "new_password_placeholder": "Digite sua nova senha",
+    "confirm_new_password": "Confirmar Nova Senha",
+    "confirm_new_password_placeholder": "Confirme sua nova senha",
+    "reset_password_button": "Redefinir Senha",
     "back_to_login": "Voltar para Entrar",
     "remember_password": "Lembra sua senha?",
     "sign_in_here": "Entre aqui",
-    "success_message": "Se existir uma conta com esse e-mail, enviamos um link para redefinição de senha."
+    "invalid_token": "Token de redefinição inválido ou ausente.",
+    "all_fields_required": "Todos os campos são obrigatórios",
+    "password_mismatch": "As senhas não coincidem",
+    "password_length": "A senha deve ter pelo menos 8 caracteres",
+    "password_reset_success": "Senha redefinida com sucesso! Agora você pode fazer login com sua nova senha.",
+    "reset_error": "Falha ao redefinir senha. Por favor, tente novamente.",
+    "success_message": "Sua senha foi redefinida com sucesso. Agora você pode entrar com sua nova senha."
   },
   "auth_page": {
     "welcome": "Bem-vindo à SST",
@@ -302,9 +325,9 @@
     "personQueueDetection": "Detecção de Fila de Pessoas",
     "vehicleDwellTime": "Tempo de Permanência do Veículo",
     "attendantAbsenceOnPump": "Ausência de Atendente na Bomba",
-    "cellphoneDetection": "Detecção de Telemóvel",
+    "attendantCellphoneDetection": "Deteccao de uso do celular",
     "restrictedAreaBreachDetection": "Detecção de Violação de Área Restrita",
-    "suspiciousLoitering": "Vadiagem Suspeita",
+    "suspiciousLoitering": "Atividade Suspeita",
     "alertPriority": "Prioridade de Alerta",
     "high": "Alta",
     "medium": "Média",
@@ -343,7 +366,8 @@
     "invalidPhoneNumberFormat": "Formato de número de telefone inválido. Use o formato E.164 (ex., +5511999999999).",
     "phoneNumberAlreadyAdded": "Este número de telefone já foi adicionado.",
     "targetedHourSlots": "Slots de Horário Alvo",
-    "defineTimeSlots": "Definir Slots de Tempo"
+    "defineTimeSlots": "Definir Slots de Tempo",
+    "notificationsubtext": "Os contatos aparecerão na sua seção de alertas no painel de controle apenas para referência rápida — nenhuma notificação direta será enviada."
   },
   "alerts": {
     "title": "Alertas",
@@ -408,8 +432,17 @@
       "vehicle_dwell_time": "Tempo de permanência do veículo detectado pela Câmera {{camera}}.",
       "attendant_absence_on_pump": "Ausência de atendente detectada pela Câmera {{camera}}.",
       "restricted_area_breach_detection": "Violação de área restrita detectada pela Câmera {{camera}}.",
-      "cellphone_detection": "Utilização de telemóvel detectada pela Câmera {{camera}}.",
+      "attendant_cellphone_detection": "Utilização de telemóvel detectada pela Câmera {{camera}}.",
       "suspicious_loitering": "Vadiagem suspeita detectada pela Câmera {{camera}}."
+    },
+    "detection_titles": {
+      "vehicle_queue_detection": "Detecção de Fila de Veículos",
+      "person_queue_detection": "Detecção de Fila de Pessoas",
+      "vehicle_dwell_time": "Tempo de Permanência do Veículo",
+      "attendant_absence_on_pump": "Ausência de Atendente na Bomba",
+      "restricted_area_breach_detection": "Detecção de Violação de Área Restrita",
+      "attendant_cellphone_detection": "Detecção de celular do atendente",
+      "suspicious_loitering": "Atividade Suspeita"
     }
   },
   "statistics": {
@@ -420,15 +453,15 @@
     "total_alerts": "Total de Alertas"
   },
   "dashboard": {
-    "camera_health_overview": "Visão Geral da Saúde da Câmera",
+    "camera_health_overview": "Status Câmeras",
     "select_location": "Selecionar Localização",
     "location": "Localização",
     "camera": "Câmera",
     "select_location_first": "Selecione a localização primeiro",
-    "active_good": "Ativo (Bom)",
-    "inactive_concern": "Inativo (Preocupação)",
+    "active_good": "Ativo",
+    "inactive_concern": "Inativo",
     "processing": "Processando",
-    "error_critical": "Erro (Crítico)",
+    "error_critical": "Erro",
     "select_camera": "Selecionar Câmera",
     "detection_type_breakdown": "Detalhamento do Tipo de Detecção",
     "alert_priority_breakdown": "Detalhamento da Prioridade de Alerta",
@@ -480,6 +513,60 @@
     "enable": "Ativar",
     "disable": "Desativar",
     "edit": "Editar",
-    "unknown": "Desconhecido"
+    "unknown": "Desconhecido",
+    "saving": "Salvando..."
+  },
+  "location": {
+    "management": {
+      "title": "Gerenciamento de Localização",
+      "description": "Gerencie todas as localizações físicas.",
+      "addLocationButton": "Adicionar Localização"
+    },
+    "map": {
+      "title": "Mapa de Localização em Tempo Real",
+      "error": "Erro ao carregar mapas",
+      "loading": "Carregando Mapa..."
+    },
+    "loading": "Carregando Gerenciamento de Localização...",
+    "modal": {
+      "edit": "Editar Localização",
+      "create": "Criar Nova Localização"
+    },
+    "form": {
+      "select_coordinates": "Selecionar Coordenadas",
+      "marker_color": "Cor do Marcador",
+      "marker_icon": "Ícone do Marcador",
+      "search_location": "Pesquisar Localização (Atualiza Todos os Campos)",
+      "search_placeholder": "Pesquisar endereço ou local para localizar no mapa",
+      "name": "Nome",
+      "name_placeholder": "Insira o nome da localização",
+      "address": "Endereço",
+      "address_placeholder": "Insira o endereço",
+      "latitude": "Latitude",
+      "longitude": "Longitude",
+      "timezone": "Fuso Horário",
+      "timezone_placeholder": "Fuso Horário (ex.: America/Sao_Paulo)"
+    },
+    "pin": {
+      "default": "Pino Padrão",
+      "store": "Loja",
+      "gas_station": "Posto de Gasolina",
+      "office": "Escritório",
+      "factory": "Fábrica"
+    },
+    "action": {
+      "update": "Atualizar Localização",
+      "create": "Criar Localização"
+    },
+    "validation": {
+      "required_fields": "Por favor, preencha todos os campos obrigatórios."
+    },
+    "update": {
+      "no_changes": "Nenhuma alteração para atualizar.",
+      "success": "Localização atualizada com sucesso!"
+    },
+    "create": {
+      "success": "Localização criada com sucesso!"
+    }
   }
 }

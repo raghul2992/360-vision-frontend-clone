@@ -53,10 +53,12 @@ export const createCamera = createAsyncThunk(
         `/api/v1/tenants/${tenantId}/cameras/`,
         cameraData
       )
+      console.log(response)
       return response.data || response.data
     } catch (error) {
+      console.log(error)
       return rejectWithValue(
-        error.response?.data?.messages || 'Failed to create camera'
+        error.response?.data?.message || 'Failed to create camera'
       )
     }
   }

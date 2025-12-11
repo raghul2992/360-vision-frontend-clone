@@ -93,9 +93,12 @@ const AlertItem = ({ alert, tenantId }) => {
   // -------------------------
   // REMOVE UNDERSCORE + CAPITALIZE
   // -------------------------
-  const formattedTitle = (detection_type || alert.title)
-    ?.replace(/_/g, ' ')
-    ?.replace(/\b\w/g, char => char.toUpperCase())
+  const formattedTitle = t(
+    `alerts.detection_titles.${(detection_type || alert.title)?.toLowerCase()}`,
+    (detection_type || alert.title)
+      ?.replace(/_/g, ' ')
+      ?.replace(/\b\w/g, char => char.toUpperCase())
+  )
 
   // -------------------------
   // DYNAMIC MESSAGE
