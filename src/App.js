@@ -121,7 +121,8 @@ function MainApp () {
     '/dashboard',
     '/camera',
     '/add-camera',
-    '/roi-configuration'
+    '/roi-configuration',
+    '/location'
   ]
   const hideFloatingButton = dashboardPaths.some(path =>
     location.pathname.startsWith(path)

@@ -1,22 +1,23 @@
 import React, { useState } from 'react'
 import { IoChevronDown } from 'react-icons/io5'
+import { useNavigate } from 'react-router-dom'
 
-const CreatableSelect = ({
+const CreateTableSelect = ({
   options = [],
   value,
   onChange,
-  onCreate,
   placeholder,
   disabled
 }) => {
-  // ✅ Normalize options in case API wraps data
+  const navigate = useNavigate()
+
+  // Normalize options from API
   const normalizedOptions = Array.isArray(options)
     ? options
     : Array.isArray(options?.data)
     ? options.data
     : []
 
-  // ✅ Filter out invalid or empty objects
   const validOptions = normalizedOptions.filter(
     opt => opt && typeof opt === 'object' && 'id' in opt && 'name' in opt
   )
@@ -29,12 +30,9 @@ const CreatableSelect = ({
     setIsOpen(false)
   }
 
-  const handleCreate = () => {
-    if (inputValue.trim() !== '') {
-      onCreate?.(inputValue)
-      setInputValue('')
-      setIsOpen(false)
-    }
+  const handleCreateLocation = () => {
+    setIsOpen(false)
+    navigate('/location')
   }
 
   const filteredOptions = validOptions.filter(option =>
@@ -49,9 +47,7 @@ const CreatableSelect = ({
         }`}
         onClick={() => !disabled && setIsOpen(!isOpen)}
       >
-        {value
-          ? validOptions.find(op => op.id === value)?.name
-          : placeholder}
+        {value ? validOptions.find(op => op.id === value)?.name : placeholder}
         <IoChevronDown
           className='absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none'
           size={16}
@@ -64,9 +60,10 @@ const CreatableSelect = ({
             <input
               type='text'
               className='w-full bg-[#2A2B36] border border-gray-600/50 rounded-lg py-2 px-3 text-white placeholder-gray-500 focus:outline-none focus:border-gray-500 text-sm'
-              placeholder='Type to search or create...'
+              placeholder='Type to search...'
               value={inputValue}
               onChange={e => setInputValue(e.target.value)}
+              onClick={e => e.stopPropagation()}
             />
           </div>
 
@@ -74,7 +71,7 @@ const CreatableSelect = ({
             {filteredOptions.length > 0 ? (
               filteredOptions.map(option => (
                 <li
-                  key={option.id ?? option.name} // ✅ fallback if id missing
+                  key={option.id ?? option.name}
                   className='px-3 py-2 text-white cursor-pointer hover:bg-[#2A2B36]'
                   onClick={() => handleSelect(option.id)}
                 >
@@ -88,12 +85,20 @@ const CreatableSelect = ({
             )}
           </ul>
 
-          <div className='p-2 border-t border-gray-600/50'>
+          {/* --- Separator --- */}
+          <div className='flex items-center justify-center gap-3 text-gray-400 text-sm my-2 px-3'>
+            <span className='flex-1 border-t border-gray-600/50'></span>
+            <span>or</span>
+            <span className='flex-1 border-t border-gray-600/50'></span>
+          </div>
+
+          {/* --- Navigate to /location using useNavigate --- */}
+          <div className='p-2 pt-0'>
             <button
-              className='w-full bg-[#3885CC] hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg'
-              onClick={handleCreate}
+              onClick={handleCreateLocation}
+              className='w-full text-center bg-[#3885CC] hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg transition-colors'
             >
-              Create
+              Create a location
             </button>
           </div>
         </div>
@@ -102,4 +107,4 @@ const CreatableSelect = ({
   )
 }
 
-export default CreatableSelect
+export default CreateTableSelect

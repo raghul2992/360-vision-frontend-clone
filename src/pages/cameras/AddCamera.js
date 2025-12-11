@@ -42,6 +42,7 @@ import {
 import { toast } from 'react-toastify'
 import CreatableSelect from '../../component/CreatableSelect'
 import 'react-toastify/dist/ReactToastify.css'
+import CreateTableSelect from '../../component/CreatableSelect'
 
 const AddCamera = () => {
   const { t } = useTranslation()
@@ -577,7 +578,7 @@ const AddCamera = () => {
               {t('cameraSetup.locationLabel')} *
             </label>
             <div className='relative'>
-              <CreatableSelect
+              <CreateTableSelect
                 options={locations}
                 value={location}
                 onChange={e => setLocation(e.target.value)}
