@@ -57,13 +57,23 @@ const LocationList = ({ isMapLoaded }) => {
     setLocationToDelete(null)
   }
 
-  const handleConfirmDelete = () => {
+  const handleConfirmDelete = async () => {
     if (tenantId && locationToDelete) {
-      dispatch(deleteLocation({ tenantId, locationId: locationToDelete.id }))
+      const res = await dispatch(
+        deleteLocation({ tenantId, locationId: locationToDelete.id })
+      )
+
+      if (res?.payload?.data?.message) {
+        toast.success(t('location.delete.delete_message'))
+      }
+
+      dispatch(getLocations({ tenantId }))
+
       handleCloseConfirm()
     }
   }
 
+  // ⬇⬇⬇ STATUS CHANGE FUNCTION (already exists)
   const handleStatusChange = async (location, newStatus) => {
     try {
       await dispatch(
@@ -75,30 +85,41 @@ const LocationList = ({ isMapLoaded }) => {
       ).unwrap()
 
       toast.success(t('location.update.success'))
-      dispatch(getLocations(tenantId))
+      dispatch(getLocations({ tenantId }))
     } catch (error) {
       toast.error(t('location.update.statusUpdateFailed'))
     }
   }
 
+  // 🔹 UPDATED LocationRow with dropdown
   const LocationRow = ({ location }) => (
     <tr className='border-b border-gray-700/30 hover:bg-[#32333F] transition-colors'>
       <td className='py-3 px-4 text-white text-sm font-medium'>
         {location.name}
       </td>
 
+      {/* STATUS DROPDOWN */}
       <td className='py-3 px-4 text-gray-300 text-xs font-semibold'>
-        <span
-          className={`px-2 py-1 rounded-md text-xs font-semibold ${
-            location.status === 'active'
-              ? 'bg-green-900/40 text-green-300 border border-green-700/50'
-              : 'bg-red-900/40 text-red-300 border border-red-700/50'
-          }`}
+        <select
+          value={location.status}
+          onChange={e => handleStatusChange(location, e.target.value)}
+          className={`px-2 py-1 rounded-md text-xs font-semibold bg-[#1f1f27] border 
+            ${
+              location.status === 'active'
+                ? 'text-green-300 border-green-700'
+                : 'text-red-300 border-red-700'
+            }`}
         >
-          {location.status.charAt(0).toUpperCase() + location.status.slice(1)}
-        </span>
+          <option value='active' className='text-green-500'>
+            Active
+          </option>
+          <option value='inactive' className='text-red-500'>
+            Inactive
+          </option>
+        </select>
       </td>
 
+      {/* ACTION BUTTONS */}
       <td className='py-3 px-4 text-sm'>
         <div className='flex justify-between items-center w-20'>
           <button
