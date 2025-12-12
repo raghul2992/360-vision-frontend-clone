@@ -858,14 +858,6 @@ const ROIConfiguration = () => {
       <div className='bg-[#30313F] rounded-lg p-6 mb-6'>
         <h2 className='text-xl font-bold mb-4'>{t('roi.roiSetting')}</h2>
 
-        {/* Debug button - remove in production */}
-        <button
-          onClick={debugCoordinates}
-          className='mb-4 bg-gray-600 px-3 py-1 rounded text-sm'
-        >
-          {t('roi.debugCoordinates')}
-        </button>
-
         <div className='relative'>
           {/* Camera Feed */}
           <div className='w-full bg-black rounded-lg  relative '>
@@ -959,7 +951,7 @@ const ROIConfiguration = () => {
             </Stage>
 
             {/* Drawing mode selector */}
-            <div className='absolute top-4 left-4 bg-gray-800 bg-opacity-80 rounded-lg p-3'>
+            {/* <div className='absolute top-4 left-4 bg-gray-800 bg-opacity-80 rounded-lg p-3'>
               <div className='flex gap-2 mb-2'>
                 <button
                   onClick={() => {
@@ -986,7 +978,7 @@ const ROIConfiguration = () => {
                   {t('roi.clickAndDragToDrawRectangle')}
                 </div>
               )}
-            </div>
+            </div> */}
 
             {/* Polygon count display */}
             <div className='absolute top-4 right-4 bg-gray-800 bg-opacity-80 rounded-lg p-3'>
@@ -1140,9 +1132,9 @@ const ROIConfiguration = () => {
                   <option value='RESTRICTED_AREA_BREACH_DETECTION'>
                     {t('roi.restrictedAreaBreachDetection')}
                   </option>
-                  <option value='SUSPICIOUS_LOITERING'>
+                  {/* <option value='SUSPICIOUS_LOITERING'>
                     {t('roi.suspiciousLoitering')}
-                  </option>
+                  </option> */}
                 </select>
               </div>
               <div>
