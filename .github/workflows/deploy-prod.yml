@@ -1,12 +1,12 @@
-name: Deploy FrontEnd - Dev
+name: Deploy FrontEnd - Prod
 
 on:
   push:
-    branches: [development]
+    branches: [production]
 
 jobs:
   build-deploy:
-    name: Build and Deploy to Dev
+    name: Build and Deploy to Prod
     runs-on: [self-hosted, linux]
     steps:
       - name: Checkout Code
@@ -17,30 +17,30 @@ jobs:
         with:
           node-version: '21.7.3'
           cache: 'npm'
-
-      - name: Create .env (dev)
+          
+      - name: Create .env (prod)
         run: |
           cat > .env <<EOF
-          REACT_APP_BASE_URL=${{ secrets.REACT_APP_BASE_URL_DEV }}
+          REACT_APP_BASE_URL=${{ secrets.REACT_APP_BASE_URL_PROD }}
           REACT_APP_GOOGLE_MAPS_API_KEY=${{ secrets.REACT_APP_GOOGLE_MAPS_API_KEY }}
           EOF
-
+          
       - name: Install Dependencies
         run: npm install --force
 
       - name: Build React App
         run: CI=false npm run build
-
+        
       - name: Authenticate with Google Cloud
         uses: google-github-actions/auth@v2
         with:
-          credentials_json: ${{ secrets.GCP_SA_KEY }}
-
+          credentials_json: ${{ secrets.GCP_SA_KEY_LIVE }}
+      
       - name: Setup Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
         with:
-          project_id: ${{ secrets.GCP_PROJECT_ID }}
+          project_id: ${{ secrets.GCP_PROJECT_ID_LIVE }}
           export_default_credentials: true
-
-      - name: Deploy to GCS (Dev)
-        run: gsutil -m rsync -R build/ gs://sst-frontend-dev
+      
+      - name: Deploy to GCS (Prod)
+        run: gsutil -m rsync -R build/ gs://sst-frontend-prod
