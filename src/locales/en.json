@@ -545,8 +545,9 @@
     },
     "delete": {
       "title": "Delete {{name}}",
-      "message": "Are you sure you want to permanently delete \"{{name}}\"?",
-      "confirm": "Confirm Deletion"
+      "message": "Are you sure you want to delete the camera '{{name}}'? This action will permanently remove the camera and all associated alerts.",
+      "confirm": "Confirm Deletion",
+      "delete_message": "Location deleted successfully"
     },
     "map": {
       "title": "Live Location Map",

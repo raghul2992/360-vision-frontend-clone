@@ -532,8 +532,9 @@
     },
     "delete": {
       "title": "Excluir {{name}}",
-      "message": "Tem certeza de que deseja excluir permanentemente \"{{name}}\"?",
-      "confirm": "Confirmar Exclusão"
+      "message": "Tem certeza de que deseja excluir a câmera '{{name}}'? Esta ação removerá permanentemente a câmera e todos os alertas associados.",
+      "confirm": "Confirmar Exclusão",
+      "delete_message": "Localização excluída com sucesso"
     },
     "map": {
       "title": "Mapa de Localização em Tempo Real",
