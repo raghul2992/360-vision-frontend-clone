@@ -3,6 +3,7 @@ import { toast } from 'react-toastify'
 import { useSelector, useDispatch } from 'react-redux'
 import { useTranslation } from 'react-i18next'
 import { GoogleMap, MarkerF, Autocomplete } from '@react-google-maps/api'
+import tzlookup from 'tz-lookup'
 import {
   PREDEFINED_COLORS,
   MARKER_ICON_PATHS,
@@ -12,7 +13,6 @@ import {
   createLocation,
   updateLocation
 } from '../features/locations/locationApiSlice'
-import TextInput from './TextInput'
 import ButtonComponent from './Button'
 import { IoCloseOutline } from 'react-icons/io5'
 
@@ -24,9 +24,6 @@ const ICON_LABELS = {
   factory: 'location.pin.factory'
 }
 
-const GOOGLE_MAPS_API_KEY = process.env.REACT_APP_GOOGLE_MAPS_API_KEY
-
-// Build icon object using selected color + icon, based on paths from constants
 const getMarkerIcon = (markerColor, iconType = 'default') => {
   const path = MARKER_ICON_PATHS[iconType] || MARKER_ICON_PATHS.default
   const scale = iconType === 'default' ? 2 : 1.5
@@ -35,24 +32,8 @@ const getMarkerIcon = (markerColor, iconType = 'default') => {
     path: path,
     fillColor: markerColor,
     fillOpacity: 1,
-    strokeWeight: 0, // Consistent with LocationMap.js logic
+    strokeWeight: 0,
     scale: scale
-  }
-}
-
-// Fetch timezone helper
-const fetchTimezone = async (lat, lng) => {
-  const timestamp = Math.floor(Date.now() / 1000)
-  const url = `https://maps.googleapis.com/maps/api/timezone/json?location=${lat},${lng}&timestamp=${timestamp}&key=${GOOGLE_MAPS_API_KEY}`
-
-  try {
-    const response = await fetch(url)
-    const data = await response.json()
-    console.log(data)
-    return data.status === 'OK' ? data.timeZoneId : ''
-  } catch (err) {
-    console.error('fetchTimezone error:', err)
-    return ''
   }
 }
 
@@ -62,7 +43,6 @@ const containerStyle = {
   borderRadius: '0.75rem'
 }
 
-// Simple light style (or remove styles completely if you want default light)[web:27][web:31]
 const lightMapStyles = [
   { elementType: 'geometry', stylers: [{ color: '#f5f5f5' }] },
   { elementType: 'labels.text.fill', stylers: [{ color: '#616161' }] },
@@ -94,7 +74,6 @@ const LocationFormModal = ({ isOpen, onClose, locationToEdit, isLoaded }) => {
   const isLoading = useSelector(state => state.locationApi.isLoading)
 
   const searchAutoRef = useRef(null)
-
   const isEditing = !!locationToEdit
 
   const [formState, setFormState] = useState({
@@ -120,7 +99,6 @@ const LocationFormModal = ({ isOpen, onClose, locationToEdit, isLoaded }) => {
       : defaultCenter
   )
 
-  // Sync editing data
   useEffect(() => {
     const initialLng = locationToEdit?.lng || locationToEdit?.lang || ''
     const initialTimezone =
@@ -149,38 +127,50 @@ const LocationFormModal = ({ isOpen, onClose, locationToEdit, isLoaded }) => {
     }
   }, [locationToEdit, isOpen])
 
-  // Map click handler
+  // GET TIMEZONE USING TZ-LOOKUP (NO GOOGLE API)
+  const setTimezoneForCoords = (lat, lng) => {
+    try {
+      const timezone = tzlookup(lat, lng)
+      setFormState(prev => ({ ...prev, timezone }))
+    } catch (e) {
+      console.error('tz-lookup failed:', e)
+    }
+  }
+
+  // MAP CLICK
   const handleMapClick = useCallback(event => {
     const lat = event.latLng.lat()
     const lng = event.latLng.lng()
+
+    setMarkerPosition({ lat, lng })
 
     setFormState(prev => ({
       ...prev,
       lat: lat.toString(),
       lng: lng.toString()
     }))
-    setMarkerPosition({ lat, lng })
+
+    setTimezoneForCoords(lat, lng)
   }, [])
 
-  // Shared place selection logic
+  // AUTOCOMPLETE PLACE SELECTION
   const handlePlaceSelection = async place => {
     if (!place || !place.geometry) return
-    console.log(place)
+
     const lat = place.geometry.location.lat()
     const lng = place.geometry.location.lng()
 
-    const timezone = await fetchTimezone(lat, lng)
-
     setMarkerPosition({ lat, lng })
 
-    setFormState(prevState => ({
-      ...prevState,
-      name: place.name || prevState.name,
-      address: place.formatted_address || prevState.address,
+    setFormState(prev => ({
+      ...prev,
+      name: place.name || prev.name,
+      address: place.formatted_address || prev.address,
       lat: lat.toString(),
-      lng: lng.toString(),
-      timezone: timezone || prevState.timezone
+      lng: lng.toString()
     }))
+
+    setTimezoneForCoords(lat, lng)
   }
 
   const onSearchPlaceChanged = async () => {
@@ -188,7 +178,6 @@ const LocationFormModal = ({ isOpen, onClose, locationToEdit, isLoaded }) => {
     if (!ac) return
 
     const place = ac.getPlace()
-    console.log(place)
     if (!place) return
 
     await handlePlaceSelection(place)
@@ -216,26 +205,17 @@ const LocationFormModal = ({ isOpen, onClose, locationToEdit, isLoaded }) => {
 
     editable.forEach(key => {
       const val = formState[key]
-      if (val === '' || val == null) return
+      if (!val) return
 
-      if (key === 'lat') {
-        payload.lat = parseFloat(val)
-      } else if (key === 'lng') {
-        payload.lang = parseFloat(val)
-      } else if (key === 'timezone') {
-        meta.timezone = val
-      } else if (key === 'markerColor') {
-        meta.markerColor = val
-      } else if (key === 'markerIcon') {
-        meta.markerIcon = val
-      } else {
-        payload[key] = val
-      }
+      if (key === 'lat') payload.lat = parseFloat(val)
+      else if (key === 'lng') payload.lang = parseFloat(val)
+      else if (key === 'timezone') meta.timezone = val
+      else if (key === 'markerColor') meta.markerColor = val
+      else if (key === 'markerIcon') meta.markerIcon = val
+      else payload[key] = val
     })
 
-    if (Object.keys(meta).length > 0) {
-      payload.meta = meta
-    }
+    if (Object.keys(meta).length > 0) payload.meta = meta
 
     payload.status = formState.status
     return payload
@@ -308,7 +288,7 @@ const LocationFormModal = ({ isOpen, onClose, locationToEdit, isLoaded }) => {
   return (
     <div className='fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-70 p-4'>
       <div className='bg-[#2A2B36] w-full max-w-[900px] rounded-xl shadow-2xl overflow-hidden max-h-[90vh]'>
-        {/* Header */}
+        {/* HEADER */}
         <div className='flex justify-between items-center px-6 py-4 border-b border-[#2f303a] sticky top-0 bg-[#1c1c24] z-10'>
           <h2 className='text-xl font-semibold text-white'>
             {isEditing ? t('location.modal.edit') : t('location.modal.create')}
@@ -318,10 +298,10 @@ const LocationFormModal = ({ isOpen, onClose, locationToEdit, isLoaded }) => {
           </button>
         </div>
 
-        {/* Form */}
+        {/* FORM */}
         <form
           onSubmit={handleSubmit}
-          className='p-6 space-y-5  scrollbar-thin overflow-y-auto max-h-[80vh]'
+          className='p-6 space-y-5 overflow-y-auto max-h-[80vh]'
         >
           {/* MAP */}
           <div>
@@ -357,9 +337,9 @@ const LocationFormModal = ({ isOpen, onClose, locationToEdit, isLoaded }) => {
               )}
             </div>
           </div>
+
           {/* MARKER CUSTOMIZATION */}
           <div className='space-y-4'>
-            {/* MARKER COLOR SELECTION (PREDEFINED) */}
             <div>
               <label className='text-gray-300 text-sm mb-2 block'>
                 {t('location.form.marker_color')}
@@ -372,19 +352,18 @@ const LocationFormModal = ({ isOpen, onClose, locationToEdit, isLoaded }) => {
                     onClick={() =>
                       setFormState(prev => ({ ...prev, markerColor: color }))
                     }
-                    className={`w-8 h-8 rounded-full transition-all duration-150 ease-in-out border-2 ${
+                    className={`w-8 h-8 rounded-full transition-all duration-150 border-2 ${
                       formState.markerColor === color
-                        ? 'border-white ring-2 ring-offset-2 ring-offset-[#2A2B36] ring-white/50'
+                        ? 'border-white ring-2 ring-offset-2 ring-white/50'
                         : 'border-transparent hover:ring-1 hover:ring-gray-400'
                     }`}
                     style={{ backgroundColor: color }}
-                    aria-label={`Select marker color ${color}`}
                   ></button>
                 ))}
               </div>
             </div>
 
-            {/* MARKER ICON SELECTION (BUTTONS) */}
+            {/* MARKER ICON */}
             <div>
               <label className='text-gray-300 text-sm mb-2 block'>
                 {t('location.form.marker_icon')}
@@ -397,13 +376,12 @@ const LocationFormModal = ({ isOpen, onClose, locationToEdit, isLoaded }) => {
                     onClick={() =>
                       setFormState(prev => ({ ...prev, markerIcon: iconType }))
                     }
-                    className={`p-2 rounded-lg transition-all duration-150 ease-in-out border-2 flex items-center gap-2 text-sm capitalize ${
+                    className={`p-2 rounded-lg border-2 flex items-center gap-2 text-sm capitalize ${
                       formState.markerIcon === iconType
                         ? 'bg-[#3A3B47] border-[#3885CC] text-white'
                         : 'bg-[#1f2029] border-transparent text-gray-400 hover:border-gray-600'
                     }`}
                   >
-                    {/* SVG preview using Google Maps Marker icon implementation */}
                     <div
                       className='w-4 h-4'
                       style={{
@@ -420,7 +398,7 @@ const LocationFormModal = ({ isOpen, onClose, locationToEdit, isLoaded }) => {
             </div>
           </div>
 
-          {/* LOCATION SEARCH AUTOCOMPLETE */}
+          {/* AUTOCOMPLETE */}
           <div>
             <label className='text-gray-300 text-sm mb-2 block'>
               {t('location.form.search_location')}
@@ -431,12 +409,12 @@ const LocationFormModal = ({ isOpen, onClose, locationToEdit, isLoaded }) => {
             >
               <input
                 placeholder={t('location.form.search_placeholder')}
-                className='w-full bg-[#3A3B47] border border-gray-600/50 rounded-lg py-2.5 px-4 text-white placeholder-gray-500 focus:outline-none focus:border-gray-500 text-sm'
+                className='w-full bg-[#3A3B47] border border-gray-600/50 rounded-lg py-2.5 px-4 text-white placeholder-gray-500 text-sm'
               />
             </Autocomplete>
           </div>
 
-          {/* NAME INPUT */}
+          {/* NAME */}
           <div>
             <label className='text-gray-300 text-sm mb-2 block'>
               {t('location.form.name')}
@@ -445,13 +423,12 @@ const LocationFormModal = ({ isOpen, onClose, locationToEdit, isLoaded }) => {
               name='name'
               value={formState.name}
               onChange={handleChange}
-              placeholder={t('location.form.name_placeholder')}
-              className='w-full bg-[#3A3B47] border border-gray-600/50 rounded-lg py-2.5 px-4 text-white placeholder-gray-500 focus:outline-none focus:border-gray-500 text-sm'
+              className='w-full bg-[#3A3B47] border border-gray-600/50 rounded-lg py-2.5 px-4 text-white text-sm'
               required
             />
           </div>
 
-          {/* ADDRESS INPUT */}
+          {/* ADDRESS */}
           <div>
             <label className='text-gray-300 text-sm mb-2 block'>
               {t('location.form.address')}
@@ -460,8 +437,7 @@ const LocationFormModal = ({ isOpen, onClose, locationToEdit, isLoaded }) => {
               name='address'
               value={formState.address}
               onChange={handleChange}
-              placeholder={t('location.form.address_placeholder')}
-              className='w-full bg-[#3A3B47] border border-gray-600/50 rounded-lg py-2.5 px-4 text-white placeholder-gray-500 focus:outline-none focus:border-gray-500 text-sm'
+              className='w-full bg-[#3A3B47] border border-gray-600/50 rounded-lg py-2.5 px-4 text-white text-sm'
               required
             />
           </div>
@@ -474,10 +450,9 @@ const LocationFormModal = ({ isOpen, onClose, locationToEdit, isLoaded }) => {
               </label>
               <input
                 name='lat'
-                placeholder={t('location.form.latitude')}
                 value={formState.lat}
                 onChange={handleChange}
-                className='w-full bg-[#3A3B47] border border-gray-600/50 rounded-lg py-2.5 px-4 text-white placeholder-gray-500 focus:outline-none focus:border-gray-500 text-sm'
+                className='w-full bg-[#3A3B47] border border-gray-600/50 rounded-lg py-2.5 px-4 text-white text-sm'
                 required={!isEditing}
               />
             </div>
@@ -488,27 +463,25 @@ const LocationFormModal = ({ isOpen, onClose, locationToEdit, isLoaded }) => {
               </label>
               <input
                 name='lng'
-                placeholder={t('location.form.longitude')}
                 value={formState.lng}
                 onChange={handleChange}
-                className='w-full bg-[#3A3B47] border border-gray-600/50 rounded-lg py-2.5 px-4 text-white placeholder-gray-500 focus:outline-none focus:border-gray-500 text-sm'
+                className='w-full bg-[#3A3B47] border border-gray-600/50 rounded-lg py-2.5 px-4 text-white text-sm'
                 required={!isEditing}
               />
             </div>
           </div>
 
-          {/* TIMEZONE */}
+          {/* TIMEZONE (AUTOFILLED BY tz-lookup) */}
           <div>
             <label className='text-gray-300 text-sm mb-2 block'>
               {t('location.form.timezone')}
             </label>
             <input
               name='timezone'
-              placeholder={t('location.form.timezone_placeholder')}
               value={formState.timezone}
               onChange={handleChange}
+              className='w-full bg-[#3A3B47] border border-gray-600/50 rounded-lg py-2.5 px-4 text-white text-sm'
               required
-              className='w-full bg-[#3A3B47] border border-gray-600/50 rounded-lg py-2.5 px-4 text-white placeholder-gray-500 focus:outline-none focus:border-gray-500 text-sm'
             />
           </div>
 

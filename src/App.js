@@ -15,6 +15,8 @@ import React, { useEffect, useState, useCallback } from 'react'
 import useWebSocket from './hooks/useWebSocket'
 import { getCameras } from './features/cameras/cameraApiSlice'
 import { logoutUser } from './features/auth/authSlice'
+import { ToastContainer, toast } from 'react-toastify'
+import 'react-toastify/dist/ReactToastify.css'
 
 function AppRoutes () {
   const element = useRoutes(routes)
@@ -25,6 +27,18 @@ function App () {
   return (
     <Provider store={store}>
       <div className='font-sans'>
+        <ToastContainer
+          position='bottom-right'
+          autoClose={5000}
+          hideProgressBar={false}
+          newestOnTop
+          closeOnClick
+          rtl={false}
+          pauseOnFocusLoss
+          draggable
+          pauseOnHover
+          theme='colored'
+        />
         <Router>
           <MainApp />
         </Router>
@@ -38,9 +52,6 @@ function MainApp () {
   const dispatch = useDispatch()
   const { user } = useSelector(state => state.auth)
   const [websocketUrl, setWebsocketUrl] = useState(null)
-  const [notificationPermission, setNotificationPermission] = useState(
-    Notification.permission
-  )
 
   const {
     isConnected,
@@ -48,19 +59,73 @@ function MainApp () {
     error: wsError
   } = useWebSocket(websocketUrl, localStorage.getItem('tenant_id'))
 
-  // --- Set WebSocket URL ---
+  // ----------------------------------
+  // FIX: Show "notifications blocked" ONLY ONCE
+  // ----------------------------------
 
-  // --- Notification permission listener ---
-  const handlePermissionChange = useCallback(() => {
-    setNotificationPermission(Notification.permission)
-  }, [])
+  const LOCAL_STORAGE_KEY = 'notif_permission_denied_shown'
+
+  const showPermissionDeniedToast = () => {
+    toast.warn(
+      <div>
+        <p className='font-semibold'>Notifications are blocked</p>
+        <p className='text-sm mt-1'>
+          Please enable notifications in your browser settings to receive
+          alerts.
+        </p>
+        <button
+          onClick={() => {
+            window.open(
+              'https://support.google.com/chrome/answer/3220216',
+              '_blank'
+            )
+            toast.dismiss()
+          }}
+          className='mt-2 text-sm underline text-blue-400 hover:text-white'
+        >
+          How to enable notifications
+        </button>
+      </div>,
+      {
+        position: 'top-right',
+        autoClose: 10000,
+        hideProgressBar: false,
+        closeOnClick: false,
+        pauseOnHover: true,
+        draggable: true,
+        theme: 'colored',
+        toastId: 'notification-permission-denied'
+      }
+    )
+  }
 
   useEffect(() => {
+    const alreadyShown = localStorage.getItem(LOCAL_STORAGE_KEY)
+
+    // Show only ONCE
+    if (Notification.permission === 'denied' && !alreadyShown) {
+      setTimeout(() => {
+        showPermissionDeniedToast()
+        localStorage.setItem(LOCAL_STORAGE_KEY, 'true')
+      }, 800)
+    }
+
     navigator.permissions
       ?.query({ name: 'notifications' })
       .then(permissionStatus => {
-        permissionStatus.onchange = handlePermissionChange
+        permissionStatus.onchange = () => {
+          const newPermission = Notification.permission
+
+          if (
+            newPermission === 'denied' &&
+            !localStorage.getItem(LOCAL_STORAGE_KEY)
+          ) {
+            showPermissionDeniedToast()
+            localStorage.setItem(LOCAL_STORAGE_KEY, 'true')
+          }
+        }
       })
+
     return () => {
       navigator.permissions
         ?.query({ name: 'notifications' })
@@ -68,30 +133,18 @@ function MainApp () {
           permissionStatus.onchange = null
         })
     }
-  }, [handlePermissionChange])
+  }, [])
 
-  // --- WebSocket Error Logging ---
+  // Request permission if needed
   useEffect(() => {
-    if (wsError) console.error('WebSocket connection error:', wsError)
-  }, [wsError])
-
-  // --- Request browser notification permission ---
-  const requestNotificationPermission = useCallback(async () => {
-    if (!('Notification' in window)) {
-      console.warn('Browser does not support notifications')
-      return
-    }
     if (Notification.permission === 'default') {
-      const permission = await Notification.requestPermission()
-      setNotificationPermission(permission)
+      Notification.requestPermission()
     }
   }, [])
 
-  useEffect(() => {
-    requestNotificationPermission()
-  }, [requestNotificationPermission])
-
-  // --- Handle WebSocket messages ---
+  // ----------------------------------
+  // WebSocket Message Handler
+  // ----------------------------------
   useEffect(() => {
     if (!wsMessage) return
 
@@ -106,7 +159,6 @@ function MainApp () {
         })
       }
     } else if (wsMessage.type === 'event_alert') {
-      // Also show system notification
       if (Notification.permission === 'granted') {
         new Notification(wsMessage.data.title || 'New Alert', {
           body: wsMessage.data.message,
@@ -114,9 +166,9 @@ function MainApp () {
         })
       }
     }
-  }, [wsMessage, dispatch])
+  }, [wsMessage])
 
-  // --- Hide Floating Button on specific pages ---
+  // Hide Floating Button on dashboard-like screens
   const dashboardPaths = [
     '/dashboard',
     '/camera',
@@ -135,13 +187,6 @@ function MainApp () {
       <AlertPopup />
 
       {!hideFloatingButton && <FloatingLanguageButton />}
-
-      {notificationPermission === 'denied' && (
-        <div className='fixed bottom-4 right-4 bg-red-500 text-white p-3 rounded-md shadow-lg z-50'>
-          Notifications are blocked. Please enable them in your browser settings
-          to receive alerts.
-        </div>
-      )}
     </>
   )
 }

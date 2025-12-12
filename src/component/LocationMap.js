@@ -318,7 +318,27 @@ const LocationMap = ({
   const [draggableMarker, setDraggableMarker] = useState(null)
   const [isPopupHovered, setIsPopupHovered] = useState(false)
 
+  // State to track initial map position and zoom from localStorage
+  const [initialMapState, setInitialMapState] = useState({
+    center: defaultCenter,
+    zoom: 10
+  })
+
   const closeTimeoutRef = useRef(null)
+  const saveTimeoutRef = useRef(null)
+
+  // Load saved map state from localStorage on component mount
+  useEffect(() => {
+    const savedMapState = localStorage.getItem('locationMapState')
+    if (savedMapState && !isSelectionMode) {
+      try {
+        const { center, zoom } = JSON.parse(savedMapState)
+        setInitialMapState({ center, zoom })
+      } catch (error) {
+        console.error('Error parsing saved map state:', error)
+      }
+    }
+  }, [isSelectionMode])
 
   useEffect(() => {
     if (tenantId && !isSelectionMode) {
@@ -328,10 +348,12 @@ const LocationMap = ({
 
   useEffect(() => {
     if (isSelectionMode && initialLat && initialLng) {
-      setDraggableMarker({
+      const newCenter = {
         lat: parseFloat(initialLat),
         lng: parseFloat(initialLng)
-      })
+      }
+      setInitialMapState({ center: newCenter, zoom: 10 })
+      setDraggableMarker(newCenter)
     }
   }, [isSelectionMode, initialLat, initialLng])
 
@@ -363,22 +385,126 @@ const LocationMap = ({
   const onLoad = useCallback(
     mapInstance => {
       if (!isSelectionMode && augmentedLocations.length > 0) {
-        const bounds = new window.google.maps.LatLngBounds()
-        augmentedLocations.forEach(loc => bounds.extend(loc.coords))
-        mapInstance.fitBounds(bounds)
+        // Check if we have saved state, otherwise fit to bounds
+        const savedMapState = localStorage.getItem('locationMapState')
+        if (savedMapState) {
+          try {
+            const { center, zoom } = JSON.parse(savedMapState)
+            mapInstance.setCenter(center)
+            mapInstance.setZoom(zoom)
+          } catch (error) {
+            // If saved state is invalid, fit to bounds
+            const bounds = new window.google.maps.LatLngBounds()
+            augmentedLocations.forEach(loc => bounds.extend(loc.coords))
+            mapInstance.fitBounds(bounds)
+
+            // Save the initial bounds state
+            const center = mapInstance.getCenter()
+            const zoom = mapInstance.getZoom()
+            if (center && zoom) {
+              const mapState = {
+                center: { lat: center.lat(), lng: center.lng() },
+                zoom: zoom
+              }
+              localStorage.setItem('locationMapState', JSON.stringify(mapState))
+            }
+          }
+        } else {
+          // No saved state, fit to bounds
+          const bounds = new window.google.maps.LatLngBounds()
+          augmentedLocations.forEach(loc => bounds.extend(loc.coords))
+          mapInstance.fitBounds(bounds)
+
+          // Save the initial bounds state
+          const center = mapInstance.getCenter()
+          const zoom = mapInstance.getZoom()
+          if (center && zoom) {
+            const mapState = {
+              center: { lat: center.lat(), lng: center.lng() },
+              zoom: zoom
+            }
+            localStorage.setItem('locationMapState', JSON.stringify(mapState))
+          }
+        }
       } else if (isSelectionMode && draggableMarker) {
         mapInstance.setCenter(draggableMarker)
         mapInstance.setZoom(10)
       } else {
-        mapInstance.setCenter(defaultCenter)
-        mapInstance.setZoom(2)
+        mapInstance.setCenter(initialMapState.center)
+        mapInstance.setZoom(initialMapState.zoom)
       }
       setMap(mapInstance)
+
+      // Add event listeners for map changes with debouncing
+      const saveMapState = () => {
+        if (mapInstance && !isSelectionMode) {
+          const center = mapInstance.getCenter()
+          const zoom = mapInstance.getZoom()
+
+          if (center && zoom) {
+            const mapState = {
+              center: { lat: center.lat(), lng: center.lng() },
+              zoom: zoom
+            }
+            localStorage.setItem('locationMapState', JSON.stringify(mapState))
+          }
+        }
+      }
+
+      // Set up event listeners with debouncing
+      const debouncedSave = () => {
+        if (saveTimeoutRef.current) {
+          clearTimeout(saveTimeoutRef.current)
+        }
+        saveTimeoutRef.current = setTimeout(saveMapState, 1000)
+      }
+
+      // Add listeners without updating React state
+      window.google.maps.event.addListener(
+        mapInstance,
+        'center_changed',
+        debouncedSave
+      )
+      window.google.maps.event.addListener(
+        mapInstance,
+        'zoom_changed',
+        debouncedSave
+      )
+      window.google.maps.event.addListener(
+        mapInstance,
+        'bounds_changed',
+        debouncedSave
+      )
+      window.google.maps.event.addListener(
+        mapInstance,
+        'dragend',
+        debouncedSave
+      )
     },
-    [augmentedLocations, isSelectionMode, draggableMarker]
+    [augmentedLocations, isSelectionMode, draggableMarker, initialMapState]
   )
 
-  const onUnmount = useCallback(() => setMap(null), [])
+  const onUnmount = useCallback(() => {
+    // Clear any pending save timeout
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current)
+    }
+
+    // Save final map state
+    if (map && !isSelectionMode) {
+      const center = map.getCenter()
+      const zoom = map.getZoom()
+
+      if (center && zoom) {
+        const mapState = {
+          center: { lat: center.lat(), lng: center.lng() },
+          zoom: zoom
+        }
+        localStorage.setItem('locationMapState', JSON.stringify(mapState))
+      }
+    }
+    setMap(null)
+  }, [map, isSelectionMode])
 
   const handleMapClick = useCallback(
     e => {
@@ -484,8 +610,8 @@ const LocationMap = ({
         mapContainerStyle={containerStyle}
         onLoad={onLoad}
         onUnmount={onUnmount}
-        center={2}
-        zoom={10}
+        center={initialMapState.center}
+        zoom={initialMapState.zoom}
         options={mapOptions}
         onClick={handleMapClick}
       >
@@ -541,7 +667,7 @@ const LocationMap = ({
 
         {isSelectionMode && draggableMarker && (
           <MarkerF
-            position={5}
+            position={draggableMarker}
             draggable={true}
             onDragEnd={handleMarkerDragEnd}
             icon={createMarkerIcon('#3885CC', 'default')}

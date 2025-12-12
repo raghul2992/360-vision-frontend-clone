@@ -59,7 +59,7 @@ const LocationManagementPage = () => {
 
       <div className='grid grid-cols-1 gap-6'>
         {/* Map View Section */}
-        <div className='bg-[#1c1c24] p-4 rounded-lg shadow-md'>
+        <div className='bg-[#1c1c24] py-4 rounded-lg shadow-md'>
           <h2 className='text-xl font-semibold mb-3 text-white'>
             {t('location.map.title', 'Location Overview Map')}
           </h2>
@@ -67,7 +67,7 @@ const LocationManagementPage = () => {
         </div>
 
         {/* List View Section */}
-        <div className='bg-[#1c1c24] p-4 rounded-lg shadow-md'>
+        <div className='bg-[#1c1c24] py-4 rounded-lg shadow-md'>
           <LocationList isMapLoaded={isLoaded} />
         </div>
       </div>
