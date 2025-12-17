@@ -9,8 +9,13 @@ import ROIConfiguration from './pages/cameras/ROIConfiguration'
 import CameraPage from './pages/cameras/CameraPage'
 import LocationManagementPage from './pages/locations/LocationManagementPage'
 import DashboardHome from './pages/dashboardhome/DashboardHome'
+import NotFound from './pages/NotFound'
 
 export const routes = [
+  {
+    path: '*',
+    element: <NotFound />
+  },
   {
     path: '/',
     element: <AuthPage />
