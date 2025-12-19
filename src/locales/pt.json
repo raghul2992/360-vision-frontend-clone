@@ -339,6 +339,8 @@
     "queueDwellTimeSeconds": "Tempo de Permanência na Fila (segundos)",
     "queueDwellTimeSecondsDescription": "Defina por quanto tempo um veículo deve permanecer na fila para acionar um alerta. (ex., 8 segundos)",
     "dwellTimeSeconds": "Tempo de Permanência (segundos)",
+    "confidenceThreshold": "Limite de Confiança",
+    "confidenceThresholdDescription": "Nível mínimo de confiança necessário para acionar um alerta de permanência suspeita. Valores mais altos reduzem alertas falsos, mas podem não detectar comportamentos sutis de permanência.",
     "dwellTimeSecondsDescription": "Especifique a duração que um veículo deve permanecer parado para acionar um alerta de tempo de permanência. (ex., 15 segundos)",
     "attendantAbsenceDwellTimeDescription": "Defina o tempo máximo que um atendente pode estar ausente da área da bomba antes que um alerta seja acionado. (ex., 6 segundos)",
     "cellphoneDwellTimeDescription": "O tempo mínimo que uma pessoa deve segurar/utilizar um telemóvel antes da deteção.",
@@ -478,7 +480,14 @@
     "alert_type_breakdown_desc": "Obter a quebra de alertas por tipo de detecção para um gráfico de pizza",
     "priority_desc": "Monitorar prioridades de alerta para focar em eventos críticos",
     "no_widgets_yet": "Nenhum widget adicionado ainda",
-    "add_first_widget": "Adicione Seu Primeiro Widget"
+    "add_first_widget": "Adicione Seu Primeiro Widget",
+    "key_performance_indicators": "Indicadores-Chave de Desempenho",
+    "total_alerts_24h": "Total de Alertas (24h)",
+    "most_frequent_alert": "Alerta Mais Frequente",
+    "busiest_hour_avg": "Horário Mais Movimentado (Média)",
+    "average_dwell_time": "Tempo Médio de Permanência",
+    "total_safety_violations_24h": "Total de Violações de Segurança (24h)",
+    "count": "Contagem"
   },
   "date_locale": "pt",
   "date": {

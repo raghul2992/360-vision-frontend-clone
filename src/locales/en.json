@@ -347,6 +347,8 @@
     "queueDwellTimeSeconds": "Queue Dwell Time (seconds)",
     "queueDwellTimeSecondsDescription": "Define how long a vehicle must remain in the queue to trigger an alert. (e.g., 8 seconds)",
     "dwellTimeSeconds": "Dwell Time (seconds)",
+    "confidenceThreshold": "Confidence Threshold",
+    "confidenceThresholdDescription": "Minimum confidence level required to trigger a suspicious loitering alert. Higher values reduce false alerts but may miss subtle loitering behavior.",
     "dwellTimeSecondsDescription": "Specify the duration a vehicle must remain stationary to trigger a dwell time alert. (e.g., 15 seconds)",
     "attendantAbsenceDwellTimeDescription": "Set the maximum time an attendant can be absent from the pump area before an alert is triggered. (e.g., 6 seconds)",
     "cellphoneDwellTimeDescription": "The minimum time a person must hold/use a phone before detection.",
@@ -493,7 +495,14 @@
     "alert_type_breakdown_desc": "Get the breakdown of alerts by detection type for a pie chart",
     "priority_desc": "Monitor alert priorities to focus on critical events",
     "no_widgets_yet": "No widgets added yet",
-    "add_first_widget": "Add Your First Widget"
+    "add_first_widget": "Add Your First Widget",
+    "key_performance_indicators": "Key Performance Indicators",
+    "total_alerts_24h": "Total Alerts (24h)",
+    "most_frequent_alert": "Most Frequent Alert",
+    "busiest_hour_avg": "Busiest Hour (Average)",
+    "average_dwell_time": "Average Dwell Time",
+    "total_safety_violations_24h": "Total Safety Violations (24h)",
+    "count": "Count"
   },
   "date_locale": "en-US",
   "date": {

@@ -127,7 +127,7 @@ const ROIConfiguration = () => {
   // ROI Settings
   const [roiName, setRoiName] = useState('')
   const [roiNameError, setRoiNameError] = useState('')
-  const [detectionType, setDetectionType] = useState('ALL_DETECTION')
+  const [detectionType, setDetectionType] = useState('VEHICLE_QUEUE_DETECTION')
   const [alertPriority, setAlertPriority] = useState('High') // Stores the English value
   const [displayAlertPriority, setDisplayAlertPriority] = useState(
     t('roi.high')
@@ -136,9 +136,10 @@ const ROIConfiguration = () => {
 
   // New detection config states
   const [queueCountThreshold, setQueueCountThreshold] = useState(1)
-  const [queueDwellTimeSeconds, setQueueDwellTimeSeconds] = useState(120)
-  const [dwellTimeSeconds, setDwellTimeSeconds] = useState(120)
+  const [queueDwellTimeSeconds, setQueueDwellTimeSeconds] = useState(40)
+  const [dwellTimeSeconds, setDwellTimeSeconds] = useState(40)
   const [attendantAbsenceDwellTime, setAttendantAbsenceDwellTime] = useState(60)
+  const [confidenceThreshold, setConfidenceThreshold] = useState(40) // NEW: Confidence threshold for suspicious loitering
   const [targetedHourSlots, setTargetedHourSlots] = useState([])
   const [newTimeSlot, setNewTimeSlot] = useState(['', ''])
 
@@ -442,7 +443,9 @@ const ROIConfiguration = () => {
         }
         if (detectionType === 'SUSPICIOUS_LOITERING') {
           return {
-            dwell_time_seconds: dwellTimeSeconds,
+            // Commented out dwell time for suspicious loitering
+            // dwell_time_seconds: dwellTimeSeconds,
+            confidence_threshold: confidenceThreshold, // NEW: Added confidence threshold
             targeted_hour_slots: convertTimeSlotsLocalToUTC(
               targetedHourSlots,
               userTimeZone
@@ -640,7 +643,11 @@ const ROIConfiguration = () => {
       )
       setTargetedHourSlots(localTimeSlots || [])
     } else if (roi.detection_type === 'SUSPICIOUS_LOITERING') {
-      setDwellTimeSeconds(roi.detection_config?.dwell_time_seconds || 15)
+      // Set confidence threshold for suspicious loitering (default 40)
+      setConfidenceThreshold(roi.detection_config?.confidence_threshold || 40)
+      // Commented out dwell time for suspicious loitering
+      // setDwellTimeSeconds(roi.detection_config?.dwell_time_seconds || 15)
+
       const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone
       const localTimeSlots = convertTimeSlotsUTCToLocal(
         roi.detection_config?.targeted_hour_slots,
@@ -679,9 +686,10 @@ const ROIConfiguration = () => {
     setWhatsappRecipients([])
     setWhatsappNumber('')
     setQueueCountThreshold(1)
-    setQueueDwellTimeSeconds(30)
+    setQueueDwellTimeSeconds(40)
     setDwellTimeSeconds(15)
     setAttendantAbsenceDwellTime(6)
+    setConfidenceThreshold(40) // Reset confidence threshold to default 40
     setTargetedHourSlots([])
     setNewTimeSlot(['', ''])
     setCurrentRoiId(null)
@@ -725,12 +733,6 @@ const ROIConfiguration = () => {
           })
           return allRoiPolygons
         } else {
-          // Old format: array of flat point arrays (e.g., [[x1,y1,...], [x1,y1,...]])
-          // Or potentially a single flat array [x1,y1,...] if the backend sends it that way.
-          // This block needs to be careful. If it's an array of arrays, each inner array is a polygon.
-          // If it's a single flat array, it's one polygon.
-          // The current `parsed.flat()` would combine them.
-          // Let's assume the 'old format' is `Array<Array<number>>` where inner array is flat points for one polygon.
           const allRoiPolygons = []
           parsed.forEach(polygonArray => {
             if (
@@ -1113,7 +1115,6 @@ const ROIConfiguration = () => {
                   onChange={e => setDetectionType(e.target.value)}
                   className='w-full bg-gray-700 border border-gray-600 rounded-lg py-2 px-4 text-white focus:outline-none focus:border-blue-500 transition-colors appearance-none'
                 >
-                  <option value=''>-------</option>
                   <option value='VEHICLE_QUEUE_DETECTION'>
                     {t('roi.vehicleQueueDetection')}
                   </option>
@@ -1132,9 +1133,9 @@ const ROIConfiguration = () => {
                   <option value='RESTRICTED_AREA_BREACH_DETECTION'>
                     {t('roi.restrictedAreaBreachDetection')}
                   </option>
-                  {/* <option value='SUSPICIOUS_LOITERING'>
+                  <option value='SUSPICIOUS_LOITERING'>
                     {t('roi.suspiciousLoitering')}
-                  </option> */}
+                  </option>
                 </select>
               </div>
               <div>
@@ -1209,9 +1210,9 @@ const ROIConfiguration = () => {
           )}
 
           {/* Vehicle Dwell Time Fields */}
+          {/* VEHICLE_DWELL_TIME & ATTENDANT_CELLPHONE_DETECTION */}
           {(detectionType === 'VEHICLE_DWELL_TIME' ||
-            detectionType === 'ATTENDANT_CELLPHONE_DETECTION' ||
-            detectionType === 'SUSPICIOUS_LOITERING') && (
+            detectionType === 'ATTENDANT_CELLPHONE_DETECTION') && (
             <div>
               <label className='block text-sm text-gray-400 mb-2'>
                 {t('roi.dwellTimeSeconds')}
@@ -1227,6 +1228,34 @@ const ROIConfiguration = () => {
                 onChange={e => setDwellTimeSeconds(Number(e.target.value))}
                 className='w-full bg-gray-700 border border-gray-600 rounded-lg py-2 px-4 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 transition-colors'
               />
+            </div>
+          )}
+
+          {/* SUSPICIOUS_LOITERING – Confidence Threshold only */}
+          {detectionType === 'SUSPICIOUS_LOITERING' && (
+            <div>
+              <label className='block text-sm text-gray-400 mb-2'>
+                {t('roi.confidenceThreshold')}
+              </label>
+
+              <p className='text-xs text-gray-500 mb-2'>
+                {t('roi.confidenceThresholdDescription')}
+              </p>
+
+              {/* Optional: Number input for precise control */}
+              <div className='mt-2'>
+                <input
+                  type='number'
+                  min='0'
+                  max='200'
+                  value={confidenceThreshold}
+                  onChange={e => {
+                    const value = Number(e.target.value)
+                    setConfidenceThreshold(Math.min(Math.max(value, 0), 200))
+                  }}
+                  className='w-full bg-gray-700 border border-gray-600 rounded-lg py-2 px-4 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 transition-colors'
+                />
+              </div>
             </div>
           )}
 
@@ -1250,8 +1279,7 @@ const ROIConfiguration = () => {
             </div>
           )}
           {/* Targeted Hour Slots */}
-          {(detectionType === 'RESTRICTED_AREA_BREACH_DETECTION' ||
-            detectionType === 'SUSPICIOUS_LOITERING') && (
+          {detectionType === 'RESTRICTED_AREA_BREACH_DETECTION' && (
             <div>
               <label className='block text-sm text-gray-400 mb-2'>
                 {t('roi.targetedHourSlots')}
