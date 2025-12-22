@@ -29,7 +29,7 @@ const CameraPage = () => {
 
   useEffect(() => {
     if (tenantId) {
-      dispatch(getLocations(tenantId))
+      dispatch(getLocations({ tenantId }))
     }
   }, [dispatch, tenantId])
 

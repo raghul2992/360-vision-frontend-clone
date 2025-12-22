@@ -1,11 +1,11 @@
 const CACHE_NAME = `app-cache-${Date.now()}`
 
-// Install → activate immediately
+// Install → wait
 self.addEventListener('install', event => {
-  self.skipWaiting()
+  console.log('Service Worker installed')
 })
 
-// Activate → remove old caches
+// Activate → clean old caches
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches
@@ -23,7 +23,14 @@ self.addEventListener('activate', event => {
   )
 })
 
-// Fetch → network first (always fresh)
+// Listen for update trigger
+self.addEventListener('message', event => {
+  if (event.data === 'SKIP_WAITING') {
+    self.skipWaiting()
+  }
+})
+
+// Fetch → network first
 self.addEventListener('fetch', event => {
   event.respondWith(
     fetch(event.request)

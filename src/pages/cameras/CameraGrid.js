@@ -36,7 +36,7 @@ const CameraGrid = () => {
   useEffect(() => {
     if (tenantId) {
       dispatch(getCameras({ tenantId }))
-      dispatch(getLocations(tenantId))
+      dispatch(getLocations({ tenantId }))
     }
   }, [dispatch, tenantId])
 
