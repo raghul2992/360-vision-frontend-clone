@@ -405,7 +405,7 @@ const AddCamera = () => {
           t('addCamera.locationCreateSuccess', { name: newLocation.name })
         )
         setLocation(newLocation.id)
-        dispatch(getLocations(tenantId)) // Refresh locations
+        dispatch(getLocations({ tenantId })) // Refresh locations
       })
       .catch(err => {
         toast.error(err || t('addCamera.locationCreateFailed'))

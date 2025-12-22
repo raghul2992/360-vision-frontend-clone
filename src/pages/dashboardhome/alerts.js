@@ -36,15 +36,19 @@ const Alerts = () => {
   const [startDate, endDate] = dateRange
 
   // Pagination
-  const [limit, setLimit] = useState(10)
+  const [limit] = useState(10)
   const [skip, setSkip] = useState(0)
   const [hasMore, setHasMore] = useState(true)
+  const [isFetchingMore, setIsFetchingMore] = useState(false)
 
+  // Refs
+  const observerRef = useRef(null)
   const loaderRef = useRef(null)
+  const containerRef = useRef(null)
 
   // Fetch Alerts
   const fetchAlertsData = useCallback(
-    async (reset = false) => {
+    async (reset = false, loadMore = false) => {
       if (!tenant_id) return
 
       const currentSkip = reset ? 0 : skip
@@ -73,6 +77,11 @@ const Alerts = () => {
       if (reset) {
         dispatch(resetAlerts())
         setSkip(0)
+        setHasMore(true)
+      }
+
+      if (loadMore) {
+        setIsFetchingMore(true)
       }
 
       const result = await dispatch(
@@ -83,6 +92,10 @@ const Alerts = () => {
         setHasMore(result.payload.results.length === currentLimit)
       } else {
         setHasMore(false)
+      }
+
+      if (loadMore) {
+        setIsFetchingMore(false)
       }
 
       dispatch(setFilters({ tenantId: tenant_id }))
@@ -104,10 +117,9 @@ const Alerts = () => {
   // Initial load + filters
   useEffect(() => {
     setSkip(0)
-    setHasMore(true)
     fetchAlertsData(true)
     if (tenant_id) {
-      dispatch(getLocations(tenant_id))
+      dispatch(getLocations({ tenantId: tenant_id }))
       dispatch(getCameras({ tenantId: tenant_id }))
     }
   }, [
@@ -120,31 +132,39 @@ const Alerts = () => {
     readStatus
   ])
 
-  // Infinite scroll observer
+  // Set up intersection observer for infinite scroll
   useEffect(() => {
-    const observer = new IntersectionObserver(
-      entries => {
-        if (entries[0].isIntersecting && hasMore && !isLoading) {
-          setSkip(prev => prev + limit)
-        }
-      },
-      { threshold: 1.0 }
-    )
-    if (loaderRef.current) observer.observe(loaderRef.current)
-    return () => {
-      if (loaderRef.current) observer.unobserve(loaderRef.current)
+    const options = {
+      root: containerRef.current,
+      rootMargin: '100px',
+      threshold: 0.1
     }
-  }, [hasMore, isLoading, limit])
 
-  // Fetch on skip change
-  useEffect(() => {
-    if (
-      skip > 0 ||
-      (skip === 0 && alerts.length === 0 && !isLoading && hasMore)
-    ) {
-      fetchAlertsData()
+    observerRef.current = new IntersectionObserver(entries => {
+      const [entry] = entries
+      if (entry.isIntersecting && hasMore && !isLoading && !isFetchingMore) {
+        // Load more data
+        setSkip(prevSkip => prevSkip + limit)
+      }
+    }, options)
+
+    if (loaderRef.current) {
+      observerRef.current.observe(loaderRef.current)
     }
-  }, [skip, limit, filters])
+
+    return () => {
+      if (observerRef.current && loaderRef.current) {
+        observerRef.current.unobserve(loaderRef.current)
+      }
+    }
+  }, [hasMore, isLoading, isFetchingMore, limit])
+
+  // Fetch more data when skip changes
+  useEffect(() => {
+    if (skip > 0) {
+      fetchAlertsData(false, true)
+    }
+  }, [skip])
 
   // Select options
   const priorityOptions = [
@@ -282,11 +302,11 @@ const Alerts = () => {
                 </div>
               )}
 
-              <div className='space-y-4 w-full max-h-[350px] overflow-y-auto scrollbar-thin scrollbar-thumb-[#3b405e] scrollbar-track-[#1f2333] hover:scrollbar-thumb-[#4a5070] rounded-lg pr-2'>
+              <div
+                ref={containerRef}
+                className='space-y-4 w-full max-h-[350px] overflow-y-auto scrollbar-thin scrollbar-thumb-[#3b405e] scrollbar-track-[#1f2333] hover:scrollbar-thumb-[#4a5070] rounded-lg pr-2'
+              >
                 {alerts.map(alert => {
-                  const timestamp = alert.created_at
-                    ? format(new Date(alert.created_at), 'yyyy-MM-dd HH:mm')
-                    : t('alerts.no_timestamp')
                   return (
                     <div key={alert.id}>
                       <AlertItem alert={alert} tenantId={tenant_id} />
@@ -294,19 +314,31 @@ const Alerts = () => {
                   )
                 })}
 
-                {isLoading && (
+                {/* Loading indicator for initial load */}
+                {isLoading && !isFetchingMore && (
                   <div className='text-center py-4 text-gray-400 text-sm'>
                     {t('alerts.loading_alerts')}
                   </div>
                 )}
 
-                {!hasMore && !isLoading && alerts.length > 0 && (
+                {/* Loading indicator for infinite scroll */}
+                {isFetchingMore && (
                   <div className='text-center py-4 text-gray-400 text-sm'>
-                    No more data
+                    Loading more alerts...
                   </div>
                 )}
 
-                <div ref={loaderRef} />
+                {/* No more data message */}
+                {!hasMore && !isLoading && alerts.length > 0 && (
+                  <div className='text-center py-4 text-gray-400 text-sm'>
+                    No more alerts to load
+                  </div>
+                )}
+
+                {/* Intersection observer target */}
+                {hasMore && !isLoading && !isFetchingMore && (
+                  <div ref={loaderRef} style={{ height: '20px' }} />
+                )}
               </div>
             </div>
           </div>
