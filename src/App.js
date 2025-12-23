@@ -162,7 +162,7 @@ function MainApp () {
       if (Notification.permission === 'granted') {
         new Notification(wsMessage.data.title || 'New Alert', {
           body: wsMessage.data.message,
-          icon: '/logo192.png'
+          icon: '/sstlogo.png'
         })
       }
     }

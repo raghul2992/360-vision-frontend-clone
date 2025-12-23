@@ -7,14 +7,15 @@ import reportWebVitals from './reportWebVitals'
 import { Provider } from 'react-redux'
 import store from './app/store'
 import { register } from './utils/cache'
+import ErrorBoundary from './ErrorBoundary';
 
 const root = ReactDOM.createRoot(document.getElementById('root'))
 root.render(
-  // <React.StrictMode>
-  <Provider store={store}>
-    <App />
-  </Provider>
-  // </React.StrictMode>
+  <ErrorBoundary>
+    <Provider store={store}>
+      <App />
+    </Provider>
+  </ErrorBoundary>
 )
 
 register('/service-worker.js')
