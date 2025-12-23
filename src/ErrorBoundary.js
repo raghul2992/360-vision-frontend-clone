@@ -26,9 +26,9 @@ class ErrorBoundary extends React.Component {
         <div style={{ padding: '2rem', textAlign: 'center', backgroundColor: '#fff', color: '#000' }}>
           <h1>Something went wrong.</h1>
           <p>Please take a screenshot of this error and send it to support at contact@sst.vision</p>
-          <pre style={{ color: 'red', background: '#f0f0f0', padding: '1rem', overflow: 'auto' }}>
+          <div style={{ color: 'red', background: '#f0f0f0', padding: '1rem', overflow: 'auto', marginTop: '10px' }}>
             {this.state.error && this.state.error.toString()}
-          </pre>
+          </div>
           <details open style={{ whiteSpace: 'pre-wrap', marginTop: '10px' }}>
             {this.state.errorInfo && this.state.errorInfo.componentStack}
           </details>
