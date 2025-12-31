@@ -27,6 +27,14 @@ const TopProblematicRoisWidget = ({ isLoading: propIsLoading }) => {
     }))
   }
 
+  // Define Color Ranges and Legend Data
+  const rangeConfig = [
+    { label: '0 - 10', color: '#10b981', max: 10 },
+    { label: '11 - 30', color: '#f59e0b', max: 30 },
+    { label: '31 - 60', color: '#3b82f6', max: 60 },
+    { label: '> 60', color: '#ef4444', max: Infinity }
+  ]
+
   const getRangeColor = value => {
     if (value >= 0 && value <= 10) return '#10b981'
     if (value > 10 && value <= 30) return '#f59e0b'
@@ -71,46 +79,66 @@ const TopProblematicRoisWidget = ({ isLoading: propIsLoading }) => {
       )}
 
       {!isLoading && !error && (
-        <>
+        <div className='flex flex-col w-full h-full'>
           {chartData.length === 0 ? (
-            <p className='mt-8 text-white'>
+            <p className='mt-8 text-white text-center'>
               {t('dashboard.no_data_available')}
             </p>
           ) : (
-            <ResponsiveContainer width='100%' height='100%'>
-              <BarChart
-                data={chartData}
-                margin={{ top: 20, right: -30, left: -30, bottom: 5 }}
-                className='w-full'
-              >
-                <CartesianGrid strokeDasharray='3 3' stroke='#3f4664' />
+            <>
+              {/* Chart Section - flex-grow ensures it takes available height */}
+              <div className='flex-grow min-h-0'>
+                <ResponsiveContainer width='100%' height='100%'>
+                  <BarChart
+                    data={chartData}
+                    margin={{ top: 20, right: 10, left: -20, bottom: 5 }}
+                    className='w-full'
+                  >
+                    <CartesianGrid strokeDasharray='3 3' stroke='#3f4664' />
 
-                <XAxis
-                  dataKey='name'
-                  tick={whiteTextStyle}
-                  stroke='white'
-                  height={30}
-                  interval={0}
-                  angle={-15}
-                  textAnchor='end'
-                />
-
-                <YAxis tick={whiteTextStyle} stroke='white' />
-
-                <Tooltip content={<CustomTooltip />} />
-
-                <Bar dataKey='AlertCount' name={t('dashboard.alerts')}>
-                  {chartData.map((entry, index) => (
-                    <Cell
-                      key={`cell-${index}`}
-                      fill={getRangeColor(entry.AlertCount)} // ⭐ APPLY RANGE COLOR
+                    <XAxis
+                      dataKey='name'
+                      tick={whiteTextStyle}
+                      stroke='white'
+                      height={30}
+                      interval={0}
+                      angle={-15}
+                      textAnchor='end'
                     />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
+
+                    <YAxis tick={whiteTextStyle} stroke='white' />
+
+                    <Tooltip content={<CustomTooltip />} />
+
+                    <Bar dataKey='AlertCount' name={t('dashboard.alerts')}>
+                      {chartData.map((entry, index) => (
+                        <Cell
+                          key={`cell-${index}`}
+                          fill={getRangeColor(entry.AlertCount)}
+                        />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+
+              {/* Color Indication / Legend Section */}
+              <div className='flex flex-wrap items-center justify-center gap-4 mt-2 mb-1'>
+                {rangeConfig.map((item, index) => (
+                  <div key={index} className='flex items-center gap-2'>
+                    <span
+                      className='w-3 h-3 rounded-full'
+                      style={{ backgroundColor: item.color }}
+                    ></span>
+                    <span className='text-xs text-gray-300 font-medium whitespace-nowrap'>
+                      {item.label}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </>
           )}
-        </>
+        </div>
       )}
     </>
   )
