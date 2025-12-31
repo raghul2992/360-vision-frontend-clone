@@ -487,7 +487,8 @@
     "busiest_hour_avg": "Horário Mais Movimentado (Média)",
     "average_dwell_time": "Tempo Médio de Permanência",
     "total_safety_violations_24h": "Total de Violações de Segurança (24h)",
-    "count": "Contagem"
+    "count": "Contagem",
+    "all_locations": "Todos os locais"
   },
   "date_locale": "pt",
   "date": {

@@ -1,4 +1,11 @@
-import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react'
+import React, {
+  useState,
+  useCallback,
+  useMemo,
+  useEffect,
+  useRef,
+  useLayoutEffect
+} from 'react'
 import { GoogleMap, MarkerF, OverlayView } from '@react-google-maps/api'
 import { useSelector, useDispatch } from 'react-redux'
 import { useNavigate } from 'react-router-dom'
@@ -54,41 +61,9 @@ const mapOptions = {
   styles: lightMapStyles
 }
 
-// Static info icon at bottom of marker - always visible
-const StaticInfoIcon = ({ position }) => {
-  return (
-    <OverlayView
-      position={position}
-      mapPaneName={OverlayView.OVERLAY_MOUSE_TARGET}
-    >
-      <div
-        className='pointer-events-none'
-        style={{
-          transform: 'translate(-50%, 0%)',
-          marginTop: '5px'
-        }}
-      >
-        {/* Static info icon - no animation, always visible at bottom of marker */}
-        <div className='bg-blue-500 rounded-full p-1 shadow-lg border-2 border-white'>
-          <svg
-            className='w-4 h-4 text-white'
-            fill='currentColor'
-            viewBox='0 0 20 20'
-            xmlns='http://www.w3.org/2000/svg'
-          >
-            <path
-              fillRule='evenodd'
-              d='M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z'
-              clipRule='evenodd'
-            />
-          </svg>
-        </div>
-      </div>
-    </OverlayView>
-  )
-}
-
-// Custom Popup Component - only shows on hover
+// =========================================================================
+// CUSTOM POPUP COMPONENT (With Smart Positioning)
+// =========================================================================
 const CustomPopup = ({
   position,
   location,
@@ -96,28 +71,91 @@ const CustomPopup = ({
   onViewDashboard,
   onViewAlerts,
   onMouseEnter,
-  onMouseLeave
+  onMouseLeave,
+  map // Recieve map instance to calculate boundaries
 }) => {
+  const containerRef = useRef(null)
+
+  // Initial state: centered above the marker
+  const [popupStyle, setPopupStyle] = useState({
+    transformX: '-50%',
+    transformY: '-100%',
+    marginTop: '-15px',
+    isFlipped: false // true if popup is below marker
+  })
+
+  // useLayoutEffect runs before browser paint - prevents visual jumping
+  useLayoutEffect(() => {
+    if (!containerRef.current || !map) return
+
+    const calculatePosition = () => {
+      const popup = containerRef.current
+      const mapDiv = map.getDiv()
+
+      if (!mapDiv) return
+
+      const mapRect = mapDiv.getBoundingClientRect()
+      const popupRect = popup.getBoundingClientRect()
+
+      let newTransformX = '-50%'
+      let newTransformY = '-100%'
+      let newMarginTop = '-15px'
+      let isFlipped = false
+
+      // 1. VERTICAL CHECK (Top Edge)
+      // If popup top goes outside map top (plus 20px buffer for UI controls)
+      if (popupRect.top < mapRect.top + 40) {
+        newTransformY = '0%' // Align top of popup to marker anchor
+        newMarginTop = '15px' // Push down below marker
+        isFlipped = true
+      }
+
+      // 2. HORIZONTAL CHECK (Left/Right Edges)
+      // Note: We adjust the X transform to shift the box relative to the anchor
+      if (popupRect.left < mapRect.left + 10) {
+        // Hits left edge -> Shift box to the right
+        newTransformX = '-10%'
+      } else if (popupRect.right > mapRect.right - 10) {
+        // Hits right edge -> Shift box to the left
+        newTransformX = '-90%'
+      }
+
+      setPopupStyle({
+        transformX: newTransformX,
+        transformY: newTransformY,
+        marginTop: newMarginTop,
+        isFlipped
+      })
+    }
+
+    // Run calculation immediately
+    calculatePosition()
+
+    // Optional: Re-calculate on window resize
+    window.addEventListener('resize', calculatePosition)
+    return () => window.removeEventListener('resize', calculatePosition)
+  }, [map, location])
+
   return (
-    <OverlayView
-      position={position}
-      mapPaneName={OverlayView.OVERLAY_MOUSE_TARGET}
-    >
+    <OverlayView position={position} mapPaneName={OverlayView.FLOAT_PANE}>
       <div
+        ref={containerRef}
         className='custom-popup-container'
         style={{
           position: 'absolute',
-          transform: 'translate(-50%, -100%)',
-          marginTop: '-15px',
-          animation: 'popupSlideIn 0.3s ease-out',
-          pointerEvents: 'auto'
+          transform: `translate(${popupStyle.transformX}, ${popupStyle.transformY})`,
+          marginTop: popupStyle.marginTop,
+          // Apply different animation based on direction
+          animation: popupStyle.isFlipped
+            ? 'popupSlideDown 0.3s ease-out'
+            : 'popupSlideIn 0.3s ease-out',
+          pointerEvents: 'auto',
+          zIndex: 9999
         }}
         onMouseEnter={onMouseEnter}
         onMouseLeave={onMouseLeave}
       >
-        {/* Popup bubble */}
         <div className='bg-white rounded-lg shadow-2xl p-4 min-w-[280px] max-w-[320px] border border-gray-200'>
-          {/* Close button */}
           <button
             onClick={onClose}
             className='absolute top-2 right-2 text-gray-400 hover:text-gray-600 transition-colors'
@@ -131,13 +169,11 @@ const CustomPopup = ({
             </svg>
           </button>
 
-          {/* Content */}
           <div className='flex flex-col items-center'>
             <h3 className='font-bold text-lg mb-1 text-gray-900 text-center pr-6'>
               {location.name}
             </h3>
 
-            {/* Specific Alert Display */}
             {location.recentAlert && (
               <div className='flex flex-col items-center mb-3 p-2'>
                 <h4 className='font-extrabold text-xl text-gray-900'>
@@ -158,9 +194,7 @@ const CustomPopup = ({
               {location.address || 'Address not available'}
             </p>
 
-            {/* Alert Status Display */}
             <div className='w-full space-y-2 mb-3'>
-              {/* Intimate Alert Banner */}
               {location.hasIntimateAlerts && (
                 <div className='w-full bg-gradient-to-r from-orange-500 to-red-500 text-white px-3 py-2 rounded-lg shadow-md'>
                   <div className='flex items-center justify-between'>
@@ -188,7 +222,6 @@ const CustomPopup = ({
                 </div>
               )}
 
-              {/* General Alerts Status */}
               {location.alertCount > 0 ? (
                 <div className='w-full bg-red-50 border-2 border-red-300 px-3 py-2 rounded-lg'>
                   <div className='flex items-center justify-between'>
@@ -255,14 +288,20 @@ const CustomPopup = ({
           </div>
         </div>
 
-        {/* Popup arrow/tail */}
+        {/* Pointer Arrow - Adjusts position based on flip state */}
         <div
-          className='absolute left-1/2 bg-white border-b border-r border-gray-200'
+          className='absolute left-1/2 bg-white border-gray-200'
           style={{
             width: '12px',
             height: '12px',
             transform: 'translateX(-50%) rotate(45deg)',
-            bottom: '-6px'
+            // If flipped (popup below), arrow goes to top. If normal (popup above), arrow goes to bottom.
+            [popupStyle.isFlipped ? 'top' : 'bottom']: '-6px',
+            // Adjust borders so the shadow looks correct
+            borderBottomWidth: popupStyle.isFlipped ? '0px' : '1px',
+            borderRightWidth: '1px',
+            borderTopWidth: popupStyle.isFlipped ? '1px' : '0px',
+            borderLeftWidth: '0px'
           }}
         ></div>
       </div>
@@ -270,7 +309,7 @@ const CustomPopup = ({
   )
 }
 
-// Pulsing alert badge component for markers with intimate alerts
+// Pulsing alert badge
 const PulsingAlertBadge = ({ position, count }) => {
   return (
     <OverlayView
@@ -281,7 +320,6 @@ const PulsingAlertBadge = ({ position, count }) => {
         className='relative'
         style={{ transform: 'translate(-50%, -100%)', marginTop: '-10px' }}
       >
-        {/* Pulsing rings */}
         <div className='absolute inset-0 flex items-center justify-center'>
           <div className='w-8 h-8 bg-orange-500 rounded-full opacity-75 animate-ping absolute'></div>
           <div
@@ -289,7 +327,6 @@ const PulsingAlertBadge = ({ position, count }) => {
             style={{ animationDelay: '0.5s' }}
           ></div>
         </div>
-        {/* Alert badge */}
         <div className='relative bg-gradient-to-br from-orange-500 to-red-600 text-white rounded-full w-8 h-8 flex items-center justify-center shadow-lg border-2 border-white font-bold text-xs z-10'>
           {count}
         </div>
@@ -317,8 +354,6 @@ const LocationMap = ({
   const [hoveredMarker, setHoveredMarker] = useState(null)
   const [draggableMarker, setDraggableMarker] = useState(null)
   const [isPopupHovered, setIsPopupHovered] = useState(false)
-
-  // State to track initial map position and zoom from localStorage
   const [initialMapState, setInitialMapState] = useState({
     center: defaultCenter,
     zoom: 10
@@ -327,7 +362,6 @@ const LocationMap = ({
   const closeTimeoutRef = useRef(null)
   const saveTimeoutRef = useRef(null)
 
-  // Load saved map state from localStorage on component mount
   useEffect(() => {
     const savedMapState = localStorage.getItem('locationMapState')
     if (savedMapState && !isSelectionMode) {
@@ -357,7 +391,6 @@ const LocationMap = ({
     }
   }, [isSelectionMode, initialLat, initialLng])
 
-  // Prepare map locations for display mode
   const augmentedLocations = useMemo(() => {
     if (isSelectionMode) return []
     return locations
@@ -365,17 +398,13 @@ const LocationMap = ({
       .map(loc => {
         const alertCount = loc.alert_count || 0
         const intimateAlertCount = loc.intimate_alert_count || 0
-
         return {
           ...loc,
           alertCount,
           intimateAlertCount,
           hasActiveAlerts: alertCount > 0,
           hasIntimateAlerts: intimateAlertCount > 0,
-          coords: {
-            lat: parseFloat(loc.lat),
-            lng: parseFloat(loc.lang)
-          },
+          coords: { lat: parseFloat(loc.lat), lng: parseFloat(loc.lang) },
           markerIcon: loc.meta?.markerIcon || 'default',
           markerColor: loc.meta?.markerColor || null
         }
@@ -385,7 +414,6 @@ const LocationMap = ({
   const onLoad = useCallback(
     mapInstance => {
       if (!isSelectionMode && augmentedLocations.length > 0) {
-        // Check if we have saved state, otherwise fit to bounds
         const savedMapState = localStorage.getItem('locationMapState')
         if (savedMapState) {
           try {
@@ -393,38 +421,14 @@ const LocationMap = ({
             mapInstance.setCenter(center)
             mapInstance.setZoom(zoom)
           } catch (error) {
-            // If saved state is invalid, fit to bounds
             const bounds = new window.google.maps.LatLngBounds()
             augmentedLocations.forEach(loc => bounds.extend(loc.coords))
             mapInstance.fitBounds(bounds)
-
-            // Save the initial bounds state
-            const center = mapInstance.getCenter()
-            const zoom = mapInstance.getZoom()
-            if (center && zoom) {
-              const mapState = {
-                center: { lat: center.lat(), lng: center.lng() },
-                zoom: zoom
-              }
-              localStorage.setItem('locationMapState', JSON.stringify(mapState))
-            }
           }
         } else {
-          // No saved state, fit to bounds
           const bounds = new window.google.maps.LatLngBounds()
           augmentedLocations.forEach(loc => bounds.extend(loc.coords))
           mapInstance.fitBounds(bounds)
-
-          // Save the initial bounds state
-          const center = mapInstance.getCenter()
-          const zoom = mapInstance.getZoom()
-          if (center && zoom) {
-            const mapState = {
-              center: { lat: center.lat(), lng: center.lng() },
-              zoom: zoom
-            }
-            localStorage.setItem('locationMapState', JSON.stringify(mapState))
-          }
         }
       } else if (isSelectionMode && draggableMarker) {
         mapInstance.setCenter(draggableMarker)
@@ -435,12 +439,10 @@ const LocationMap = ({
       }
       setMap(mapInstance)
 
-      // Add event listeners for map changes with debouncing
       const saveMapState = () => {
         if (mapInstance && !isSelectionMode) {
           const center = mapInstance.getCenter()
           const zoom = mapInstance.getZoom()
-
           if (center && zoom) {
             const mapState = {
               center: { lat: center.lat(), lng: center.lng() },
@@ -451,15 +453,11 @@ const LocationMap = ({
         }
       }
 
-      // Set up event listeners with debouncing
       const debouncedSave = () => {
-        if (saveTimeoutRef.current) {
-          clearTimeout(saveTimeoutRef.current)
-        }
+        if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current)
         saveTimeoutRef.current = setTimeout(saveMapState, 1000)
       }
 
-      // Add listeners without updating React state
       window.google.maps.event.addListener(
         mapInstance,
         'center_changed',
@@ -485,16 +483,10 @@ const LocationMap = ({
   )
 
   const onUnmount = useCallback(() => {
-    // Clear any pending save timeout
-    if (saveTimeoutRef.current) {
-      clearTimeout(saveTimeoutRef.current)
-    }
-
-    // Save final map state
+    if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current)
     if (map && !isSelectionMode) {
       const center = map.getCenter()
       const zoom = map.getZoom()
-
       if (center && zoom) {
         const mapState = {
           center: { lat: center.lat(), lng: center.lng() },
@@ -508,17 +500,13 @@ const LocationMap = ({
 
   const handleMapClick = useCallback(
     e => {
-      // Close popup when clicking on map
       setHoveredMarker(null)
       setIsPopupHovered(false)
-
       if (isSelectionMode) {
         const newLat = e.latLng.lat()
         const newLng = e.latLng.lng()
         setDraggableMarker({ lat: newLat, lng: newLng })
-        if (onLocationSelect) {
-          onLocationSelect(newLat, newLng)
-        }
+        if (onLocationSelect) onLocationSelect(newLat, newLng)
       }
     },
     [isSelectionMode, onLocationSelect]
@@ -530,16 +518,14 @@ const LocationMap = ({
         const newLat = e.latLng.lat()
         const newLng = e.latLng.lng()
         setDraggableMarker({ lat: newLat, lng: newLng })
-        if (onLocationSelect) {
-          onLocationSelect(newLat, newLng)
-        }
+        if (onLocationSelect) onLocationSelect(newLat, newLng)
       }
     },
     [isSelectionMode, onLocationSelect]
   )
 
   const handleViewDashboard = id => {
-    navigate(`/dashboard`)
+    navigate(`/dashboard?locationId=${id}`)
   }
 
   const handleViewAlerts = id => {
@@ -549,13 +535,10 @@ const LocationMap = ({
   const handleMarkerMouseOver = location => {
     if (closeTimeoutRef.current) clearTimeout(closeTimeoutRef.current)
     setHoveredMarker(location)
-    if (onPopupOpen) {
-      onPopupOpen(location)
-    }
+    if (onPopupOpen) onPopupOpen(location)
   }
 
   const handleMarkerMouseOut = () => {
-    // Only close if not hovering over popup
     if (!isPopupHovered) {
       if (closeTimeoutRef.current) clearTimeout(closeTimeoutRef.current)
       closeTimeoutRef.current = setTimeout(() => {
@@ -592,17 +575,15 @@ const LocationMap = ({
 
   return (
     <div className='w-full'>
-      {/* Add custom CSS for popup animation only */}
+      {/* Updated Animations including slideDown */}
       <style>{`
         @keyframes popupSlideIn {
-          from {
-            opacity: 0;
-            transform: translate(-50%, -90%);
-          }
-          to {
-            opacity: 1;
-            transform: translate(-50%, -100%);
-          }
+          from { opacity: 0; transform: translate(-50%, -90%); }
+          to { opacity: 1; transform: translate(-50%, -100%); }
+        }
+        @keyframes popupSlideDown {
+          from { opacity: 0; transform: translate(-50%, 10%); }
+          to { opacity: 1; transform: translate(-50%, 0%); }
         }
       `}</style>
 
@@ -634,18 +615,17 @@ const LocationMap = ({
                   onMouseOut={handleMarkerMouseOut}
                   zIndex={
                     hoveredMarker?.id === location.id
-                      ? 2000
+                      ? 1
                       : location.hasIntimateAlerts
-                      ? 1000
+                      ? 1
                       : 100
                   }
                 />
-
-                {/* Custom Popup - ONLY ON HOVER */}
                 {hoveredMarker && hoveredMarker.id === location.id && (
                   <CustomPopup
                     position={location.coords}
                     location={hoveredMarker}
+                    map={map} /* IMPORTANT: Pass the map instance here */
                     onClose={handlePopupClose}
                     onViewDashboard={handleViewDashboard}
                     onViewAlerts={handleViewAlerts}
@@ -653,8 +633,6 @@ const LocationMap = ({
                     onMouseLeave={handlePopupMouseLeave}
                   />
                 )}
-
-                {/* Pulsing badge for intimate alerts */}
                 {location.hasIntimateAlerts && (
                   <PulsingAlertBadge
                     position={location.coords}
@@ -664,7 +642,6 @@ const LocationMap = ({
               </React.Fragment>
             )
           })}
-
         {isSelectionMode && draggableMarker && (
           <MarkerF
             position={draggableMarker}

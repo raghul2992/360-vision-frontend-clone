@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next'
 export default function DetectionChart ({ data, total, showPercentages }) {
   const { t } = useTranslation()
   const chartRef = useRef(null)
-  // Initialize with a default size, will be updated on mount/resize
+
   const [chartSize, setChartSize] = useState({
     width: 300,
     height: 300,
@@ -13,38 +13,43 @@ export default function DetectionChart ({ data, total, showPercentages }) {
     innerRadius: 20
   })
 
+  // Helper function to assign colors based on Priority
+  const getPriorityColor = (label, defaultColor) => {
+    if (!label) return defaultColor
+    const lowerLabel = label.toString().toLowerCase()
+
+    // Check for keywords and return specific colors
+    if (lowerLabel.includes('low')) return '#4CAF50' // Green
+    if (lowerLabel.includes('medium')) return '#FFC107' // Yellow (Amber for better visibility)
+    if (lowerLabel.includes('high')) return '#F44336' // Red
+
+    return defaultColor
+  }
+
   // Transform your incoming data to match MUI PieChart format
   const chartData = data.map((item, index) => ({
     id: index,
     value: item.value,
     label: item.label,
-    color: item.color
+    // Override color if it matches priority keywords, otherwise use item.color
+    color: getPriorityColor(item.label, item.color)
   }))
 
   // Function to calculate and set the chart size
   const updateChartSize = () => {
     if (chartRef.current) {
-      // Get the current dimensions of the chart container
       const parentWidth = chartRef.current.offsetWidth
       const parentHeight = chartRef.current.offsetHeight
-
-      // Determine the max size for the chart circle to fit within the container
-      // Subtract space for the total text below and margin.
       const availableHeight = parentHeight - 50
 
-      // Calculate a size based on the smaller dimension (to keep it square)
-      // If legend is visible, the chart needs to be smaller than the width.
       const chartDimension = Math.min(
         showPercentages ? parentWidth * 0.7 : parentWidth * 0.9,
         availableHeight * 0.9
       )
 
-      // Ensure minimum size
       const size = Math.max(chartDimension, 150)
-
-      // Calculate radii for the PieChart
-      const radius = size / 2.5 // Outer radius
-      const innerRadius = radius * 0.2 // Inner radius (20% of outer)
+      const radius = size / 2.5
+      const innerRadius = radius * 0.2
 
       setChartSize({
         width: parentWidth,
@@ -55,17 +60,13 @@ export default function DetectionChart ({ data, total, showPercentages }) {
     }
   }
 
-  // Hook to handle resize events using ResizeObserver
   useEffect(() => {
     updateChartSize()
-
-    // Use ResizeObserver to detect when the div changes size (due to RGL drag/resize)
     if (chartRef.current) {
       const observer = new ResizeObserver(() => updateChartSize())
       observer.observe(chartRef.current)
       return () => observer.disconnect()
     }
-    // Fallback if needed, but ResizeObserver is preferred for RGL context
     return () => {}
   }, [showPercentages, data.length])
 
@@ -79,12 +80,11 @@ export default function DetectionChart ({ data, total, showPercentages }) {
         cornerRadius: 4
       }
     ],
-    // Use full parent dimensions
     width: chartSize.width,
     height: chartSize.height,
     slotProps: {
       legend: {
-        hidden: !showPercentages, // Hide legend if not showing percentages (Default for DetectionType)
+        hidden: !showPercentages,
         direction: 'column',
         itemMarkWidth: 10,
         itemMarkHeight: 10
@@ -98,7 +98,6 @@ export default function DetectionChart ({ data, total, showPercentages }) {
   return (
     <div
       ref={chartRef}
-      // Style the container to take up all available space
       style={{
         width: '100%',
         height: '100%',
@@ -107,12 +106,10 @@ export default function DetectionChart ({ data, total, showPercentages }) {
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        marginTop: '40px' // Ensure a minimum visible size
+        marginTop: '40px'
       }}
     >
       <PieChart {...pieChartProps} />
-
-      {/* Total Label: Positioned to be below the chart */}
     </div>
   )
 }

@@ -1,5 +1,4 @@
 import './App.css'
-import React, { useEffect, useState, useCallback } from 'react'
 import {
   BrowserRouter as Router,
   useLocation,
@@ -8,8 +7,11 @@ import {
 import { routes } from './route'
 import FloatingLanguageButton from './component/FloatingLanguageButton'
 import AlertPopup from './component/AlertPopup'
-import { useSelector, useDispatch } from 'react-redux' // Removed Provider from here (it's in index.js)
+import { Provider, useSelector, useDispatch } from 'react-redux'
+import eventEmitter from './utils/eventEmitter'
 import store from './app/store'
+import 'react-toastify/dist/ReactToastify.css'
+import React, { useEffect, useState, useCallback } from 'react'
 import useWebSocket from './hooks/useWebSocket'
 import { getCameras } from './features/cameras/cameraApiSlice'
 import { logoutUser } from './features/auth/authSlice'
@@ -23,24 +25,25 @@ function AppRoutes () {
 
 function App () {
   return (
-    // <Provider> is removed here because it is already in index.js
-    <div className='font-sans'>
-      <ToastContainer
-        position='bottom-right'
-        autoClose={5000}
-        hideProgressBar={false}
-        newestOnTop
-        closeOnClick
-        rtl={false}
-        pauseOnFocusLoss
-        draggable
-        pauseOnHover
-        theme='colored'
-      />
-      <Router>
-        <MainApp />
-      </Router>
-    </div>
+    <Provider store={store}>
+      <div className='font-sans'>
+        <ToastContainer
+          position='bottom-right'
+          autoClose={5000}
+          hideProgressBar={false}
+          newestOnTop
+          closeOnClick
+          rtl={false}
+          pauseOnFocusLoss
+          draggable
+          pauseOnHover
+          theme='colored'
+        />
+        <Router>
+          <MainApp />
+        </Router>
+      </div>
+    </Provider>
   )
 }
 
@@ -50,11 +53,6 @@ function MainApp () {
   const { user } = useSelector(state => state.auth)
   const [websocketUrl, setWebsocketUrl] = useState(null)
 
-  // FIX 1: Safely initialize state
-  const [notificationPermission, setNotificationPermission] = useState(
-    ('Notification' in window) ? Notification.permission : 'default'
-  )
-
   const {
     isConnected,
     message: wsMessage,
@@ -62,11 +60,12 @@ function MainApp () {
   } = useWebSocket(websocketUrl, localStorage.getItem('tenant_id'))
 
   // ----------------------------------
-  // Helper: Toast for Blocked Permissions
+  // FIX: Show "notifications blocked" ONLY ONCE
   // ----------------------------------
+
   const LOCAL_STORAGE_KEY = 'notif_permission_denied_shown'
 
-  const showPermissionDeniedToast = useCallback(() => {
+  const showPermissionDeniedToast = () => {
     toast.warn(
       <div>
         <p className='font-semibold'>Notifications are blocked</p>
@@ -98,15 +97,9 @@ function MainApp () {
         toastId: 'notification-permission-denied'
       }
     )
-  }, [])
+  }
 
-  // ----------------------------------
-  // Permission Logic (Safe for iOS)
-  // ----------------------------------
   useEffect(() => {
-    // FIX 2: Check existence before checking permission property
-    if (!('Notification' in window)) return;
-
     const alreadyShown = localStorage.getItem(LOCAL_STORAGE_KEY)
 
     // Show only ONCE
@@ -117,53 +110,35 @@ function MainApp () {
       }, 800)
     }
 
-    // FIX 3: Add safety check for navigator.permissions
-    if ('permissions' in navigator) {
+    navigator.permissions
+      ?.query({ name: 'notifications' })
+      .then(permissionStatus => {
+        permissionStatus.onchange = () => {
+          const newPermission = Notification.permission
+
+          if (
+            newPermission === 'denied' &&
+            !localStorage.getItem(LOCAL_STORAGE_KEY)
+          ) {
+            showPermissionDeniedToast()
+            localStorage.setItem(LOCAL_STORAGE_KEY, 'true')
+          }
+        }
+      })
+
+    return () => {
       navigator.permissions
         ?.query({ name: 'notifications' })
         .then(permissionStatus => {
-          permissionStatus.onchange = () => {
-            // FIX 4: Re-check existence inside callback
-            if (!('Notification' in window)) return;
-
-            const newPermission = Notification.permission
-
-            if (
-              newPermission === 'denied' &&
-              !localStorage.getItem(LOCAL_STORAGE_KEY)
-            ) {
-              showPermissionDeniedToast()
-              localStorage.setItem(LOCAL_STORAGE_KEY, 'true')
-            }
-          }
-        })
-        .catch(err => {
-          // Creating a catch block prevents crash on browsers that don't implement this query
-          console.log("Permission query not supported", err);
+          permissionStatus.onchange = null
         })
     }
-
-    return () => {
-       if ('permissions' in navigator) {
-        navigator.permissions
-          ?.query({ name: 'notifications' })
-          .then(permissionStatus => {
-            permissionStatus.onchange = null
-          })
-          .catch(() => {})
-      }
-    }
-  }, [showPermissionDeniedToast, LOCAL_STORAGE_KEY])
+  }, [])
 
   // Request permission if needed
   useEffect(() => {
-    // FIX 5: Check existence before requesting
-    if ('Notification' in window && Notification.permission === 'default') {
-      try {
-        Notification.requestPermission().catch(err => console.error(err));
-      } catch (e) {
-        console.error("Failed to request permission", e);
-      }
+    if (Notification.permission === 'default') {
+      Notification.requestPermission()
     }
   }, [])
 
@@ -174,37 +149,24 @@ function MainApp () {
     if (!wsMessage) return
 
     const tenantId = localStorage.getItem('tenant_id')
-    
-    // FIX 6: Centralized check for capability
-    const canNotify = ('Notification' in window) && (Notification.permission === 'granted');
 
     if (wsMessage.type === 'camera_status' && tenantId) {
       dispatch(getCameras({ tenantId }))
-      
-      if (canNotify) {
-        try {
-          new Notification('Camera Status Update', {
-            body: `Camera ${wsMessage.data.camera_id} status changed to ${wsMessage.data.status}`,
-            icon: '/favicon.ico'
-          })
-        } catch (e) {
-          console.error("Notification creation failed", e)
-        }
+      if (Notification.permission === 'granted') {
+        new Notification('Camera Status Update', {
+          body: `Camera ${wsMessage.data.camera_id} status changed to ${wsMessage.data.status}`,
+          icon: '/favicon.ico'
+        })
       }
-
     } else if (wsMessage.type === 'event_alert') {
-      if (canNotify) {
-        try {
-          new Notification(wsMessage.data.title || 'New Alert', {
-            body: wsMessage.data.message,
-            icon: '/sstlogo.png'
-          })
-        } catch (e) {
-          console.error("Notification creation failed", e)
-        }
+      if (Notification.permission === 'granted') {
+        new Notification(wsMessage.data.title || 'New Alert', {
+          body: wsMessage.data.message,
+          icon: '/logo192.png'
+        })
       }
     }
-  }, [wsMessage, dispatch])
+  }, [wsMessage])
 
   // Hide Floating Button on dashboard-like screens
   const dashboardPaths = [

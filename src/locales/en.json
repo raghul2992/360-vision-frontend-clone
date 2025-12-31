@@ -502,7 +502,8 @@
     "busiest_hour_avg": "Busiest Hour (Average)",
     "average_dwell_time": "Average Dwell Time",
     "total_safety_violations_24h": "Total Safety Violations (24h)",
-    "count": "Count"
+    "count": "Count",
+    "all_locations": "All Locations"
   },
   "date_locale": "en-US",
   "date": {
