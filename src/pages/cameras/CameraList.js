@@ -15,7 +15,8 @@ import {
   IoEllipsisHorizontal,
   IoCog,
   IoRefresh,
-  IoAddCircleOutline
+  IoAddCircleOutline,
+  IoCloseCircleOutline
 } from 'react-icons/io5'
 import { FaCircleNotch } from 'react-icons/fa'
 import { useTranslation } from 'react-i18next'
@@ -24,6 +25,7 @@ import { Link } from 'react-router-dom'
 import { getCameras, deleteCamera } from '../../features/cameras/cameraApiSlice'
 import { getLocations } from '../../features/locations/locationApiSlice'
 import { toast } from 'react-toastify'
+import CameraStatusSummary from './component/CameraStatusSummary'
 
 const CameraList = () => {
   const { t } = useTranslation()
@@ -130,7 +132,7 @@ const CameraList = () => {
             className='w-12 h-12 rounded-xl bg-red-500/20 flex items-center justify-center border border-red-500/30'
             title='Error'
           >
-            <IoCloseCircle className='text-red-400' size={24} />
+            <IoCloseCircleOutline className='text-red-400' size={24} />
           </div>
         )
       default:
@@ -159,7 +161,7 @@ const CameraList = () => {
                 onClick={handleDeleteCancel}
                 className='text-gray-400 hover:text-white transition-colors'
               >
-                <IoClose size={24} />
+                <IoCloseCircleOutline size={24} />
               </button>
             </div>
 
@@ -264,6 +266,8 @@ const CameraList = () => {
           </div>
         </div>
       </div>
+
+      <CameraStatusSummary cameras={filteredCameras} />
 
       {isLoading && (
         <p className='text-center text-gray-400'>
