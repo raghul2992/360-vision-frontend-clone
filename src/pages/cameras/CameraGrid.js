@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useMemo } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 import {
   IoPencil,
@@ -7,15 +7,20 @@ import {
   IoSearchOutline,
   IoChevronDown,
   IoLocationOutline,
-  IoRadio,
-  IoClose
+  IoCloseCircleOutline,
+  IoWifi, // Added for Active
+  IoBanOutline, // Added for Inactive
+  IoRefresh // Added for Processing
+  // Added for Error
 } from 'react-icons/io5'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { getCameras, deleteCamera } from '../../features/cameras/cameraApiSlice'
 import { getLocations } from '../../features/locations/locationApiSlice'
 import { toast } from 'react-toastify'
+import CameraStatusSummary from './component/CameraStatusSummary'
 
+// --- Main Component: CameraGrid ---
 const CameraGrid = () => {
   const { t } = useTranslation()
   const dispatch = useDispatch()
@@ -127,7 +132,7 @@ const CameraGrid = () => {
                 onClick={handleDeleteCancel}
                 className='text-gray-400 hover:text-white transition-colors'
               >
-                <IoClose size={24} />
+                <IoCloseCircleOutline size={24} />
               </button>
             </div>
 
@@ -239,6 +244,8 @@ const CameraGrid = () => {
         </div>
       </div>
 
+      <CameraStatusSummary cameras={filteredCameras} />
+
       {/* Camera Grid */}
       {isLoading && (
         <p className='text-center text-gray-400'>
@@ -325,12 +332,6 @@ const CameraGrid = () => {
 
             {/* Footer actions */}
             <div className='flex justify-end items-center pt-4 border-t border-gray-700/50 mt-auto'>
-              {/* <Link className='flex items-center'>
-                <button className='flex items-center gap-1.5 text-gray-400 hover:text-white transition-colors text-sm'>
-                  <IoRadio size={16} />
-                  {t('cameraGrid.roiButton') || 'ROI'}
-                </button>
-              </Link> */}
               <div className='flex gap-3'>
                 <Link
                   to={`/add-camera?id=${camera.id}`}

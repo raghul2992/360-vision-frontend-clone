@@ -77,6 +77,9 @@ export const useDashboardLogic = () => {
   const [alertTypeBreakdownDateRange, setAlertTypeBreakdownDateRange] =
     useState(null)
 
+  // -- FIXED: Added State for Top Problematic ROIs --
+  const [topRoisLocation, setTopRoisLocation] = useState(null)
+  const [topRoisCamera, setTopRoisCamera] = useState(null)
   const [topRoisDateRange, setTopRoisDateRange] = useState(null)
 
   // --- Data State ---
@@ -127,7 +130,7 @@ export const useDashboardLogic = () => {
     const tenantId = localStorage.getItem('tenant_id')
     if (tenantId) {
       hasRequestedTenant.current = false
-      dispatch(getTenant({ tenant_id: tenantId, skip: 0, limit: 100 }))
+      dispatch(getTenant({ tenant_id: tenantId, skip: 0, limit: 10 }))
     }
   }, [dispatch])
 
@@ -136,12 +139,10 @@ export const useDashboardLogic = () => {
   // =========================================================
   const applyLocationFilter = useCallback(
     newLocationId => {
-      // 1. Set the global string ID for the dropdown
       setSelectedGlobalLocation(newLocationId)
 
       let locationObj = null
 
-      // 2. Find the full location object (if not 'all')
       if (newLocationId && newLocationId !== 'all') {
         const loc = locations.find(
           l =>
@@ -154,10 +155,8 @@ export const useDashboardLogic = () => {
         }
       }
 
-      // 3. Update all individual section states
-      // If locationObj is null (because 'all' was selected), these will reset to show all data
       setKpiLocation(locationObj)
-      setKpiCamera(null) // Reset camera when location changes
+      setKpiCamera(null)
 
       setHealthLocation(locationObj)
       setHealthCamera(null)
@@ -173,47 +172,39 @@ export const useDashboardLogic = () => {
 
       setAlertTypeBreakdownLocation(locationObj)
       setAlertTypeBreakdownCamera(null)
+
+      // -- FIXED: Apply global filter to Top ROIs --
+      setTopRoisLocation(locationObj)
+      setTopRoisCamera(null)
     },
     [locations]
   )
 
-  // =========================================================
-  //  1. HANDLE MANUAL CHANGE (Dropdown)
-  // =========================================================
   const handleGlobalLocationChange = useCallback(
     e => {
       const newLocationId = e.target.value
 
-      // Update URL search params
-      const searchParams = new URLSearchParams(location.search)
+      // FIX: Do not set state here. Only update the URL.
+      // The useEffect below will detect the URL change and update the state.
 
       if (newLocationId === 'all') {
-        searchParams.delete('locationId')
+        navigate(location.pathname, { replace: true })
       } else {
-        searchParams.set('locationId', newLocationId)
+        // Ensure we replace to avoid cluttering history, or push if you want history
+        navigate(`${location.pathname}?locationId=${newLocationId}`, {
+          replace: true
+        })
       }
-
-      // Navigate to the new URL.
-      // The useEffect below will detect this change and call applyLocationFilter.
-      navigate(
-        { pathname: location.pathname, search: searchParams.toString() },
-        { replace: true }
-      )
     },
-    [location.pathname, location.search, navigate]
+    [navigate, location.pathname]
   )
 
-  // =========================================================
-  //  2. LISTEN FOR URL QUERY PARAMETERS
-  // =========================================================
   useEffect(() => {
     const searchParams = new URLSearchParams(location.search)
-    // If param exists, use it. If not, default to 'all'.
+    // If param is missing, treat it as 'all'
     const incomingId = searchParams.get('locationId') || 'all'
 
-    // We only apply logic if we have locations loaded (to find the matching object)
-    // and if the incoming ID is different from what is currently selected.
-    if (locations.length > 0) {
+    if (locations.length > 0 || incomingId === 'all') {
       if (String(incomingId) !== String(selectedGlobalLocation)) {
         applyLocationFilter(incomingId)
       }
@@ -225,7 +216,7 @@ export const useDashboardLogic = () => {
     const tenantId = localStorage.getItem('tenant_id')
     if (tenantId && !hasRequestedTenant.current) {
       hasRequestedTenant.current = true
-      dispatch(getTenant({ tenant_id: tenantId, skip: 0, limit: 100 }))
+      dispatch(getTenant({ tenant_id: tenantId, skip: 0, limit: 10 }))
     }
   }, [dispatch])
 
@@ -241,7 +232,7 @@ export const useDashboardLogic = () => {
     const tenantId = localStorage.getItem('tenant_id')
     if (tenantId && !hasRequestedCameras.current) {
       hasRequestedCameras.current = true
-      dispatch(getCameras({ tenantId, skip: 0, limit: 100 }))
+      dispatch(getCameras({ tenantId, skip: 0, limit: 10 }))
     }
   }, [dispatch])
 
@@ -346,67 +337,67 @@ export const useDashboardLogic = () => {
   const handleLayoutChange = useCallback(newLayout => setLayout(newLayout), [])
 
   // --- KPI Data Fetching ---
-  useEffect(() => {
-    const fetchKpiData = async () => {
-      const tenantId = localStorage.getItem('tenant_id')
-      if (!tenantId) return
-      setIsKpiLoading(true)
-      try {
-        const params = { ...getDateParams(kpiDateRange) }
-        if (kpiLocation?.value) params.location_id = kpiLocation.value
-        if (kpiCamera?.value) params.camera_id = kpiCamera.value
+  // useEffect(() => {
+  //   const fetchKpiData = async () => {
+  //     const tenantId = localStorage.getItem('tenant_id')
+  //     if (!tenantId) return
+  //     setIsKpiLoading(true)
+  //     try {
+  //       const params = { ...getDateParams(kpiDateRange) }
+  //       if (kpiLocation?.value) params.location_id = kpiLocation.value
+  //       if (kpiCamera?.value) params.camera_id = kpiCamera.value
 
-        const res = await dispatch(
-          fetchOverviewReports({ tenant_id: tenantId, params })
-        )
-        if (res.payload) {
-          const overviewData = res.payload
-          const totalCameras = cameras.length
-          const activeCameras = cameras.filter(
-            c => c.status === 'active'
-          ).length
-          const detectionEfficiency =
-            totalCameras > 0
-              ? `${Math.round((activeCameras / totalCameras) * 100)}%`
-              : '0%'
+  //       const res = await dispatch(
+  //         fetchOverviewReports({ tenant_id: tenantId, params })
+  //       )
+  //       if (res.payload) {
+  //         const overviewData = res.payload
+  //         const totalCameras = cameras.length
+  //         const activeCameras = cameras.filter(
+  //           c => c.status === 'active'
+  //         ).length
+  //         const detectionEfficiency =
+  //           totalCameras > 0
+  //             ? `${Math.round((activeCameras / totalCameras) * 100)}%`
+  //             : '0%'
 
-          let dwellTime = '0m 0s'
-          if (overviewData.avgDwell?.average_dwell_time) {
-            const dwellSeconds = parseInt(
-              overviewData.avgDwell.average_dwell_time
-            )
-            if (!isNaN(dwellSeconds))
-              dwellTime = `${Math.floor(dwellSeconds / 60)}m ${
-                dwellSeconds % 60
-              }s`
-          }
+  //         let dwellTime = '0m 0s'
+  //         if (overviewData.avgDwell?.average_dwell_time) {
+  //           const dwellSeconds = parseInt(
+  //             overviewData.avgDwell.average_dwell_time
+  //           )
+  //           if (!isNaN(dwellSeconds))
+  //             dwellTime = `${Math.floor(dwellSeconds / 60)}m ${
+  //               dwellSeconds % 60
+  //             }s`
+  //         }
 
-          setKpiData({
-            alertsCount: overviewData.alertsCount?.count || 0,
-            mostFrequent: {
-              detection_type:
-                overviewData.mostFrequent?.detection_type?.replace(/_/g, ' ') ||
-                '-',
-              count: overviewData.mostFrequent?.count || 0
-            },
-            busiestHour: overviewData.busiestHour || null,
-            avgDwell: { average_dwell_time: dwellTime },
-            safetyViolations: overviewData.safetyViolations?.count || 0,
-            peakDetectionHour: overviewData.peakDetectionHour || null,
-            totalCameras,
-            activeCameras,
-            detectionEfficiency,
-            avgResponseTime: '2m 30s'
-          })
-        }
-      } catch (error) {
-        console.error('Failed to fetch KPI:', error)
-      } finally {
-        setIsKpiLoading(false)
-      }
-    }
-    fetchKpiData()
-  }, [dispatch, kpiLocation, kpiCamera, kpiDateRange, cameras, getDateParams])
+  //         setKpiData({
+  //           alertsCount: overviewData.alertsCount?.count || 0,
+  //           mostFrequent: {
+  //             detection_type:
+  //               overviewData.mostFrequent?.detection_type?.replace(/_/g, ' ') ||
+  //               '-',
+  //             count: overviewData.mostFrequent?.count || 0
+  //           },
+  //           busiestHour: overviewData.busiestHour || null,
+  //           avgDwell: { average_dwell_time: dwellTime },
+  //           safetyViolations: overviewData.safetyViolations?.count || 0,
+  //           peakDetectionHour: overviewData.peakDetectionHour || null,
+  //           totalCameras,
+  //           activeCameras,
+  //           detectionEfficiency,
+  //           avgResponseTime: '2m 30s'
+  //         })
+  //       }
+  //     } catch (error) {
+  //       console.error('Failed to fetch KPI:', error)
+  //     } finally {
+  //       setIsKpiLoading(false)
+  //     }
+  //   }
+  //   fetchKpiData()
+  // }, [dispatch, kpiLocation, kpiCamera, kpiDateRange, cameras, getDateParams])
 
   // --- Widget Fetching ---
   useEffect(() => {
@@ -416,7 +407,7 @@ export const useDashboardLogic = () => {
     const queryParams = {
       type: 'event_alert',
       skip: 0,
-      limit: 100,
+      limit: 10,
       ...getDateParams(detectionDateRange)
     }
     if (detectionLocation?.value)
@@ -439,7 +430,7 @@ export const useDashboardLogic = () => {
     const queryParams = {
       type: 'event_alert',
       skip: 0,
-      limit: 100,
+      limit: 10,
       ...getDateParams(priorityDateRange)
     }
     if (priorityLocation?.value)
@@ -499,6 +490,7 @@ export const useDashboardLogic = () => {
     getDateParams
   ])
 
+  // -- FIXED: Updated Fetch Logic for Top Problematic ROIs --
   useEffect(() => {
     if (!activeWidgets.some(w => w.widget_name === 'top_problematic_rois'))
       return
@@ -506,11 +498,21 @@ export const useDashboardLogic = () => {
     if (!tenantId) return
     const params = {
       tenant_id: tenantId,
-      ...getDateParams(topRoisDateRange),
-      limit: 5
+      ...getDateParams(topRoisDateRange)
     }
+
+    if (topRoisLocation?.value) params.location_id = topRoisLocation.value
+    if (topRoisCamera?.value) params.camera_id = topRoisCamera.value
+
     dispatch(getTopProblematicRois(params))
-  }, [dispatch, activeWidgets, topRoisDateRange, getDateParams])
+  }, [
+    dispatch,
+    activeWidgets,
+    topRoisDateRange,
+    topRoisLocation,
+    topRoisCamera,
+    getDateParams
+  ])
 
   // --- Client Side Filtering ---
   useEffect(() => {
@@ -691,15 +693,18 @@ export const useDashboardLogic = () => {
             setDateRange: setAlertTypeBreakdownDateRange,
             dateRange: alertTypeBreakdownDateRange
           }
+        // -- FIXED: Wired up Props for Top Problematic ROIs --
         case 'top_problematic_rois':
           return {
             ...base,
-            locationOptions: [],
-            cameraOptions: [],
-            selectedLocation: null,
-            setSelectedLocation: () => {},
-            selectedCamera: null,
-            setSelectedCamera: () => {},
+            cameraOptions: getCamOpts(topRoisLocation),
+            selectedLocation: topRoisLocation,
+            setSelectedLocation: o => {
+              setTopRoisLocation(o)
+              setTopRoisCamera(null)
+            },
+            selectedCamera: topRoisCamera,
+            setSelectedCamera: setTopRoisCamera,
             setDateRange: setTopRoisDateRange,
             dateRange: topRoisDateRange
           }
@@ -722,6 +727,8 @@ export const useDashboardLogic = () => {
       alertTypeBreakdownLocation,
       alertTypeBreakdownCamera,
       alertTypeBreakdownDateRange,
+      topRoisLocation,
+      topRoisCamera,
       topRoisDateRange
     ]
   )

@@ -9,7 +9,7 @@ import { useDashboardLogic } from './dashboardhooks/useDashboardLogic'
 
 // Components
 import AddWidgetModal from './components/AddWidgetModal'
-import KpiSection from './components/KpiSection'
+// import KpiSection from './components/KpiSection'
 import HealthSection from './components/HealthSection'
 import DashboardWidget from './components/DashboardWidget'
 
@@ -137,10 +137,10 @@ export default function DashboardOverview () {
           isLoading={isKpiLoading}
           filterProps={kpiFilterProps}
         /> */}
-        <HealthSection
+        {/* <HealthSection
           healthData={healthData}
           filterProps={healthFilterProps}
-        />
+        /> */}
 
         {/* Analytics Header */}
         <div className='flex items-center justify-between mt-8 mb-6'>
