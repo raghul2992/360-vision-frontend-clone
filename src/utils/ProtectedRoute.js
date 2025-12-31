@@ -1,11 +1,11 @@
 import React from 'react'
 import { Navigate, Outlet } from 'react-router-dom'
-import { useSelector } from 'react-redux'
 
 const ProtectedRoute = () => {
-  const { user } = useSelector(state => state.auth)
+  // 1. Get the tenant_id directly from localStorage
+  const tenantId = localStorage.getItem('tenant_id')
 
-  return user ? <Outlet /> : <Navigate to='/' replace />
+  return tenantId ? <Outlet /> : <Navigate to='/' replace />
 }
 
 export default ProtectedRoute
