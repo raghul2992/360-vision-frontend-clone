@@ -11,6 +11,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import { loginUser } from '../../features/auth/authSlice'
 import { toast } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
+import { unwrapResult } from '@reduxjs/toolkit';
 
 const LoginPage = ({ callbackScreen }) => {
   const { t, i18n } = useTranslation()
@@ -38,13 +39,24 @@ const LoginPage = ({ callbackScreen }) => {
   //   }
   // }, [success, error, navigate, t])
 
+  
   const handleLogin = async () => {
-    const res = await dispatch(loginUser({ email, password }))
-    console.log(res.payload.status)
-    if (res.payload.status == 200) {
-      navigate('/dashboard')
+    try {
+      const actionResult = await dispatch(loginUser({ email, password }));
+      
+      // unwrapResult gets the { data, status } object we returned above
+      const result = unwrapResult(actionResult);
+
+      // Now 'result' is our plain object: { data: ..., status: 200 }
+      if (result.status === 200) {
+        navigate('/dashboard');
+      }
+    } catch (error) {
+      console.error("Login failed:", error);
+      toast.error(error);
+      // show toast error here
     }
-  }
+  };
 
   return (
     <div className='flex flex-col justify-start items-center w-full'>

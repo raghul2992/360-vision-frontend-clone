@@ -59,16 +59,22 @@ export const loginUser = createAsyncThunk(
       const response = await api.post('/api/v1/login/access-token', {
         email,
         password
-      })
-      return response
+      });
+
+      // Extract ONLY the serializable parts (data and status)
+      return {
+        data: response.data,
+        status: response.status
+      };
+      
     } catch (error) {
       if (error.response && error.response.data?.message) {
-        return rejectWithValue(error.response.data.message)
+        return rejectWithValue(error.response.data.message);
       }
-      return rejectWithValue(error.message)
+      return rejectWithValue(error.message);
     }
   }
-)
+);
 
 // Logout user
 export const logoutUser = createAsyncThunk(
