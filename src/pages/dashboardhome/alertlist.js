@@ -255,18 +255,17 @@ const AlertItem = ({ alert, tenantId }) => {
                   </p>
                 </div>
               </div>
+              <div>
+                <h3 className='text-gray-800 text-lg font-semibold'>
+                  {t('alerts.comments')}:
+                </h3>
+                <p className='text-gray-600 leading-relaxed'>
+                  {(enriched_message && enriched_message[i18n.language]) ||
+                    notes ||
+                    t('alerts.default_comment')}
+                </p>
+              </div>
             </div>
-          </div>
-
-          <div>
-            <h3 className='text-gray-800 text-lg font-semibold mb-2'>
-              {t('alerts.comments')}:
-            </h3>
-            <p className='text-gray-600 leading-relaxed'>
-              {(enriched_message && enriched_message[i18n.language]) ||
-                notes ||
-                t('alerts.default_comment')}
-            </p>
           </div>
         </div>
       )}

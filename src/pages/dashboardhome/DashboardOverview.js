@@ -60,7 +60,7 @@ export default function DashboardOverview () {
   if (layoutLoading && !hasInitialized) {
     return (
       <div className='min-h-screen bg-[#1a1d29] p-6 w-full'>
-        <div className='mx-auto max-w-7xl animate-pulse'>
+        <div className='mx-auto max-w-full animate-pulse'>
           <div className='flex items-center justify-between mb-8'>
             <div className='h-6 w-64 bg-[#2a2f45] rounded' />
             <div className='h-10 w-40 bg-[#2a2f45] rounded' />
@@ -84,7 +84,7 @@ export default function DashboardOverview () {
 
   return (
     <div className='min-h-screen bg-[#1a1d29] p-6 w-full'>
-      <div className='mx-auto max-w-7xl'>
+      <div className='mx-auto max-w-full'>
         {/* === GLOBAL FILTER SECTION === */}
         <div className='flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4'>
           <div>

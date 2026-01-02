@@ -217,7 +217,7 @@ const Alerts = () => {
 
   return (
     <div className='min-h-screen bg-[#1a1d29] p-6 w-full'>
-      <div className='mx-auto max-w-7xl'>
+      <div className='mx-auto max-w-full'>
         {/* Header */}
         <div className='flex items-center justify-between mb-4'>
           <h1 className='text-white text-2xl font-semibold'>
@@ -304,7 +304,7 @@ const Alerts = () => {
 
               <div
                 ref={containerRef}
-                className='space-y-4 w-full max-h-[350px] overflow-y-auto scrollbar-thin scrollbar-thumb-[#3b405e] scrollbar-track-[#1f2333] hover:scrollbar-thumb-[#4a5070] rounded-lg pr-2'
+                className='space-y-4 w-full max-h-[650px] overflow-y-auto scrollbar-thin scrollbar-thumb-[#3b405e] scrollbar-track-[#1f2333] hover:scrollbar-thumb-[#4a5070] rounded-lg pr-2'
               >
                 {alerts.map(alert => {
                   return (
