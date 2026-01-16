@@ -605,5 +605,101 @@
     "create": {
       "success": "Location created successfully!"
     }
+  },
+  "userManagement": {
+    "title": "User Management",
+    "subtitle": "Manage user roles, status, and locations",
+    "addUser": "Add User",
+    "searchPlaceholder": "Search by name or email",
+    "allRoles": "All Roles",
+    "clear": "Clear",
+    "search": "Search",
+    "loading": "Loading Users...",
+    "noUsers": "No users found matching your criteria.",
+    "table": {
+      "user": "User",
+      "role": "Role",
+      "locations": "Locations",
+      "status": "Status",
+      "action": "Action",
+      "global": "Global"
+    },
+    "stats": {
+      "total": "Total Users",
+      "active": "Active",
+      "admins": "Admins",
+      "operator": "Operator",
+      "viewers": "Viewers"
+    },
+    "modals": {
+      "deleteTitle": "Delete User?",
+      "deleteText": "This action cannot be undone.",
+      "cancel": "Cancel",
+      "delete": "Delete",
+      "sendInvitation": "Send Invitation"
+    },
+    "toast": {
+      "deleteSuccess": "User deleted",
+      "statusUpdate": "User is now {{status}}",
+      "inviteSuccess": "Invitation Sent!"
+    },
+    "addModal": {
+      "title": "Add New User",
+      "fullName": "Full Name*",
+      "fullNamePlaceholder": "Enter full name",
+      "email": "Email Address*",
+      "emailPlaceholder": "example@gmail.com",
+      "password": "Password*",
+      "role": "Role*",
+      "selectLocation": "Select Location*",
+      "searchLocation": "Search or select a location...",
+      "assignedCount": "Assigned: {{count}} Locations",
+      "noLocations": "No locations assigned yet",
+      "cancel": "Cancel",
+      "addUser": "Add User",
+      "adding": "Adding...",
+      "successTitle": "User Added Successfully"
+    },
+    "roles": {
+      "admin": "Admin",
+      "operator": "Operator",
+      "viewer": "Viewer"
+    },
+    "errors": {
+      "requiredFields": "Please fill in all required fields",
+      "addFailed": "Failed to add user",
+      "inviteFailed": "Failed to send invitation"
+    },
+    "updateModal": {
+      "title": "Update User",
+      "fullName": "Full Name*",
+      "role": "Role*",
+      "status": "Status*",
+      "active": "Active",
+      "inactive": "Inactive",
+      "locationVisibility": "Location Visibility",
+      "selectLocation": "Select Location*",
+      "searchLocation": "Search or select a location...",
+      "assignedCount": "Meta: {{count}} Locations Assigned",
+      "noLocations": "No locations assigned yet",
+      "cancel": "Cancel",
+      "updateUser": "Update User",
+      "updating": "Updating...",
+      "successToast": "User updated successfully",
+      "errorToast": "Update failed"
+    },
+    "invitation": {
+      "newBody": "The user <strong>{{name}}</strong> has been added successfully. Would you like to send an invitation email now?",
+      "existingBody": "Would you like to send a new invitation email to <strong>{{name}}</strong>? This will allow them to set up their account.",
+      "sendBtn": "Yes, Send Invitation",
+      "sendingBtn": "Sending Invitation...",
+      "skipBtn": "No, Skip for now",
+      "cancelBtn": "Cancel"
+    },
+    "roleInfo": {
+      "admin": "Full system access, manage users, and configurations.",
+      "operator": "Manage locations and monitor activities (No user management).",
+      "viewer": "Read-only access to assigned locations only."
+    }
   }
 }

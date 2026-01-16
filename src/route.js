@@ -9,6 +9,7 @@ import LocationManagementPage from './pages/locations/LocationManagementPage'
 import DashboardHome from './pages/dashboardhome/DashboardHome'
 import NotFound from './pages/NotFound'
 import ProtectedRoute from './utils/ProtectedRoute'
+import UserManagement from './pages/usesManagement/userManagement'
 
 export const routes = [
   // --- PUBLIC ROUTES (No Cookie Check) ---
@@ -24,7 +25,10 @@ export const routes = [
     path: '/forgot-password',
     element: <ForgotPasswordPage />
   },
-
+  {
+    path: '/accept-invitation',
+    element: <ResetPasswordPage acceptinvitation={true} />
+  },
   // --- PROTECTED ROUTES (Cookie Check Required) ---
   {
     element: <ProtectedRoute />, // The Gatekeeper
@@ -51,6 +55,10 @@ export const routes = [
           {
             path: '/roi-configuration',
             element: <ROIConfiguration />
+          },
+          {
+            path: 'user-management',
+            element: <UserManagement />
           }
         ]
       }

@@ -18,7 +18,7 @@ import { resetPassword } from '../../features/auth/authSlice'
 import { toast } from 'react-toastify'
 import SuccessDisplay from '../../component/SuccessDisplay'
 
-const ResetPasswordPage = () => {
+const ResetPasswordPage = ({ acceptinvitation = false }) => {
   const { t } = useTranslation()
   const dispatch = useDispatch()
   const navigate = useNavigate()
@@ -89,12 +89,17 @@ const ResetPasswordPage = () => {
             <h1
               className={`${textSizes.title2} ${textcolors.white} mb-2 text-xl sm:text-2xl lg:text-3xl 4k:text-5xl`}
             >
-              {t('reset_password.title')}
+              {acceptinvitation
+                ? 'Complete Your Registration'
+                : t('reset_password.title')}
             </h1>
+
             <span
-              className={`${textcolors.white} ${textSizes.extrasmall} mb-3 text-sm sm:text-base lg:text-lg 4k:text-2xl`}
+              className={`${textcolors.white} ${textSizes.extrasmall} mb-2 text-sm sm:text-base lg:text-lg 4k:text-2xl`}
             >
-              {t('reset_password.subtitle')}
+              {acceptinvitation
+                ? 'Create a secure password to finish setting up your account.'
+                : t('reset_password.subtitle')}
             </span>
 
             {passwordResetSuccess ? (

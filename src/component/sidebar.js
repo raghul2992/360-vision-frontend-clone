@@ -1,12 +1,12 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import ssticon from '../assets/sst-icon.png'
 import {
   IoHome,
   IoLocationOutline,
-  IoStatsChart,
   IoCameraOutline,
   IoSettingsOutline,
-  IoLogOutOutline
+  IoLogOutOutline,
+  IoPeopleOutline
 } from 'react-icons/io5'
 import { textcolors } from '../theme'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
@@ -18,6 +18,9 @@ const Sidebar = () => {
   const navigate = useNavigate()
   const location = useLocation()
 
+  // 1. Retrieve the role directly
+  const userRole = localStorage.getItem('user_role')
+
   const handleLogout = async () => {
     try {
       const result = await dispatch(logoutUser()).unwrap()
@@ -28,11 +31,14 @@ const Sidebar = () => {
     }
   }
 
-  // Utility function → check if route is active
   const isActive = path =>
     location.pathname === path
       ? 'bg-[#30313F] rounded-[16px] text-[#3885CC]'
       : `${textcolors.white}`
+
+  useEffect(() => {
+    console.log('Current Role:', userRole)
+  }, [userRole])
 
   return (
     <div className='sticky w-[90px] h-screen bg-[#1c1c24] flex flex-col items-center py-3'>
@@ -41,14 +47,14 @@ const Sidebar = () => {
       </div>
 
       <div className='flex flex-col items-center justify-center flex-1 gap-5 text-xl'>
-        {/* Dashboard */}
+        {/* Dashboard - Visible to everyone */}
         <Link to='/dashboard'>
           <div className='w-12 h-12 flex justify-center items-center cursor-pointer hover:bg-[#30313F] hover:rounded-[16px]'>
             <IoHome className={`text-2xl ${isActive('/dashboard')}`} />
           </div>
         </Link>
 
-        {/* Location */}
+        {/* Location - Visible to everyone */}
         <Link to='/location'>
           <div className='w-12 h-12 flex justify-center items-center cursor-pointer hover:bg-[#30313F] hover:rounded-[16px]'>
             <IoLocationOutline
@@ -57,15 +63,28 @@ const Sidebar = () => {
           </div>
         </Link>
 
-        {/* Camera */}
-        <Link to='/camera'>
-          <div className='w-12 h-12 flex justify-center items-center cursor-pointer hover:bg-[#30313F] hover:rounded-[16px]'>
-            <IoCameraOutline className={`text-2xl ${isActive('/camera')}`} />
-          </div>
-        </Link>
+        {/* Camera - HIDDEN for viewer */}
+        {userRole !== 'viewer' && (
+          <Link to='/camera'>
+            <div className='w-12 h-12 flex justify-center items-center cursor-pointer hover:bg-[#30313F] hover:rounded-[16px]'>
+              <IoCameraOutline className={`text-2xl ${isActive('/camera')}`} />
+            </div>
+          </Link>
+        )}
 
-        {/* Settings
-        <Link to='/settings'>
+        {/* People/User Mgmt - HIDDEN for viewer */}
+        {userRole !== 'viewer' && (
+          <Link to='/user-management'>
+            <div className='w-12 h-12 flex justify-center items-center cursor-pointer hover:bg-[#30313F] hover:rounded-[16px]'>
+              <IoPeopleOutline
+                className={`text-2xl ${isActive('/user-management')}`}
+              />
+            </div>
+          </Link>
+        )}
+
+        {/* Settings */}
+        {/* <Link to='/settings'>
           <div className='w-12 h-12 flex justify-center items-center cursor-pointer hover:bg-[#30313F] hover:rounded-[16px]'>
             <IoSettingsOutline
               className={`text-2xl ${isActive('/settings')}`}

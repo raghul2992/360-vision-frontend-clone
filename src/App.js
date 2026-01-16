@@ -52,7 +52,7 @@ function MainApp () {
 
   // FIX 1: Safely initialize state
   const [notificationPermission, setNotificationPermission] = useState(
-    ('Notification' in window) ? Notification.permission : 'default'
+    'Notification' in window ? Notification.permission : 'default'
   )
 
   const {
@@ -105,7 +105,7 @@ function MainApp () {
   // ----------------------------------
   useEffect(() => {
     // FIX 2: Check existence before checking permission property
-    if (!('Notification' in window)) return;
+    if (!('Notification' in window)) return
 
     const alreadyShown = localStorage.getItem(LOCAL_STORAGE_KEY)
 
@@ -124,7 +124,7 @@ function MainApp () {
         .then(permissionStatus => {
           permissionStatus.onchange = () => {
             // FIX 4: Re-check existence inside callback
-            if (!('Notification' in window)) return;
+            if (!('Notification' in window)) return
 
             const newPermission = Notification.permission
 
@@ -139,12 +139,12 @@ function MainApp () {
         })
         .catch(err => {
           // Creating a catch block prevents crash on browsers that don't implement this query
-          console.log("Permission query not supported", err);
+          console.log('Permission query not supported', err)
         })
     }
 
     return () => {
-       if ('permissions' in navigator) {
+      if ('permissions' in navigator) {
         navigator.permissions
           ?.query({ name: 'notifications' })
           .then(permissionStatus => {
@@ -160,9 +160,9 @@ function MainApp () {
     // FIX 5: Check existence before requesting
     if ('Notification' in window && Notification.permission === 'default') {
       try {
-        Notification.requestPermission().catch(err => console.error(err));
+        Notification.requestPermission().catch(err => console.error(err))
       } catch (e) {
-        console.error("Failed to request permission", e);
+        console.error('Failed to request permission', e)
       }
     }
   }, [])
@@ -174,13 +174,14 @@ function MainApp () {
     if (!wsMessage) return
 
     const tenantId = localStorage.getItem('tenant_id')
-    
+
     // FIX 6: Centralized check for capability
-    const canNotify = ('Notification' in window) && (Notification.permission === 'granted');
+    const canNotify =
+      'Notification' in window && Notification.permission === 'granted'
 
     if (wsMessage.type === 'camera_status' && tenantId) {
       dispatch(getCameras({ tenantId }))
-      
+
       if (canNotify) {
         try {
           new Notification('Camera Status Update', {
@@ -188,10 +189,9 @@ function MainApp () {
             icon: '/favicon.ico'
           })
         } catch (e) {
-          console.error("Notification creation failed", e)
+          console.error('Notification creation failed', e)
         }
       }
-
     } else if (wsMessage.type === 'event_alert') {
       if (canNotify) {
         try {
@@ -200,7 +200,7 @@ function MainApp () {
             icon: '/sstlogo.png'
           })
         } catch (e) {
-          console.error("Notification creation failed", e)
+          console.error('Notification creation failed', e)
         }
       }
     }
@@ -212,7 +212,8 @@ function MainApp () {
     '/camera',
     '/add-camera',
     '/roi-configuration',
-    '/location'
+    '/location',
+    '/user-management'
   ]
   const hideFloatingButton = dashboardPaths.some(path =>
     location.pathname.startsWith(path)

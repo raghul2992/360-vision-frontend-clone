@@ -13,6 +13,10 @@ const LocationManagementPage = () => {
   const { t } = useTranslation()
   const [isModalOpen, setIsModalOpen] = useState(false)
 
+  // 1. Get the role and determine permissions
+  const userRole = localStorage.getItem('user_role')
+  const isViewer = userRole === 'viewer'
+
   const { isLoaded, loadError } = useLoadScript({
     googleMapsApiKey: process.env.REACT_APP_GOOGLE_MAPS_API_KEY,
     libraries
@@ -46,38 +50,47 @@ const LocationManagementPage = () => {
             )}
           </p>
         </div>
-        {/* <div className='flex items-center gap-4'>
-          <button
-            onClick={() => setIsModalOpen(true)}
-            className='flex items-center gap-2 bg-[#3885CC] text-white font-semibold py-2.5 px-5 rounded-full transition-colors'
-          >
-            <IoAddCircleOutline size={22} className='font-semibold' />
-            {t('location.management.addLocationButton', 'Add Location')}
-          </button>
-        </div> */}
+
+        {/* 2. Conditionally render the Add Button */}
+        {!isViewer && (
+          <div className='flex items-center gap-4'>
+            <button
+              onClick={() => setIsModalOpen(true)}
+              className='flex items-center gap-2 bg-[#3885CC] text-white font-semibold py-2.5 px-5 rounded-full transition-colors hover:bg-[#2b6cb0]'
+            >
+              <IoAddCircleOutline size={22} className='font-semibold' />
+              {t('location.management.addLocationButton', 'Add Location')}
+            </button>
+          </div>
+        )}
       </div>
 
       <div className='grid grid-cols-1 gap-6'>
         {/* Map View Section */}
         <div className='bg-[#1c1c24] py-4 rounded-lg shadow-md'>
-          <h2 className='text-xl font-semibold mb-3 text-white'>
+          <h2 className='text-xl font-semibold mb-3 text-white px-4'>
             {t('location.map.title', 'Location Overview Map')}
           </h2>
-          <LocationMap isLoaded={isLoaded} />
+          {/* 3. Pass readOnly prop to Map */}
+          <LocationMap isLoaded={isLoaded} readOnly={isViewer} />
         </div>
 
         {/* List View Section */}
         <div className='bg-[#1c1c24] py-4 rounded-lg shadow-md'>
-          <LocationList isMapLoaded={isLoaded} />
+          {/* 4. Pass readOnly prop to List */}
+          <LocationList isMapLoaded={isLoaded} readOnly={isViewer} />
         </div>
       </div>
 
-      <LocationFormModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        locationToEdit={null}
-        isLoaded={isLoaded}
-      />
+      {/* Prevent modal from rendering/opening if viewer, for extra security */}
+      {!isViewer && (
+        <LocationFormModal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          locationToEdit={null}
+          isLoaded={isLoaded}
+        />
+      )}
     </div>
   )
 }

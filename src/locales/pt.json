@@ -592,5 +592,101 @@
     "create": {
       "success": "Localização criada com sucesso!"
     }
+  },
+  "userManagement": {
+    "title": "Gestão de Usuários",
+    "subtitle": "Gerencie funções, status e localizações de usuários",
+    "addUser": "Adicionar Usuário",
+    "searchPlaceholder": "Buscar por nome ou e-mail",
+    "allRoles": "Todas as Funções",
+    "clear": "Limpar",
+    "search": "Buscar",
+    "loading": "Carregando Usuários...",
+    "noUsers": "Nenhum usuário encontrado com seus critérios.",
+    "table": {
+      "user": "Usuário",
+      "role": "Função",
+      "locations": "Localizações",
+      "status": "Status",
+      "action": "Ação",
+      "global": "Global"
+    },
+    "stats": {
+      "total": "Total de Usuários",
+      "active": "Ativos",
+      "admins": "Admins",
+      "operator": "Operador",
+      "viewers": "Visualizadores"
+    },
+    "modals": {
+      "deleteTitle": "Excluir Usuário?",
+      "deleteText": "Esta ação não pode ser desfeita.",
+      "cancel": "Cancelar",
+      "delete": "Excluir",
+      "sendInvitation": "Enviar Convite"
+    },
+    "toast": {
+      "deleteSuccess": "Usuário excluído",
+      "statusUpdate": "O usuário agora está {{status}}",
+      "inviteSuccess": "Convite Enviado!"
+    },
+    "addModal": {
+      "title": "Adicionar Novo Usuário",
+      "fullName": "Nome Completo*",
+      "fullNamePlaceholder": "Insira o nome completo",
+      "email": "Endereço de E-mail*",
+      "emailPlaceholder": "exemplo@gmail.com",
+      "password": "Senha*",
+      "role": "Função*",
+      "selectLocation": "Selecionar Localização*",
+      "searchLocation": "Pesquisar ou selecionar uma localização...",
+      "assignedCount": "Atribuído: {{count}} Localizações",
+      "noLocations": "Nenhuma localização atribuída ainda",
+      "cancel": "Cancelar",
+      "addUser": "Adicionar Usuário",
+      "adding": "Adicionando...",
+      "successTitle": "Usuário Adicionado com Sucesso"
+    },
+    "roles": {
+      "admin": "Administrador",
+      "operator": "Operador",
+      "viewer": "Visualizador"
+    },
+    "errors": {
+      "requiredFields": "Por favor, preencha todos os campos obrigatórios",
+      "addFailed": "Falha ao adicionar usuário",
+      "inviteFailed": "Falha ao enviar convite"
+    },
+    "updateModal": {
+      "title": "Atualizar Usuário",
+      "fullName": "Nome Completo*",
+      "role": "Função*",
+      "status": "Status*",
+      "active": "Ativo",
+      "inactive": "Inativo",
+      "locationVisibility": "Visibilidade de Localização",
+      "selectLocation": "Selecionar Localização*",
+      "searchLocation": "Pesquisar ou selecionar uma localização...",
+      "assignedCount": "Meta: {{count}} Localizações Atribuídas",
+      "noLocations": "Nenhuma localização atribuída ainda",
+      "cancel": "Cancelar",
+      "updateUser": "Atualizar Usuário",
+      "updating": "Atualizando...",
+      "successToast": "Usuário atualizado com sucesso",
+      "errorToast": "Falha na atualização"
+    },
+    "invitation": {
+      "newBody": "O usuário <strong>{{name}}</strong> foi adicionado com sucesso. Deseja enviar um e-mail de convite agora?",
+      "existingBody": "Deseja enviar um novo e-mail de convite para <strong>{{name}}</strong>? Isso permitirá que ele configure sua conta.",
+      "sendBtn": "Sim, Enviar Convite",
+      "sendingBtn": "Enviando Convite...",
+      "skipBtn": "Não, Pular por enquanto",
+      "cancelBtn": "Cancelar"
+    },
+    "roleInfo": {
+      "admin": "Acesso total ao sistema, gestão de usuários e configurações.",
+      "operator": "Gerenciar locais e monitorar atividades (Sem gestão de usuários).",
+      "viewer": "Acesso apenas de leitura apenas para locais atribuídos."
+    }
   }
 }
