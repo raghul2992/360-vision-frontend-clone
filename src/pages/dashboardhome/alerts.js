@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, useRef } from 'react'
+import React, { useEffect, useState, useCallback, useRef, useMemo } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 import AlertItem from './alertlist'
 import {
@@ -8,22 +8,24 @@ import {
 } from '../../features/alert/alertSlice'
 import { getLocations } from '../../features/locations/locationApiSlice'
 import { getCameras } from '../../features/cameras/cameraApiSlice'
+// Import user API action for fetching assigned locations
+import { fetchTenantsUsers } from '../../features/userManagement/userApiSlice'
 import Select from 'react-select'
 import DatePicker from 'react-datepicker'
 import 'react-datepicker/dist/react-datepicker.css'
 import format from 'date-fns/format'
-import setHours from 'date-fns/setHours'
-import setMinutes from 'date-fns/setMinutes'
 import { useTranslation } from 'react-i18next'
 
 const Alerts = () => {
   const { t } = useTranslation()
-  const tenant_id = localStorage.getItem('tenant_id')
   const dispatch = useDispatch()
 
-  const { alerts, unreadCount, isLoading, error, filters } = useSelector(
-    state => state.alerts
-  )
+  // 1. Get User Info from LocalStorage
+  const tenant_id = localStorage.getItem('tenant_id')
+  const userRole = localStorage.getItem('user_role')
+  const userId = localStorage.getItem('user_id')
+
+  const { alerts, isLoading, error } = useSelector(state => state.alerts)
   const locations = useSelector(state => state.locationApi.locations)
   const cameras = useSelector(state => state.cameraApi.cameras)
 
@@ -45,6 +47,48 @@ const Alerts = () => {
   const observerRef = useRef(null)
   const loaderRef = useRef(null)
   const containerRef = useRef(null)
+
+  // 2. State for Viewer's Assigned Location IDs
+  const [assignedLocationIds, setAssignedLocationIds] = useState([])
+
+  // 3. Fetch Assigned Locations (Only if Viewer)
+  useEffect(() => {
+    if (userRole === 'viewer' && userId && tenant_id) {
+      dispatch(fetchTenantsUsers({ tenant_id, user_id: userId }))
+        .unwrap()
+        .then(usersData => {
+          const currentUser =
+            usersData.find(u => String(u.id) === String(userId)) || usersData[0]
+          setAssignedLocationIds(currentUser?.meta?.assign_locations || [])
+        })
+        .catch(err => {
+          console.error('Failed to load viewer locations', err)
+          setAssignedLocationIds([])
+        })
+    }
+  }, [dispatch, userRole, userId, tenant_id])
+
+  // 4. Create Filtered Locations List
+  const filteredLocations = useMemo(() => {
+    if (userRole === 'viewer') {
+      return locations.filter(loc =>
+        assignedLocationIds.includes(String(loc.id))
+      )
+    }
+    return locations
+  }, [locations, userRole, assignedLocationIds])
+
+  // 5. NEW: Auto-select first location for Viewer
+  useEffect(() => {
+    if (
+      userRole === 'viewer' &&
+      filteredLocations.length > 0 &&
+      !selectedLocation
+    ) {
+      const firstLoc = filteredLocations[0]
+      setSelectedLocation({ value: firstLoc.id, label: firstLoc.name })
+    }
+  }, [userRole, filteredLocations, selectedLocation])
 
   // Fetch Alerts
   const fetchAlertsData = useCallback(
@@ -115,6 +159,7 @@ const Alerts = () => {
   )
 
   // Initial load + filters
+  // Note: changing selectedLocation (via the viewer useEffect above) will trigger this automatically
   useEffect(() => {
     setSkip(0)
     fetchAlertsData(true)
@@ -178,7 +223,8 @@ const Alerts = () => {
     { value: 'unread', label: t('alerts.unread_alerts') }
   ]
 
-  const locationOptions = locations.map(location => ({
+  // Use filteredLocations for the dropdown options
+  const locationOptions = filteredLocations.map(location => ({
     value: location.id,
     label: location.name
   }))

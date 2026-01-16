@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { useLocation, useNavigate } from 'react-router-dom'
 import format from 'date-fns/format'
@@ -8,6 +8,7 @@ import { useTranslation } from 'react-i18next'
 import { getCameras } from '../../../features/cameras/cameraApiSlice'
 import { getLocations } from '../../../features/locations/locationApiSlice'
 import { fetchAlerts } from '../../../features/alert/alertSlice'
+import { fetchTenantsUsers } from '../../../features/userManagement/userApiSlice'
 import {
   getTenant,
   updateWidgetLayout,
@@ -26,8 +27,49 @@ export const useDashboardLogic = () => {
   const location = useLocation()
   const navigate = useNavigate()
 
+  // --- 1. Get User Info from LocalStorage ---
+  const userRole = localStorage.getItem('user_role')
+  const userId = localStorage.getItem('user_id')
+  const tenantId = localStorage.getItem('tenant_id')
+
   // --- Selectors ---
-  const { locations = [] } = useSelector(state => state.locationApi || {})
+  const { locations: allLocations = [] } = useSelector(
+    state => state.locationApi || {}
+  )
+
+  // --- 2. State for Viewer's Assigned Location IDs ---
+  const [assignedLocationIds, setAssignedLocationIds] = useState([])
+
+  // --- 3. Fetch Assigned Locations (Only if Viewer) ---
+  useEffect(() => {
+    if (userRole === 'viewer' && userId && tenantId) {
+      dispatch(fetchTenantsUsers({ tenant_id: tenantId, user_id: userId }))
+        .unwrap()
+        .then(usersData => {
+          const currentUser =
+            usersData.find(u => String(u.id) === String(userId)) || usersData[0]
+
+          setAssignedLocationIds(currentUser?.meta?.assign_locations || [])
+        })
+        .catch(err => {
+          console.error('Failed to load viewer locations', err)
+          setAssignedLocationIds([])
+        })
+    }
+  }, [dispatch, userRole, userId, tenantId])
+
+  // --- 4. Filter Locations based on Role ---
+  const locations = useMemo(() => {
+    // If Viewer, only return locations that match assigned IDs
+    if (userRole === 'viewer') {
+      return allLocations.filter(loc =>
+        assignedLocationIds.includes(String(loc.id || loc._id))
+      )
+    }
+    // If Admin/Operator, return ALL locations
+    return allLocations
+  }, [allLocations, userRole, assignedLocationIds])
+
   const { cameras = [], isLoading: isCamerasLoading } = useSelector(
     state => state.cameraApi || {}
   )
@@ -77,7 +119,6 @@ export const useDashboardLogic = () => {
   const [alertTypeBreakdownDateRange, setAlertTypeBreakdownDateRange] =
     useState(null)
 
-  // -- FIXED: Added State for Top Problematic ROIs --
   const [topRoisLocation, setTopRoisLocation] = useState(null)
   const [topRoisCamera, setTopRoisCamera] = useState(null)
   const [topRoisDateRange, setTopRoisDateRange] = useState(null)
@@ -127,12 +168,11 @@ export const useDashboardLogic = () => {
   }, [])
 
   const refreshTenantData = useCallback(() => {
-    const tenantId = localStorage.getItem('tenant_id')
     if (tenantId) {
       hasRequestedTenant.current = false
       dispatch(getTenant({ tenant_id: tenantId, skip: 0, limit: 10 }))
     }
-  }, [dispatch])
+  }, [dispatch, tenantId])
 
   // =========================================================
   //  SHARED: Logic to Apply Filter to All Sections
@@ -173,7 +213,6 @@ export const useDashboardLogic = () => {
       setAlertTypeBreakdownLocation(locationObj)
       setAlertTypeBreakdownCamera(null)
 
-      // -- FIXED: Apply global filter to Top ROIs --
       setTopRoisLocation(locationObj)
       setTopRoisCamera(null)
     },
@@ -184,13 +223,9 @@ export const useDashboardLogic = () => {
     e => {
       const newLocationId = e.target.value
 
-      // FIX: Do not set state here. Only update the URL.
-      // The useEffect below will detect the URL change and update the state.
-
       if (newLocationId === 'all') {
         navigate(location.pathname, { replace: true })
       } else {
-        // Ensure we replace to avoid cluttering history, or push if you want history
         navigate(`${location.pathname}?locationId=${newLocationId}`, {
           replace: true
         })
@@ -199,42 +234,59 @@ export const useDashboardLogic = () => {
     [navigate, location.pathname]
   )
 
+  // Update URL effect to handle default viewer state
   useEffect(() => {
     const searchParams = new URLSearchParams(location.search)
-    // If param is missing, treat it as 'all'
     const incomingId = searchParams.get('locationId') || 'all'
 
-    if (locations.length > 0 || incomingId === 'all') {
+    // If locations are loaded
+    if (locations.length > 0) {
+      // 5. Special Case for Viewer: If URL says 'all' (or nothing), redirect to first assigned location
+      if (userRole === 'viewer' && incomingId === 'all') {
+        const firstAssignedId = locations[0]?.id || locations[0]?._id
+        if (firstAssignedId) {
+          navigate(`${location.pathname}?locationId=${firstAssignedId}`, {
+            replace: true
+          })
+          return // Stop here, let the next render handle the update
+        }
+      }
+
       if (String(incomingId) !== String(selectedGlobalLocation)) {
         applyLocationFilter(incomingId)
       }
     }
-  }, [location.search, locations, selectedGlobalLocation, applyLocationFilter])
+  }, [
+    location.search,
+    locations,
+    selectedGlobalLocation,
+    applyLocationFilter,
+    userRole,
+    navigate,
+    location.pathname
+  ])
 
   // --- Initial Fetches ---
   useEffect(() => {
-    const tenantId = localStorage.getItem('tenant_id')
     if (tenantId && !hasRequestedTenant.current) {
       hasRequestedTenant.current = true
       dispatch(getTenant({ tenant_id: tenantId, skip: 0, limit: 10 }))
     }
-  }, [dispatch])
+  }, [dispatch, tenantId])
 
   useEffect(() => {
-    const tenant_id = localStorage.getItem('tenant_id')
-    if (tenant_id && !hasRequestedLocations.current) {
+    if (tenantId && !hasRequestedLocations.current) {
       hasRequestedLocations.current = true
-      dispatch(getLocations({ tenantId: tenant_id }))
+      dispatch(getLocations({ tenantId: tenantId }))
     }
-  }, [dispatch])
+  }, [dispatch, tenantId])
 
   useEffect(() => {
-    const tenantId = localStorage.getItem('tenant_id')
     if (tenantId && !hasRequestedCameras.current) {
       hasRequestedCameras.current = true
       dispatch(getCameras({ tenantId, skip: 0, limit: 10 }))
     }
-  }, [dispatch])
+  }, [dispatch, tenantId])
 
   // --- Layout Management ---
   useEffect(() => {
@@ -271,7 +323,6 @@ export const useDashboardLogic = () => {
   const saveLayoutToApi = useCallback(
     layoutToSave => {
       if (!hasInitialized) return
-      const tenantId = localStorage.getItem('tenant_id')
       if (!tenantId) return
       if (
         JSON.stringify(lastSavedLayoutRef.current) ===
@@ -293,7 +344,7 @@ export const useDashboardLogic = () => {
         .then(() => refreshTenantData())
         .catch(error => console.error('Failed to save layout:', error))
     },
-    [dispatch, hasInitialized, refreshTenantData]
+    [dispatch, hasInitialized, refreshTenantData, tenantId]
   )
 
   const addWidget = useCallback(
@@ -337,72 +388,78 @@ export const useDashboardLogic = () => {
   const handleLayoutChange = useCallback(newLayout => setLayout(newLayout), [])
 
   // --- KPI Data Fetching ---
-  // useEffect(() => {
-  //   const fetchKpiData = async () => {
-  //     const tenantId = localStorage.getItem('tenant_id')
-  //     if (!tenantId) return
-  //     setIsKpiLoading(true)
-  //     try {
-  //       const params = { ...getDateParams(kpiDateRange) }
-  //       if (kpiLocation?.value) params.location_id = kpiLocation.value
-  //       if (kpiCamera?.value) params.camera_id = kpiCamera.value
+  useEffect(() => {
+    const fetchKpiData = async () => {
+      if (!tenantId) return
+      setIsKpiLoading(true)
+      try {
+        const params = { ...getDateParams(kpiDateRange) }
+        if (kpiLocation?.value) params.location_id = kpiLocation.value
+        if (kpiCamera?.value) params.camera_id = kpiCamera.value
 
-  //       const res = await dispatch(
-  //         fetchOverviewReports({ tenant_id: tenantId, params })
-  //       )
-  //       if (res.payload) {
-  //         const overviewData = res.payload
-  //         const totalCameras = cameras.length
-  //         const activeCameras = cameras.filter(
-  //           c => c.status === 'active'
-  //         ).length
-  //         const detectionEfficiency =
-  //           totalCameras > 0
-  //             ? `${Math.round((activeCameras / totalCameras) * 100)}%`
-  //             : '0%'
+        const res = await dispatch(
+          fetchOverviewReports({ tenant_id: tenantId, params })
+        )
+        if (res.payload) {
+          const overviewData = res.payload
+          const totalCameras = cameras.length
+          const activeCameras = cameras.filter(
+            c => c.status === 'active'
+          ).length
+          const detectionEfficiency =
+            totalCameras > 0
+              ? `${Math.round((activeCameras / totalCameras) * 100)}%`
+              : '0%'
 
-  //         let dwellTime = '0m 0s'
-  //         if (overviewData.avgDwell?.average_dwell_time) {
-  //           const dwellSeconds = parseInt(
-  //             overviewData.avgDwell.average_dwell_time
-  //           )
-  //           if (!isNaN(dwellSeconds))
-  //             dwellTime = `${Math.floor(dwellSeconds / 60)}m ${
-  //               dwellSeconds % 60
-  //             }s`
-  //         }
+          let dwellTime = '0m 0s'
+          if (overviewData.avgDwell?.average_dwell_time) {
+            const dwellSeconds = parseInt(
+              overviewData.avgDwell.average_dwell_time
+            )
+            if (!isNaN(dwellSeconds))
+              dwellTime = `${Math.floor(dwellSeconds / 60)}m ${
+                dwellSeconds % 60
+              }s`
+          }
 
-  //         setKpiData({
-  //           alertsCount: overviewData.alertsCount?.count || 0,
-  //           mostFrequent: {
-  //             detection_type:
-  //               overviewData.mostFrequent?.detection_type?.replace(/_/g, ' ') ||
-  //               '-',
-  //             count: overviewData.mostFrequent?.count || 0
-  //           },
-  //           busiestHour: overviewData.busiestHour || null,
-  //           avgDwell: { average_dwell_time: dwellTime },
-  //           safetyViolations: overviewData.safetyViolations?.count || 0,
-  //           peakDetectionHour: overviewData.peakDetectionHour || null,
-  //           totalCameras,
-  //           activeCameras,
-  //           detectionEfficiency,
-  //           avgResponseTime: '2m 30s'
-  //         })
-  //       }
-  //     } catch (error) {
-  //       console.error('Failed to fetch KPI:', error)
-  //     } finally {
-  //       setIsKpiLoading(false)
-  //     }
-  //   }
-  //   fetchKpiData()
-  // }, [dispatch, kpiLocation, kpiCamera, kpiDateRange, cameras, getDateParams])
+          setKpiData({
+            alertsCount: overviewData.alertsCount?.count || 0,
+            mostFrequent: {
+              detection_type:
+                overviewData.mostFrequent?.detection_type?.replace(/_/g, ' ') ||
+                '-',
+              count: overviewData.mostFrequent?.count || 0
+            },
+            busiestHour: overviewData.busiestHour || null,
+            avgDwell: { average_dwell_time: dwellTime },
+            safetyViolations: overviewData.safetyViolations?.count || 0,
+            peakDetectionHour: overviewData.peakDetectionHour || null,
+            totalCameras,
+            activeCameras,
+            detectionEfficiency,
+            avgResponseTime: '2m 30s'
+          })
+        }
+      } catch (error) {
+        console.error('Failed to fetch KPI:', error)
+      } finally {
+        setIsKpiLoading(false)
+      }
+    }
+    fetchKpiData()
+  }, [
+    dispatch,
+    kpiLocation,
+    kpiCamera,
+    kpiDateRange,
+    cameras,
+    getDateParams,
+    tenantId
+  ])
 
   // --- Widget Fetching ---
   useEffect(() => {
     if (!activeWidgets.some(w => w.widget_name === 'detection')) return
-    const tenantId = localStorage.getItem('tenant_id')
     if (!tenantId) return
     const queryParams = {
       type: 'event_alert',
@@ -420,12 +477,12 @@ export const useDashboardLogic = () => {
     detectionDateRange,
     detectionLocation,
     detectionCamera,
-    getDateParams
+    getDateParams,
+    tenantId
   ])
 
   useEffect(() => {
     if (!activeWidgets.some(w => w.widget_name === 'priority')) return
-    const tenantId = localStorage.getItem('tenant_id')
     if (!tenantId) return
     const queryParams = {
       type: 'event_alert',
@@ -443,12 +500,12 @@ export const useDashboardLogic = () => {
     priorityDateRange,
     priorityLocation,
     priorityCamera,
-    getDateParams
+    getDateParams,
+    tenantId
   ])
 
   useEffect(() => {
     if (!activeWidgets.some(w => w.widget_name === 'alert_timeline')) return
-    const tenantId = localStorage.getItem('tenant_id')
     if (!tenantId) return
     const params = {
       tenant_id: tenantId,
@@ -464,13 +521,13 @@ export const useDashboardLogic = () => {
     alertTimelineDateRange,
     alertTimelineLocation,
     alertTimelineCamera,
-    getDateParams
+    getDateParams,
+    tenantId
   ])
 
   useEffect(() => {
     if (!activeWidgets.some(w => w.widget_name === 'alert_type_breakdown'))
       return
-    const tenantId = localStorage.getItem('tenant_id')
     if (!tenantId) return
     const params = {
       tenant_id: tenantId,
@@ -487,14 +544,13 @@ export const useDashboardLogic = () => {
     alertTypeBreakdownDateRange,
     alertTypeBreakdownLocation,
     alertTypeBreakdownCamera,
-    getDateParams
+    getDateParams,
+    tenantId
   ])
 
-  // -- FIXED: Updated Fetch Logic for Top Problematic ROIs --
   useEffect(() => {
     if (!activeWidgets.some(w => w.widget_name === 'top_problematic_rois'))
       return
-    const tenantId = localStorage.getItem('tenant_id')
     if (!tenantId) return
     const params = {
       tenant_id: tenantId,
@@ -511,7 +567,8 @@ export const useDashboardLogic = () => {
     topRoisDateRange,
     topRoisLocation,
     topRoisCamera,
-    getDateParams
+    getDateParams,
+    tenantId
   ])
 
   // --- Client Side Filtering ---
@@ -693,7 +750,6 @@ export const useDashboardLogic = () => {
             setDateRange: setAlertTypeBreakdownDateRange,
             dateRange: alertTypeBreakdownDateRange
           }
-        // -- FIXED: Wired up Props for Top Problematic ROIs --
         case 'top_problematic_rois':
           return {
             ...base,
@@ -743,8 +799,11 @@ export const useDashboardLogic = () => {
     activeWidgets,
     layout,
     WIDGETS,
+    // 6. Modified Return: Exclude "All Locations" if user is Viewer
     locations: [
-      { id: 'all', name: t('dashboard.all_locations') || 'All Locations' },
+      ...(userRole !== 'viewer'
+        ? [{ id: 'all', name: t('dashboard.all_locations') || 'All Locations' }]
+        : []),
       ...(locations || []).map(l => ({ id: l.id || l._id, name: l.name }))
     ],
     layoutLoading,

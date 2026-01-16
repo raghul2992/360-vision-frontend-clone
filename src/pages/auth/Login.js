@@ -11,7 +11,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import { loginUser } from '../../features/auth/authSlice'
 import { toast } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
-import { unwrapResult } from '@reduxjs/toolkit';
+import { unwrapResult } from '@reduxjs/toolkit'
 
 const LoginPage = ({ callbackScreen }) => {
   const { t, i18n } = useTranslation()
@@ -39,24 +39,30 @@ const LoginPage = ({ callbackScreen }) => {
   //   }
   // }, [success, error, navigate, t])
 
-  
   const handleLogin = async () => {
     try {
-      const actionResult = await dispatch(loginUser({ email, password }));
-      
-      // unwrapResult gets the { data, status } object we returned above
-      const result = unwrapResult(actionResult);
+      const actionResult = await dispatch(loginUser({ email, password }))
 
-      // Now 'result' is our plain object: { data: ..., status: 200 }
+      const result = unwrapResult(actionResult)
+
+      console.log(result)
+      localStorage.setItem('user_role', result.data.role)
+      localStorage.setItem('user_id', result.data.id)
+      // if (result.data.role === 'viewer') {
+      //   localStorage.setItem(
+      //     'viewer_location',
+      //     JSON.stringify(result.data.meta.assign_locations)
+      //   )
+      // }
       if (result.status === 200) {
-        navigate('/dashboard');
+        navigate('/dashboard')
       }
     } catch (error) {
-      console.error("Login failed:", error);
-      toast.error(error);
+      console.error('Login failed:', error)
+      toast.error(error)
       // show toast error here
     }
-  };
+  }
 
   return (
     <div className='flex flex-col justify-start items-center w-full'>

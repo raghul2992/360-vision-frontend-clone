@@ -10,6 +10,7 @@ import { GoogleMap, MarkerF, OverlayView } from '@react-google-maps/api'
 import { useSelector, useDispatch } from 'react-redux'
 import { useNavigate } from 'react-router-dom'
 import { getLocations } from '../features/locations/locationApiSlice'
+import { fetchTenantsUsers } from '../features/userManagement/userApiSlice'
 import { MARKER_ICON_PATHS } from '../utils/locationMarkerConstants'
 import ButtonComponent from './Button'
 import AlertSeverityIcon from './AlertSeverityIcon'
@@ -341,14 +342,14 @@ const LocationMap = ({
   onLocationSelect,
   initialLat,
   initialLng,
-  onPopupOpen
+  onPopupOpen,
+  readOnly
 }) => {
   const dispatch = useDispatch()
   const navigate = useNavigate()
 
   const { locations } = useSelector(state => state.locationApi)
-  const { user } = useSelector(state => state.auth)
-  const tenantId = user?.tenantId
+  const tenantId = localStorage.getItem('tenant_id')
 
   const [map, setMap] = useState(null)
   const [hoveredMarker, setHoveredMarker] = useState(null)
@@ -361,6 +362,10 @@ const LocationMap = ({
 
   const closeTimeoutRef = useRef(null)
   const saveTimeoutRef = useRef(null)
+
+  // 2. State to hold assigned location IDs from API
+  const [assignedLocationIds, setAssignedLocationIds] = useState([])
+  const users = localStorage.getItem('user_id')
 
   useEffect(() => {
     const savedMapState = localStorage.getItem('locationMapState')
@@ -380,6 +385,27 @@ const LocationMap = ({
     }
   }, [tenantId, dispatch, isSelectionMode])
 
+  // 3. Fetch Assigned Locations from API if readOnly
+  useEffect(() => {
+    if (readOnly && tenantId && users) {
+      dispatch(fetchTenantsUsers({ tenant_id: tenantId, user_id: users }))
+        .unwrap()
+        .then(usersData => {
+          console.log('API Response:', usersData)
+
+          // Since the API returns an array (filtered by user_id), we take the first item
+          const currentUserData = usersData?.[0]
+          console.log('Current User:', currentUserData)
+
+          setAssignedLocationIds(currentUserData?.meta?.assign_locations || [])
+        })
+        .catch(err => {
+          console.error('Failed to fetch user assignments', err)
+          setAssignedLocationIds([])
+        })
+    }
+  }, [dispatch, readOnly, tenantId, users])
+
   useEffect(() => {
     if (isSelectionMode && initialLat && initialLng) {
       const newCenter = {
@@ -391,9 +417,21 @@ const LocationMap = ({
     }
   }, [isSelectionMode, initialLat, initialLng])
 
+  // 4. Filter locations using the API state instead of localStorage
   const augmentedLocations = useMemo(() => {
     if (isSelectionMode) return []
-    return locations
+
+    let visibleLocations = locations
+
+    // If readOnly (viewer), filter by state 'assignedLocationIds'
+    if (readOnly) {
+      visibleLocations = locations.filter(loc =>
+        assignedLocationIds.includes(String(loc.id))
+      )
+    }
+    console.log('visible locations', visibleLocations)
+
+    return visibleLocations
       .filter(loc => loc.lat !== null && loc.lang !== null)
       .map(loc => {
         const alertCount = loc.alert_count || 0
@@ -409,7 +447,7 @@ const LocationMap = ({
           markerColor: loc.meta?.markerColor || null
         }
       })
-  }, [locations, isSelectionMode])
+  }, [locations, isSelectionMode, readOnly, assignedLocationIds])
 
   const onLoad = useCallback(
     mapInstance => {
@@ -502,26 +540,28 @@ const LocationMap = ({
     e => {
       setHoveredMarker(null)
       setIsPopupHovered(false)
-      if (isSelectionMode) {
+      // Disable map click to move marker if readOnly
+      if (isSelectionMode && !readOnly) {
         const newLat = e.latLng.lat()
         const newLng = e.latLng.lng()
         setDraggableMarker({ lat: newLat, lng: newLng })
         if (onLocationSelect) onLocationSelect(newLat, newLng)
       }
     },
-    [isSelectionMode, onLocationSelect]
+    [isSelectionMode, onLocationSelect, readOnly]
   )
 
   const handleMarkerDragEnd = useCallback(
     e => {
-      if (isSelectionMode) {
+      // Disable marker drag if readOnly
+      if (isSelectionMode && !readOnly) {
         const newLat = e.latLng.lat()
         const newLng = e.latLng.lng()
         setDraggableMarker({ lat: newLat, lng: newLng })
         if (onLocationSelect) onLocationSelect(newLat, newLng)
       }
     },
-    [isSelectionMode, onLocationSelect]
+    [isSelectionMode, onLocationSelect, readOnly]
   )
 
   const handleViewDashboard = id => {
@@ -645,7 +685,8 @@ const LocationMap = ({
         {isSelectionMode && draggableMarker && (
           <MarkerF
             position={draggableMarker}
-            draggable={true}
+            // Disable draggable property if readOnly
+            draggable={!readOnly}
             onDragEnd={handleMarkerDragEnd}
             icon={createMarkerIcon('#3885CC', 'default')}
           />
