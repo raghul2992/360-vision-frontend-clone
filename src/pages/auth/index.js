@@ -16,8 +16,8 @@ import 'swiper/css/pagination'
 import 'swiper/css/effect-fade'
 
 // Import Images
-import banner_1 from '../../assets/banner/1.png'
-import banner_2 from '../../assets/banner/2.png'
+import banner_1 from '../../assets/banner/1.jpg'
+import banner_2 from '../../assets/banner/2.jpg'
 import banner_3 from '../../assets/banner/3.png'
 
 // 3. Define your Carousel Images/Data
@@ -68,7 +68,7 @@ const AuthPage = () => {
     <div className='flex h-screen flex-col lg:flex-row relative'>
       {/* --- LEFT BANNER (CAROUSEL) --- */}
       <div
-        className={`max-h-screen w-[40%] h-[100%] hidden lg:block overflow-hidden relative`}
+        className={`max-h-screen w-[50%] h-[100%] hidden lg:block overflow-hidden relative`}
       >
         <Swiper
           spaceBetween={0}
@@ -92,7 +92,7 @@ const AuthPage = () => {
                 <img
                   src={slide.image}
                   alt={slide.title}
-                  className='h-full w-full object-fill bg-[#1c1c24]'
+                  className='h-full w-full object-cover bg-[#1c1c24]'
                 />
 
                 <div className='absolute inset-0 '></div>

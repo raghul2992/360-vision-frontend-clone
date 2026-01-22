@@ -28,8 +28,8 @@ import 'swiper/css/pagination'
 import 'swiper/css/effect-fade'
 
 // Import Images
-import banner_1 from '../../assets/banner/1.png'
-import banner_2 from '../../assets/banner/2.png'
+import banner_1 from '../../assets/banner/1.jpg'
+import banner_2 from '../../assets/banner/2.jpg'
 import banner_3 from '../../assets/banner/3.png'
 
 // 3. Define Carousel Data
