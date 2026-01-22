@@ -1,245 +1,250 @@
-import React, { useState, useEffect, useRef } from 'react'
-import Select from 'react-select'
-import DatePicker from 'react-datepicker'
-import 'react-datepicker/dist/react-datepicker.css'
+import React, { useState, useEffect, useMemo } from 'react'
+import { useDispatch } from 'react-redux'
+import { format } from 'date-fns'
 import { useTranslation } from 'react-i18next'
-import {
-  FiFilter,
-  FiCalendar,
-  FiMapPin,
-  FiVideo,
-  FiAlertCircle,
-  FiTrendingUp,
-  FiClock,
-  FiShield,
-  FiActivity
-} from 'react-icons/fi'
-import OverviewStatCard from '../../../component/OverviewStatCard'
+import KpiWidget from './kpistatswidgets'
+import { KPI_WIDGETS_CONFIG } from '../config/KpiConfig'
+import { fetchOverviewReports } from '../../../features/reports/reportsApiSlice'
+import { Responsive, WidthProvider } from 'react-grid-layout'
 
-// --- 1. React Select Custom Styles ---
-const customStyles = {
-  control: (base, state) => ({
-    ...base,
-    backgroundColor: '#393A4A',
-    borderRadius: '8px',
-    border: state.isFocused ? '1px solid #6366F1' : '1px solid #4B5563',
-    boxShadow: 'none',
-    color: '#E0E0E0',
-    padding: '2px 6px',
-    cursor: 'pointer',
-    minHeight: '38px'
-  }),
-  menu: base => ({
-    ...base,
-    backgroundColor: '#2a2f45',
-    color: '#FFFFFF',
-    borderRadius: '8px',
-    marginTop: '4px',
-    border: '1px solid #4B5563',
-    zIndex: 9999
-  }),
-  menuList: base => ({ ...base, color: '#E0E0E0' }),
-  option: (base, { isFocused, isSelected }) => ({
-    ...base,
-    backgroundColor: isSelected
-      ? '#6366F1'
-      : isFocused
-      ? '#3B3F58'
-      : 'transparent',
-    color: isSelected ? '#fff' : '#E0E0E0',
-    cursor: 'pointer'
-  }),
-  singleValue: base => ({ ...base, color: '#FFFFFF', fontWeight: 500 }),
-  placeholder: base => ({ ...base, color: '#A5ADC9', fontWeight: 400 }),
-  input: base => ({ ...base, color: '#FFFFFF' })
-}
+import 'react-grid-layout/css/styles.css'
+import 'react-resizable/css/styles.css'
 
-// --- 2. Reusable Filter Dropdown Component ---
-const FilterDropdown = ({
-  locationOptions,
-  cameraOptions,
-  selectedLocation,
-  setSelectedLocation,
-  selectedCamera,
-  setSelectedCamera,
-  dateRange,
-  setDateRange
+const ResponsiveGridLayout = WidthProvider(Responsive)
+
+const KpiSection = ({
+  kpiData,
+  isLoading,
+  visibleWidgets = [],
+  layout = [], // Received from parent
+  onLayoutChange, // Received from parent
+  onRemoveWidget,
+  locations = [],
+  cameras = []
 }) => {
+  const dispatch = useDispatch()
   const { t } = useTranslation()
-  const [isOpen, setIsOpen] = useState(false)
-  const wrapperRef = useRef(null)
-  const [startDate, endDate] = dateRange || [null, null]
 
-  // Close on click outside
-  useEffect(() => {
-    function handleClickOutside (event) {
-      const isOutsideWrapper =
-        wrapperRef.current && !wrapperRef.current.contains(event.target)
-      const isSelectMenu = event.target.closest('.react-select__menu')
-      const isDatepicker = event.target.closest('.react-datepicker-popper')
+  // Internal data fetching state
+  const [widgetFilters, setWidgetFilters] = useState({})
+  const [specificWidgetData, setSpecificWidgetData] = useState({})
+  const [loadingWidgets, setLoadingWidgets] = useState({})
 
-      if (isOutsideWrapper && !isSelectMenu && !isDatepicker) {
-        setIsOpen(false)
+  // --- HELPER: Format Date for API ---
+  const getDateParams = dateRange => {
+    const [start, end] = dateRange || []
+    if (start && end && !isNaN(start) && !isNaN(end)) {
+      return {
+        created_after: format(start, "yyyy-MM-dd'T'00:00:00"),
+        created_before: format(end, "yyyy-MM-dd'T'23:59:59")
       }
     }
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [wrapperRef])
-
-  return (
-    <div className='relative' ref={wrapperRef}>
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors duration-200 border border-transparent ${
-          isOpen
-            ? 'bg-[#6366F1] text-white'
-            : 'bg-[#393A4A] text-gray-300 border-[#4B5563] hover:bg-[#4B4D63]'
-        }`}
-        title={t('Filter KPIs')}
-      >
-        <FiFilter size={16} />
-      </button>
-
-      {isOpen && (
-        <div className='absolute right-0 top-12 w-[320px] bg-[#2a2f45] border border-[#4B5563] rounded-xl shadow-2xl p-4 z-50'>
-          <div className='space-y-4'>
-            {/* Location */}
-            <div className='space-y-1'>
-              <label className='text-xs text-gray-400 flex items-center gap-2'>
-                <FiMapPin size={12} /> {t('Location') || 'Location'}
-              </label>
-              <Select
-                options={locationOptions}
-                value={selectedLocation}
-                onChange={setSelectedLocation}
-                placeholder={t('Select Location') || 'Select Location'}
-                isClearable
-                styles={customStyles}
-              />
-            </div>
-
-            {/* Camera */}
-            <div className='space-y-1'>
-              <label className='text-xs text-gray-400 flex items-center gap-2'>
-                <FiVideo size={12} /> {t('Camera') || 'Camera'}
-              </label>
-              <Select
-                isDisabled={!selectedLocation}
-                options={cameraOptions}
-                value={selectedCamera}
-                onChange={setSelectedCamera}
-                placeholder={
-                  selectedLocation
-                    ? t('Select Camera') || 'Select Camera'
-                    : t('Select Location First') || 'Select Location First'
-                }
-                isClearable
-                styles={customStyles}
-              />
-            </div>
-
-            {/* Date Picker */}
-            <div className='space-y-1'>
-              <label className='text-xs text-gray-400 flex items-center gap-2'>
-                <FiCalendar size={12} /> {t('Date Range') || 'Date Range'}
-              </label>
-              <DatePicker
-                selectsRange
-                startDate={startDate}
-                endDate={endDate}
-                onChange={setDateRange}
-                isClearable
-                placeholderText={t('Select Date Range') || 'Select Date Range'}
-                className='w-full px-4 py-2 rounded-lg bg-[#393A4A] text-white border border-[#4B5563] focus:outline-none focus:border-[#6366F1] text-sm'
-                wrapperClassName='w-full'
-              />
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  )
-}
-
-// --- 3. Main KPI Section Component ---
-const KpiSection = ({ kpiData, isLoading, filterProps }) => {
-  if (isLoading) {
-    return (
-      <div className='bg-[#2a2f45] rounded-xl p-6 md:p-10 mb-8 shadow-sm'>
-        <div className='flex items-center justify-between mb-6'>
-          <h2 className='text-white text-xl font-semibold'>
-            Key Performance Indicators
-          </h2>
-          <div className='h-10 w-10 bg-[#1f2435] rounded-lg animate-pulse' />
-        </div>
-        <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4'>
-          {Array.from({ length: 5 }).map((_, i) => (
-            <div
-              key={i}
-              className='bg-[#1f2435] rounded-lg h-32 animate-pulse'
-            />
-          ))}
-        </div>
-      </div>
-    )
+    return {}
   }
 
+  // --- ACTION: Fetch Data for a Single Widget ---
+  const fetchSingleWidgetData = async (widgetId, filters) => {
+    const tenantId = localStorage.getItem('tenant_id')
+    if (!tenantId) return
+
+    const params = { ...getDateParams(filters.dateRange) }
+    if (filters.selectedLocation?.value)
+      params.location_id = filters.selectedLocation.value
+    if (filters.selectedCamera?.value)
+      params.camera_id = filters.selectedCamera.value
+
+    setLoadingWidgets(prev => ({ ...prev, [widgetId]: true }))
+
+    try {
+      const res = await dispatch(
+        fetchOverviewReports({ tenant_id: tenantId, params })
+      )
+      if (res.payload) {
+        const overviewData = res.payload
+        let dwellTime = '0m 0s'
+        if (overviewData.avgDwell?.average_dwell_time) {
+          const dwellSeconds = parseInt(
+            overviewData.avgDwell.average_dwell_time
+          )
+          if (!isNaN(dwellSeconds))
+            dwellTime = `${Math.floor(dwellSeconds / 60)}m ${
+              dwellSeconds % 60
+            }s`
+        }
+
+        const formattedData = {
+          alertsCount: overviewData.alertsCount?.count || 0,
+          mostFrequent: {
+            detection_type:
+              overviewData.mostFrequent?.detection_type?.replace(/_/g, ' ') ||
+              '-',
+            count: overviewData.mostFrequent?.count || 0
+          },
+          busiestHour: overviewData.busiestHour || null,
+          avgDwell: { average_dwell_time: dwellTime },
+          safetyViolations: overviewData.safetyViolations?.count || 0,
+          peakDetectionHour: overviewData.peakDetectionHour || null,
+          detectionEfficiency: '0%',
+          avgResponseTime: '2m 30s'
+        }
+        setSpecificWidgetData(prev => ({ ...prev, [widgetId]: formattedData }))
+      }
+    } catch (err) {
+      console.error(`Failed to fetch data for widget ${widgetId}`, err)
+    } finally {
+      setLoadingWidgets(prev => ({ ...prev, [widgetId]: false }))
+    }
+  }
+
+  // --- EVENT: Handle Filter Change ---
+  const updateWidgetFilter = (widgetId, key, value) => {
+    setWidgetFilters(prev => {
+      const current = prev[widgetId] || {}
+      let newFilters = { ...current }
+      if (key === 'selectedLocation') {
+        newFilters = {
+          ...newFilters,
+          selectedLocation: value,
+          selectedCamera: null
+        }
+      } else {
+        newFilters = { ...newFilters, [key]: value }
+      }
+      fetchSingleWidgetData(widgetId, newFilters)
+      return { ...prev, [widgetId]: newFilters }
+    })
+  }
+
+  // --- HELPER: Get Data for Rendering ---
+  const getWidgetData = widgetId => {
+    const filters = widgetFilters[widgetId]
+    const hasFilters =
+      filters &&
+      (filters.selectedLocation ||
+        filters.selectedCamera ||
+        (filters.dateRange && filters.dateRange[0]))
+    let displayData =
+      hasFilters && specificWidgetData[widgetId]
+        ? { ...specificWidgetData[widgetId] }
+        : { ...kpiData }
+
+    if (cameras.length > 0) {
+      let filteredCameras = [...cameras]
+      if (filters?.selectedLocation?.value)
+        filteredCameras = filteredCameras.filter(
+          c => c.location_id === filters.selectedLocation.value
+        )
+      if (filters?.selectedCamera?.value)
+        filteredCameras = filteredCameras.filter(
+          c => c.id === filters.selectedCamera.value
+        )
+      displayData.activeCameras = filteredCameras.filter(
+        c => c.status === 'active'
+      ).length
+      displayData.totalCameras = filteredCameras.length
+      const eff =
+        displayData.totalCameras > 0
+          ? Math.round(
+              (displayData.activeCameras / displayData.totalCameras) * 100
+            )
+          : 0
+      displayData.detectionEfficiency = `${eff}%`
+    }
+    return displayData
+  }
+
+  const getLocalCameraOptions = selectedLoc => {
+    if (!selectedLoc || !cameras) return []
+    return cameras
+      .filter(c => c.location_id === selectedLoc.value)
+      .map(c => ({ value: c.id, label: c.name }))
+  }
+
+  // Filter active widget configs
+  const activeWidgets = useMemo(
+    () => KPI_WIDGETS_CONFIG.filter(w => visibleWidgets.includes(w.id)),
+    [visibleWidgets]
+  )
+
+  // Generate fallback layout if none provided (e.g. fresh add)
+  const displayLayout = useMemo(() => {
+    if (layout && layout.length > 0) return layout
+    return activeWidgets.map((w, i) => ({
+      i: w.id,
+      x: i % 5,
+      y: Math.floor(i / 5),
+      w: 1,
+      h: 1
+    }))
+  }, [layout, activeWidgets])
+
+  const globalLocationOptions = useMemo(
+    () => locations.map(l => ({ value: l.id || l._id, label: l.name })),
+    [locations]
+  )
+
+  if (isLoading)
+    return <div className='h-[140px] bg-[#212332] animate-pulse rounded' />
+  if (activeWidgets.length === 0) return null
+
   return (
-    <div className='bg-[#2a2f45] rounded-xl p-6 md:p-10 mb-8 shadow-sm'>
-      {/* Header with Title and Filter Dropdown */}
-      <div className='flex flex-row items-center justify-between mb-6'>
-        <h2 className='text-white text-xl font-semibold'>
-          Key Performance Indicators
-        </h2>
+    <div className='mb-8'>
+      <ResponsiveGridLayout
+        layouts={{ lg: displayLayout }}
+        breakpoints={{ lg: 996, md: 768, xxs: 0 }}
+        cols={{ lg: 5, md: 2, xxs: 1 }}
+        rowHeight={140}
+        margin={[16, 16]}
+        isDraggable={true}
+        isResizable={false}
+        draggableHandle='.drag-handle' // Ensure KpiWidget has a drag-handle class (or remove to drag whole card)
+        onLayoutChange={l => onLayoutChange && onLayoutChange(l)}
+      >
+        {activeWidgets.map(widget => {
+          const widgetFilter = widgetFilters[widget.id] || {}
+          const isWidgetLoading = loadingWidgets[widget.id]
+          const finalData = getWidgetData(widget.id)
+          const specificCameraOptions = getLocalCameraOptions(
+            widgetFilter.selectedLocation
+          )
 
-        {/* Pass the filterProps directly to the Dropdown */}
-        {filterProps && <FilterDropdown {...filterProps} />}
-      </div>
+          const specificFilterProps = {
+            locationOptions: globalLocationOptions,
+            cameraOptions: specificCameraOptions,
+            selectedLocation: widgetFilter.selectedLocation || null,
+            selectedCamera: widgetFilter.selectedCamera || null,
+            dateRange: widgetFilter.dateRange || [null, null],
+            setSelectedLocation: val =>
+              updateWidgetFilter(widget.id, 'selectedLocation', val),
+            setSelectedCamera: val =>
+              updateWidgetFilter(widget.id, 'selectedCamera', val),
+            setDateRange: val =>
+              updateWidgetFilter(widget.id, 'dateRange', val),
+            isMinimal: true
+          }
 
-      {/* KPI Cards Grid - Adjusted for 5 items */}
-      <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4'>
-        {/* 1. Total Alerts */}
-        <OverviewStatCard
-          title='Total Alerts'
-          value={kpiData?.alertsCount ?? 0}
-          icon={<FiAlertCircle className='text-red-500' size={20} />}
-          trend={kpiData?.alertsCount > 50 ? 'high' : 'normal'}
-        />
-        {/* 2. Most Frequent Alert */}
-        <OverviewStatCard
-          title='Most Frequent'
-          value={kpiData?.mostFrequent?.detection_type || '-'}
-          sub={`${kpiData?.mostFrequent?.count ?? 0} occurrences`}
-          icon={<FiTrendingUp className='text-yellow-500' size={20} />}
-        />
-        {/* 3. Busiest Hour */}
-        <OverviewStatCard
-          title='Busiest Hour'
-          value={
-            kpiData?.busiestHour?.time_start_utc
-              ? kpiData.busiestHour.time_start_utc.slice(11, 16)
-              : '--:--'
-          }
-          sub={
-            kpiData?.busiestHour
-              ? `${kpiData.busiestHour.count ?? 0} alerts`
-              : 'No data'
-          }
-          icon={<FiClock className='text-blue-500' size={20} />}
-        />
-        {/* 4. Average Dwell Time */}
-        <OverviewStatCard
-          title='Avg Dwell Time'
-          value={kpiData?.avgDwell?.average_dwell_time || '0m 0s'}
-          icon={<FiActivity className='text-green-500' size={20} />}
-        />
-        {/* 5. Safety Violations (Added back)
-        <OverviewStatCard
-          title='Safety Violations'
-          value={kpiData?.safetyViolations ?? 0}
-          icon={<FiShield className='text-orange-500' size={20} />}
-        /> */}
-      </div>
+          return (
+            <div key={widget.id} className='relative overflow-visible !z-auto'>
+              <div className='h-full relative'>
+                {isWidgetLoading && (
+                  <div className='absolute inset-0 bg-[#212332]/80 z-20 flex items-center justify-center rounded-lg backdrop-blur-sm'>
+                    <div className='w-5 h-5 border-2 border-t-transparent border-white rounded-full animate-spin'></div>
+                  </div>
+                )}
+                <KpiWidget
+                  title={t(widget.titleKey)}
+                  value={widget.getValue(finalData)}
+                  subText={widget.getSubText(finalData, t)}
+                  subIcon={widget.subIcon}
+                  subClass={widget.subClass}
+                  onRemove={() => onRemoveWidget(widget.id)}
+                  filterProps={specificFilterProps}
+                />
+              </div>
+            </div>
+          )
+        })}
+      </ResponsiveGridLayout>
     </div>
   )
 }

@@ -8,7 +8,6 @@ import { useTranslation } from 'react-i18next'
 import { getCameras } from '../../../features/cameras/cameraApiSlice'
 import { getLocations } from '../../../features/locations/locationApiSlice'
 import { fetchAlerts } from '../../../features/alert/alertSlice'
-import { fetchTenantsUsers } from '../../../features/userManagement/userApiSlice'
 import {
   getTenant,
   updateWidgetLayout,
@@ -18,8 +17,9 @@ import {
 } from '../../../features/widgets/widgetApiSlice'
 import { fetchOverviewReports } from '../../../features/reports/reportsApiSlice'
 
-// Config
-import { WIDGETS } from '../config/widgetConfig'
+// Configs
+import { WIDGETS as CHART_WIDGETS } from '../config/widgetConfig'
+import { KPI_WIDGETS_CONFIG } from '../config/KpiConfig'
 
 export const useDashboardLogic = () => {
   const dispatch = useDispatch()
@@ -27,49 +27,19 @@ export const useDashboardLogic = () => {
   const location = useLocation()
   const navigate = useNavigate()
 
-  // --- 1. Get User Info from LocalStorage ---
-  const userRole = localStorage.getItem('user_role')
-  const userId = localStorage.getItem('user_id')
-  const tenantId = localStorage.getItem('tenant_id')
+  // --- 1. MERGE CONFIGURATIONS ---
+  // Create a unified list of all possible widgets (KPIs + Charts)
+  const ALL_AVAILABLE_WIDGETS = useMemo(() => {
+    const kpis = KPI_WIDGETS_CONFIG.map(k => ({
+      ...k,
+      widget_name: k.id, // Normalize ID field to match charts
+      isKpi: true
+    }))
+    return [...CHART_WIDGETS, ...kpis]
+  }, [])
 
   // --- Selectors ---
-  const { locations: allLocations = [] } = useSelector(
-    state => state.locationApi || {}
-  )
-
-  // --- 2. State for Viewer's Assigned Location IDs ---
-  const [assignedLocationIds, setAssignedLocationIds] = useState([])
-
-  // --- 3. Fetch Assigned Locations (Only if Viewer) ---
-  useEffect(() => {
-    if (userRole === 'viewer' && userId && tenantId) {
-      dispatch(fetchTenantsUsers({ tenant_id: tenantId, user_id: userId }))
-        .unwrap()
-        .then(usersData => {
-          const currentUser =
-            usersData.find(u => String(u.id) === String(userId)) || usersData[0]
-
-          setAssignedLocationIds(currentUser?.meta?.assign_locations || [])
-        })
-        .catch(err => {
-          console.error('Failed to load viewer locations', err)
-          setAssignedLocationIds([])
-        })
-    }
-  }, [dispatch, userRole, userId, tenantId])
-
-  // --- 4. Filter Locations based on Role ---
-  const locations = useMemo(() => {
-    // If Viewer, only return locations that match assigned IDs
-    if (userRole === 'viewer') {
-      return allLocations.filter(loc =>
-        assignedLocationIds.includes(String(loc.id || loc._id))
-      )
-    }
-    // If Admin/Operator, return ALL locations
-    return allLocations
-  }, [allLocations, userRole, assignedLocationIds])
-
+  const { locations = [] } = useSelector(state => state.locationApi || {})
   const { cameras = [], isLoading: isCamerasLoading } = useSelector(
     state => state.cameraApi || {}
   )
@@ -82,17 +52,16 @@ export const useDashboardLogic = () => {
   } = useSelector(state => state.widgetApi || {})
 
   // --- Local UI State ---
-  const [layout, setLayout] = useState([])
+  const [layout, setLayout] = useState([]) // Master layout (contains both types)
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const [activeWidgets, setActiveWidgets] = useState([])
+  const [activeWidgets, setActiveWidgets] = useState([]) // Stores BOTH types
   const [hasInitialized, setHasInitialized] = useState(false)
 
+  // --- Global Filter State ---
   const today = new Date()
-
-  // --- GLOBAL FILTER STATE ---
   const [selectedGlobalLocation, setSelectedGlobalLocation] = useState('all')
 
-  // --- SECTION SPECIFIC STATES ---
+  // --- Section Specific States ---
   const [kpiLocation, setKpiLocation] = useState(null)
   const [kpiCamera, setKpiCamera] = useState(null)
   const [kpiDateRange, setKpiDateRange] = useState([today, today])
@@ -168,143 +137,114 @@ export const useDashboardLogic = () => {
   }, [])
 
   const refreshTenantData = useCallback(() => {
+    const tenantId = localStorage.getItem('tenant_id')
     if (tenantId) {
       hasRequestedTenant.current = false
       dispatch(getTenant({ tenant_id: tenantId, skip: 0, limit: 10 }))
     }
-  }, [dispatch, tenantId])
+  }, [dispatch])
 
-  // =========================================================
-  //  SHARED: Logic to Apply Filter to All Sections
-  // =========================================================
-  const applyLocationFilter = useCallback(
-    newLocationId => {
-      setSelectedGlobalLocation(newLocationId)
-
-      let locationObj = null
-
-      if (newLocationId && newLocationId !== 'all') {
-        const loc = locations.find(
-          l =>
-            String(l.id) === String(newLocationId) ||
-            String(l._id) === String(newLocationId)
-        )
-
-        if (loc) {
-          locationObj = { value: loc.id || loc._id, label: loc.name }
-        }
+  // --- API Save Logic ---
+  const saveLayoutToApi = useCallback(
+    layoutToSave => {
+      if (!hasInitialized) return
+      const tenantId = localStorage.getItem('tenant_id')
+      if (!tenantId) {
+        console.warn('Cannot save layout: Missing Tenant ID')
+        return
       }
 
-      setKpiLocation(locationObj)
-      setKpiCamera(null)
+      // Avoid duplicate API calls
+      if (
+        JSON.stringify(lastSavedLayoutRef.current) ===
+        JSON.stringify(layoutToSave)
+      )
+        return
 
-      setHealthLocation(locationObj)
-      setHealthCamera(null)
+      lastSavedLayoutRef.current = layoutToSave
 
-      setDetectionLocation(locationObj)
-      setDetectionCamera(null)
+      const apiLayout = layoutToSave.map(item => ({
+        widget_name: item.i,
+        x: item.x,
+        y: item.y,
+        w: item.w,
+        h: item.h,
+        minW: item.minW,
+        minH: item.minH
+      }))
 
-      setPriorityLocation(locationObj)
-      setPriorityCamera(null)
-
-      setAlertTimelineLocation(locationObj)
-      setAlertTimelineCamera(null)
-
-      setAlertTypeBreakdownLocation(locationObj)
-      setAlertTypeBreakdownCamera(null)
-
-      setTopRoisLocation(locationObj)
-      setTopRoisCamera(null)
+      dispatch(updateWidgetLayout({ tenantId, layout: apiLayout }))
+        .unwrap()
+        .then(() => refreshTenantData())
+        .catch(error => console.error('Failed to save layout:', error))
     },
-    [locations]
+    [dispatch, hasInitialized, refreshTenantData]
   )
 
-  const handleGlobalLocationChange = useCallback(
-    e => {
-      const newLocationId = e.target.value
+  // --- SPLIT LAYOUT HANDLERS ---
 
-      if (newLocationId === 'all') {
-        navigate(location.pathname, { replace: true })
-      } else {
-        navigate(`${location.pathname}?locationId=${newLocationId}`, {
-          replace: true
-        })
-      }
+  // 1. Chart Layout Change: Updates Charts, preserves existing KPI positions
+  const handleChartLayoutChange = useCallback(
+    newChartLayout => {
+      if (!hasInitialized) return
+
+      // Find items in current layout that are KPIs
+      const currentKpiItems = layout.filter(item =>
+        KPI_WIDGETS_CONFIG.some(k => k.id === item.i)
+      )
+
+      // Merge new chart positions with existing KPI positions
+      const mergedLayout = [...newChartLayout, ...currentKpiItems]
+
+      setLayout(mergedLayout)
+      saveLayoutToApi(mergedLayout)
     },
-    [navigate, location.pathname]
+    [layout, hasInitialized, saveLayoutToApi]
   )
 
-  // Update URL effect to handle default viewer state
-  useEffect(() => {
-    const searchParams = new URLSearchParams(location.search)
-    const incomingId = searchParams.get('locationId') || 'all'
+  // 2. KPI Layout Change: Updates KPIs, preserves existing Chart positions
+  const handleKpiLayoutChange = useCallback(
+    newKpiLayout => {
+      if (!hasInitialized) return
 
-    // If locations are loaded
-    if (locations.length > 0) {
-      // 5. Special Case for Viewer: If URL says 'all' (or nothing), redirect to first assigned location
-      if (userRole === 'viewer' && incomingId === 'all') {
-        const firstAssignedId = locations[0]?.id || locations[0]?._id
-        if (firstAssignedId) {
-          navigate(`${location.pathname}?locationId=${firstAssignedId}`, {
-            replace: true
-          })
-          return // Stop here, let the next render handle the update
-        }
-      }
+      // Find items in current layout that are Charts
+      const currentChartItems = layout.filter(
+        item => !KPI_WIDGETS_CONFIG.some(k => k.id === item.i)
+      )
 
-      if (String(incomingId) !== String(selectedGlobalLocation)) {
-        applyLocationFilter(incomingId)
-      }
-    }
-  }, [
-    location.search,
-    locations,
-    selectedGlobalLocation,
-    applyLocationFilter,
-    userRole,
-    navigate,
-    location.pathname
-  ])
+      // Merge new KPI positions with existing Chart positions
+      const mergedLayout = [...newKpiLayout, ...currentChartItems]
 
-  // --- Initial Fetches ---
-  useEffect(() => {
-    if (tenantId && !hasRequestedTenant.current) {
-      hasRequestedTenant.current = true
-      dispatch(getTenant({ tenant_id: tenantId, skip: 0, limit: 10 }))
-    }
-  }, [dispatch, tenantId])
+      setLayout(mergedLayout)
+      saveLayoutToApi(mergedLayout)
+    },
+    [layout, hasInitialized, saveLayoutToApi]
+  )
 
-  useEffect(() => {
-    if (tenantId && !hasRequestedLocations.current) {
-      hasRequestedLocations.current = true
-      dispatch(getLocations({ tenantId: tenantId }))
-    }
-  }, [dispatch, tenantId])
-
-  useEffect(() => {
-    if (tenantId && !hasRequestedCameras.current) {
-      hasRequestedCameras.current = true
-      dispatch(getCameras({ tenantId, skip: 0, limit: 10 }))
-    }
-  }, [dispatch, tenantId])
-
-  // --- Layout Management ---
+  // --- Initial Load Logic ---
   useEffect(() => {
     if (!layoutLoading && tenant && !hasInitialized) {
       const widgetConfig = tenant?.meta?.widget_config || []
+
       if (widgetConfig.length > 0) {
+        // Map backend config to Layout format
         const mappedLayout = widgetConfig.map(item => ({
           i: item.widget_name,
           x: item.x || 0,
           y: item.y || 0,
-          w: item.w || 6,
-          h: item.h || 8,
-          minW: 3,
-          minH: 8
+          w: item.w,
+          h: item.h,
+          // If KPI, set min 1x1, else 3x8
+          minW: KPI_WIDGETS_CONFIG.some(k => k.id === item.widget_name) ? 1 : 3,
+          minH: KPI_WIDGETS_CONFIG.some(k => k.id === item.widget_name) ? 1 : 8
         }))
+
         setLayout(mappedLayout)
         const activeNames = new Set(widgetConfig.map(item => item.widget_name))
-        setActiveWidgets(WIDGETS.filter(w => activeNames.has(w.widget_name)))
+        const active = ALL_AVAILABLE_WIDGETS.filter(w =>
+          activeNames.has(w.widget_name)
+        )
+        setActiveWidgets(active)
         lastSavedLayoutRef.current = mappedLayout
       } else {
         setLayout([])
@@ -313,83 +253,87 @@ export const useDashboardLogic = () => {
       }
       setHasInitialized(true)
     }
-  }, [tenant, layoutLoading, hasInitialized])
+  }, [tenant, layoutLoading, hasInitialized, ALL_AVAILABLE_WIDGETS])
 
-  useEffect(() => {
-    const activeNames = new Set(layout.map(item => item.i))
-    setActiveWidgets(WIDGETS.filter(w => activeNames.has(w.widget_name)))
-  }, [layout])
-
-  const saveLayoutToApi = useCallback(
-    layoutToSave => {
-      if (!hasInitialized) return
-      if (!tenantId) return
-      if (
-        JSON.stringify(lastSavedLayoutRef.current) ===
-        JSON.stringify(layoutToSave)
-      )
-        return
-
-      lastSavedLayoutRef.current = layoutToSave
-      const apiLayout = layoutToSave.map(item => ({
-        widget_name: item.i,
-        x: item.x,
-        y: item.y,
-        w: item.w,
-        h: item.h
-      }))
-
-      dispatch(updateWidgetLayout({ tenantId, layout: apiLayout }))
-        .unwrap()
-        .then(() => refreshTenantData())
-        .catch(error => console.error('Failed to save layout:', error))
-    },
-    [dispatch, hasInitialized, refreshTenantData, tenantId]
-  )
-
+  // --- Unified Add Widget ---
   const addWidget = useCallback(
     widgetName => {
-      const newWidget = WIDGETS.find(w => w.widget_name === widgetName)
+      const newWidget = ALL_AVAILABLE_WIDGETS.find(
+        w => w.widget_name === widgetName
+      )
+
       if (!newWidget || activeWidgets.some(w => w.widget_name === widgetName)) {
         setIsModalOpen(false)
         return
       }
+
+      const isKpi = newWidget.isKpi
+
       const newLayoutItem = {
         i: newWidget.widget_name,
-        x: (layout.length * 6) % 12,
+        // Append to end. 'Infinity' forces grid-layout to place it at the bottom.
+        x: 0,
         y: Infinity,
-        w: 6,
-        h: 12,
-        minW: 3,
-        minH: 8
+        w: isKpi ? 1 : 6,
+        h: isKpi ? 1 : 12,
+        minW: isKpi ? 1 : 3,
+        minH: isKpi ? 1 : 8
       }
+
       const newLayout = [...layout, newLayoutItem]
+
       setLayout(newLayout)
       setActiveWidgets(prev => [...prev, newWidget])
       saveLayoutToApi(newLayout)
       setIsModalOpen(false)
     },
-    [activeWidgets, layout, saveLayoutToApi]
+    [activeWidgets, layout, saveLayoutToApi, ALL_AVAILABLE_WIDGETS]
   )
 
+  // --- Unified Remove Widget ---
   const removeWidget = useCallback(
     widgetName => {
       const newLayout = layout.filter(item => item.i !== widgetName)
       const newActiveWidgets = activeWidgets.filter(
         w => w.widget_name !== widgetName
       )
+
       setLayout(newLayout)
       setActiveWidgets(newActiveWidgets)
       saveLayoutToApi(newLayout)
     },
-    [activeWidgets, layout, saveLayoutToApi]
+    [layout, activeWidgets, saveLayoutToApi]
   )
 
-  const handleLayoutChange = useCallback(newLayout => setLayout(newLayout), [])
+  // --- Initial API Fetches (Tenant, Locations, Cameras) ---
+  useEffect(() => {
+    const tenantId = localStorage.getItem('tenant_id')
+    if (tenantId && !hasRequestedTenant.current) {
+      hasRequestedTenant.current = true
+      dispatch(getTenant({ tenant_id: tenantId, skip: 0, limit: 10 }))
+    }
+  }, [dispatch])
+
+  useEffect(() => {
+    const tenant_id = localStorage.getItem('tenant_id')
+    if (tenant_id && !hasRequestedLocations.current) {
+      hasRequestedLocations.current = true
+      dispatch(getLocations({ tenantId: tenant_id }))
+    }
+  }, [dispatch])
+
+  useEffect(() => {
+    const tenantId = localStorage.getItem('tenant_id')
+    if (tenantId && !hasRequestedCameras.current) {
+      hasRequestedCameras.current = true
+      dispatch(getCameras({ tenantId, skip: 0, limit: 10 }))
+    }
+  }, [dispatch])
 
   // --- KPI Data Fetching ---
   useEffect(() => {
     const fetchKpiData = async () => {
+      const tenantId = localStorage.getItem('tenant_id')
       if (!tenantId) return
       setIsKpiLoading(true)
       try {
@@ -447,19 +391,14 @@ export const useDashboardLogic = () => {
       }
     }
     fetchKpiData()
-  }, [
-    dispatch,
-    kpiLocation,
-    kpiCamera,
-    kpiDateRange,
-    cameras,
-    getDateParams,
-    tenantId
-  ])
+  }, [dispatch, kpiLocation, kpiCamera, kpiDateRange, cameras, getDateParams])
 
-  // --- Widget Fetching ---
+  // --- Widget Data Fetching ---
+
+  // Detection Chart
   useEffect(() => {
     if (!activeWidgets.some(w => w.widget_name === 'detection')) return
+    const tenantId = localStorage.getItem('tenant_id')
     if (!tenantId) return
     const queryParams = {
       type: 'event_alert',
@@ -477,12 +416,13 @@ export const useDashboardLogic = () => {
     detectionDateRange,
     detectionLocation,
     detectionCamera,
-    getDateParams,
-    tenantId
+    getDateParams
   ])
 
+  // Priority Chart
   useEffect(() => {
     if (!activeWidgets.some(w => w.widget_name === 'priority')) return
+    const tenantId = localStorage.getItem('tenant_id')
     if (!tenantId) return
     const queryParams = {
       type: 'event_alert',
@@ -500,12 +440,13 @@ export const useDashboardLogic = () => {
     priorityDateRange,
     priorityLocation,
     priorityCamera,
-    getDateParams,
-    tenantId
+    getDateParams
   ])
 
+  // Alert Timeline
   useEffect(() => {
     if (!activeWidgets.some(w => w.widget_name === 'alert_timeline')) return
+    const tenantId = localStorage.getItem('tenant_id')
     if (!tenantId) return
     const params = {
       tenant_id: tenantId,
@@ -521,13 +462,14 @@ export const useDashboardLogic = () => {
     alertTimelineDateRange,
     alertTimelineLocation,
     alertTimelineCamera,
-    getDateParams,
-    tenantId
+    getDateParams
   ])
 
+  // Alert Type Breakdown
   useEffect(() => {
     if (!activeWidgets.some(w => w.widget_name === 'alert_type_breakdown'))
       return
+    const tenantId = localStorage.getItem('tenant_id')
     if (!tenantId) return
     const params = {
       tenant_id: tenantId,
@@ -544,22 +486,18 @@ export const useDashboardLogic = () => {
     alertTypeBreakdownDateRange,
     alertTypeBreakdownLocation,
     alertTypeBreakdownCamera,
-    getDateParams,
-    tenantId
+    getDateParams
   ])
 
+  // Top Problematic ROIs
   useEffect(() => {
     if (!activeWidgets.some(w => w.widget_name === 'top_problematic_rois'))
       return
+    const tenantId = localStorage.getItem('tenant_id')
     if (!tenantId) return
-    const params = {
-      tenant_id: tenantId,
-      ...getDateParams(topRoisDateRange)
-    }
-
+    const params = { tenant_id: tenantId, ...getDateParams(topRoisDateRange) }
     if (topRoisLocation?.value) params.location_id = topRoisLocation.value
     if (topRoisCamera?.value) params.camera_id = topRoisCamera.value
-
     dispatch(getTopProblematicRois(params))
   }, [
     dispatch,
@@ -567,13 +505,13 @@ export const useDashboardLogic = () => {
     topRoisDateRange,
     topRoisLocation,
     topRoisCamera,
-    getDateParams,
-    tenantId
+    getDateParams
   ])
 
-  // --- Client Side Filtering ---
+  // --- Client Side Filtering (Health, Detection Local Aggregation) ---
   useEffect(() => {
     if (cameras.length > 0 && !isCamerasLoading) {
+      // Health Data
       const filtered = cameras.filter(c => {
         const locMatch =
           !healthLocation || c.location_id === healthLocation.value
@@ -588,6 +526,7 @@ export const useDashboardLogic = () => {
         error: filtered.filter(c => c.status === 'error').length
       })
 
+      // Detection Data Aggregation
       const detectionDetections = {}
       const detectionFiltered = cameras.filter(
         cam =>
@@ -613,6 +552,7 @@ export const useDashboardLogic = () => {
         Object.values(detectionDetections).reduce((a, b) => a + b, 0)
       )
 
+      // Priority Data Aggregation
       const priorityPriorities = {}
       const priorityFiltered = cameras.filter(
         cam =>
@@ -789,6 +729,61 @@ export const useDashboardLogic = () => {
     ]
   )
 
+  // --- Logic for Global Location application ---
+  const applyLocationFilter = useCallback(
+    newLocationId => {
+      setSelectedGlobalLocation(newLocationId)
+      let locationObj = null
+      if (newLocationId && newLocationId !== 'all') {
+        const loc = locations.find(
+          l =>
+            String(l.id) === String(newLocationId) ||
+            String(l._id) === String(newLocationId)
+        )
+        if (loc) locationObj = { value: loc.id || loc._id, label: loc.name }
+      }
+      // Apply to all local states
+      setKpiLocation(locationObj)
+      setKpiCamera(null)
+      setHealthLocation(locationObj)
+      setHealthCamera(null)
+      setDetectionLocation(locationObj)
+      setDetectionCamera(null)
+      setPriorityLocation(locationObj)
+      setPriorityCamera(null)
+      setAlertTimelineLocation(locationObj)
+      setAlertTimelineCamera(null)
+      setAlertTypeBreakdownLocation(locationObj)
+      setAlertTypeBreakdownCamera(null)
+      setTopRoisLocation(locationObj)
+      setTopRoisCamera(null)
+    },
+    [locations]
+  )
+
+  const handleGlobalLocationChange = useCallback(
+    e => {
+      const newLocationId = e.target.value
+      if (newLocationId === 'all')
+        navigate(location.pathname, { replace: true })
+      else
+        navigate(`${location.pathname}?locationId=${newLocationId}`, {
+          replace: true
+        })
+    },
+    [navigate, location.pathname]
+  )
+
+  useEffect(() => {
+    const searchParams = new URLSearchParams(location.search)
+    const incomingId = searchParams.get('locationId') || 'all'
+    if (locations.length > 0 || incomingId === 'all') {
+      if (String(incomingId) !== String(selectedGlobalLocation))
+        applyLocationFilter(incomingId)
+    }
+  }, [location.search, locations, selectedGlobalLocation, applyLocationFilter])
+
+  // --- EXPORT ---
   return {
     kpiData,
     healthData,
@@ -796,33 +791,48 @@ export const useDashboardLogic = () => {
     priorityData,
     totalDetection,
     totalAlerts,
+
+    // Unified State & Config
     activeWidgets,
     layout,
-    WIDGETS,
-    // 6. Modified Return: Exclude "All Locations" if user is Viewer
-    locations: [
-      ...(userRole !== 'viewer'
-        ? [{ id: 'all', name: t('dashboard.all_locations') || 'All Locations' }]
-        : []),
-      ...(locations || []).map(l => ({ id: l.id || l._id, name: l.name }))
-    ],
+    ALL_AVAILABLE_WIDGETS,
+
+    // Loading State
     layoutLoading,
     hasInitialized,
     isKpiLoading,
     isAlertTimelineLoading,
     isAlertTypeBreakdownLoading,
     isTopProblematicRoisLoading,
+
+    // UI State
     isModalOpen,
     setIsModalOpen,
-    selectedGlobalLocation,
-    handleGlobalLocationChange,
+
+    // Unified Actions
     addWidget,
     removeWidget,
-    handleLayoutChange,
-    saveLayoutToApi,
+
+    // Split Layout Handlers (Crucial for preventing grid conflicts)
+    handleChartLayoutChange,
+    handleKpiLayoutChange,
+
+    // Helpers
+    t,
     kpiFilterProps,
     healthFilterProps,
     getWidgetProps,
-    t
+
+    // Raw Data & Locations
+    rawLocations: locations || [],
+    rawCameras: cameras || [],
+    locations: [
+      { id: 'all', name: t('dashboard.all_locations') || 'All Locations' },
+      ...(locations || []).map(l => ({ id: l.id || l._id, name: l.name }))
+    ],
+
+    // Global Location Filter
+    selectedGlobalLocation,
+    handleGlobalLocationChange
   }
 }
