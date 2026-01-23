@@ -132,8 +132,8 @@ const Alerts = () => {
         fetchAlerts({ tenantId: tenant_id, queryParams, reset })
       )
 
-      if (result.payload && result.payload.results) {
-        setHasMore(result.payload.results.length === currentLimit)
+      if (result.payload) {
+        setHasMore(result.payload.length === currentLimit)
       } else {
         setHasMore(false)
       }
@@ -352,10 +352,13 @@ const Alerts = () => {
                 ref={containerRef}
                 className='space-y-4 w-full max-h-[650px] overflow-y-auto scrollbar-thin scrollbar-thumb-[#3b405e] scrollbar-track-[#1f2333] hover:scrollbar-thumb-[#4a5070] rounded-lg pr-2'
               >
-                {alerts.map(alert => {
+                {
+                alerts.map(alert => {
+                  var location = filteredLocations?.find(loc => loc?.id == alert?.location_id);
+                  const timezone = location?.meta?.timezone || "Etc/UTC";
                   return (
                     <div key={alert.id}>
-                      <AlertItem alert={alert} tenantId={tenant_id} />
+                      <AlertItem alert={alert} tenantId={tenant_id} timezone={timezone} />
                     </div>
                   )
                 })}
