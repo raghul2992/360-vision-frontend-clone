@@ -108,7 +108,7 @@ const AddUserModal = ({ isOpen, onClose, tenantId }) => {
       setShowInviteConfirm(true)
       window.dispatchEvent(new CustomEvent('triggeruserapi', { detail: true }))
     } catch (err) {
-      toast.error(err || t('userManagement.errors.addFailed'))
+      toast.error(err.message || t('userManagement.errors.addFailed'))
     }
   }
 
