@@ -376,7 +376,13 @@
     "phoneNumberAlreadyAdded": "This phone number is already added.",
     "targetedHourSlots": "Slots de Horário Alvo",
     "defineTimeSlots": "Definir Slots de Tempo",
-    "notificationsubtext": "Contacts will appear on your alert section under dashboard for quick reference only—no direct notifications will be sent."
+    "notificationsubtext": "Contacts will appear on your alert section under dashboard for quick reference only—no direct notifications will be sent.",
+    "minDwellSeconds": "Minimum Dwell Time (seconds)",
+    "minDwellSecondsDescription": "Minimum time a person must stay in the area to be considered loitering",
+    "alertCooldownSeconds": "Alert Cooldown Time (seconds)",
+    "alertCooldownSecondsDescription": "Time between consecutive alerts for the same loitering event",
+    "enableActivityTracking": "Enable Activity Tracking",
+    "activityTrackingSubtext": "Track and record activity related to this ROI for monitoring and reporting purposes."
   },
   "alerts": {
     "title": "Alerts",

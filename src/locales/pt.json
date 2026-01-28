@@ -369,7 +369,13 @@
     "phoneNumberAlreadyAdded": "Este número de telefone já foi adicionado.",
     "targetedHourSlots": "Slots de Horário Alvo",
     "defineTimeSlots": "Definir Slots de Tempo",
-    "notificationsubtext": "Os contatos aparecerão na sua seção de alertas no painel de controle apenas para referência rápida — nenhuma notificação direta será enviada."
+    "notificationsubtext": "Os contatos aparecerão na sua seção de alertas no painel de controle apenas para referência rápida — nenhuma notificação direta será enviada.",
+    "minDwellSeconds": "Tempo Mínimo de Permanência (segundos)",
+    "minDwellSecondsDescription": "Tempo mínimo que uma pessoa deve permanecer na área para ser considerada em situação de ócio",
+    "alertCooldownSeconds": "Tempo de Resfriamento de Alerta (segundos)",
+    "alertCooldownSecondsDescription": "Tempo entre alertas consecutivos para o mesmo evento de ócio",
+    "enableActivityTracking": "Ativar Rastreamento de Atividade",
+    "activityTrackingSubtext": "Rastrear e registrar atividades relacionadas a este ROI para fins de monitoramento e relatórios."
   },
   "alerts": {
     "title": "Alertas",

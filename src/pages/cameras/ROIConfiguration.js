@@ -134,6 +134,9 @@ const ROIConfiguration = () => {
   ) // Stores the translated value for display
   const [currentRoiId, setCurrentRoiId] = useState(currentRoi_Id)
 
+  // NEW: Activity Tracking state
+  const [trackingType, setTrackingType] = useState(false)
+
   // New detection config states
   const [queueCountThreshold, setQueueCountThreshold] = useState(1)
   const [queueDwellTimeSeconds, setQueueDwellTimeSeconds] = useState(40)
@@ -142,6 +145,10 @@ const ROIConfiguration = () => {
   const [confidenceThreshold, setConfidenceThreshold] = useState(40) // NEW: Confidence threshold for suspicious loitering
   const [targetedHourSlots, setTargetedHourSlots] = useState([])
   const [newTimeSlot, setNewTimeSlot] = useState(['', ''])
+
+  // NEW: Suspicious loitering specific states
+  const [minDwellSeconds, setMinDwellSeconds] = useState(12)
+  const [alertCooldownSeconds, setAlertCooldownSeconds] = useState(120)
 
   const searchParams = new URLSearchParams(location.search)
   const cameraIdFromUrl = searchParams.get('cameraId')
@@ -407,6 +414,7 @@ const ROIConfiguration = () => {
       frame_url: snapshotUrl,
       polygons: transformedPolygons,
       alert_priority: priorityToSend,
+      tracking_activity: trackingType,
       detection_type: detectionType,
       detection_config: (() => {
         if (
@@ -443,9 +451,9 @@ const ROIConfiguration = () => {
         }
         if (detectionType === 'SUSPICIOUS_LOITERING') {
           return {
-            // Commented out dwell time for suspicious loitering
-            // dwell_time_seconds: dwellTimeSeconds,
-            confidence_threshold: confidenceThreshold, // NEW: Added confidence threshold
+            min_dwell_seconds: minDwellSeconds,
+            confidence_threshold: confidenceThreshold,
+            alert_cooldown_seconds: alertCooldownSeconds,
             targeted_hour_slots: convertTimeSlotsLocalToUTC(
               targetedHourSlots,
               userTimeZone
@@ -484,6 +492,13 @@ const ROIConfiguration = () => {
 
     console.log('handleSaveRoi called. currentRoiId:', currentRoiId)
     console.log('Transformed polygons data:', transformedPolygons)
+    console.log(
+      'Tracking type to send:',
+      trackingType,
+      'Type:',
+      typeof trackingType
+    )
+    console.log('Full ROI data to send:', roiData)
 
     if (currentRoiId) {
       const res = await dispatch(
@@ -513,6 +528,7 @@ const ROIConfiguration = () => {
   }
 
   // UPDATED: Handle ROI editing - parse both old and new formats
+  // UPDATED: Handle ROI editing - parse both old and new formats
   const handleEditRoi = roi => {
     console.log('Editing ROI:', roi)
     setCurrentRoiId(roi.id)
@@ -522,6 +538,24 @@ const ROIConfiguration = () => {
     setAlertPriority(roi.alert_priority)
     // Set the displayAlertPriority to the translated value
     setDisplayAlertPriority(t(`roi.${roi.alert_priority.toLowerCase()}`))
+
+    // DEBUG: Log the ROI object to see its structure
+    console.log('ROI object for editing:', roi)
+    console.log('Tracking type from ROI:', roi.tracking_activity)
+
+    // FIX: Set tracking type from the ROI being edited - handle both boolean and string values
+    if (roi.tracking_activity !== undefined && roi.tracking_activity !== null) {
+      // Convert to boolean if it's a string
+      const trackingValue =
+        typeof roi.tracking_activity === 'string'
+          ? roi.tracking_activity.toLowerCase() === 'true'
+          : Boolean(roi.tracking_activity)
+      console.log('Converted tracking value:', trackingValue)
+      setTrackingType(trackingValue)
+    } else {
+      console.log('No tracking_activity found, defaulting to false')
+      setTrackingType(false)
+    }
 
     // Set the snapshot URL from the ROI being edited
     setSnapshotUrl(`${roi.frame_url}`)
@@ -643,10 +677,12 @@ const ROIConfiguration = () => {
       )
       setTargetedHourSlots(localTimeSlots || [])
     } else if (roi.detection_type === 'SUSPICIOUS_LOITERING') {
-      // Set confidence threshold for suspicious loitering (default 40)
+      // Set suspicious loitering specific fields
+      setMinDwellSeconds(roi.detection_config?.min_dwell_seconds || 12)
       setConfidenceThreshold(roi.detection_config?.confidence_threshold || 40)
-      // Commented out dwell time for suspicious loitering
-      // setDwellTimeSeconds(roi.detection_config?.dwell_time_seconds || 15)
+      setAlertCooldownSeconds(
+        roi.detection_config?.alert_cooldown_seconds || 120
+      )
 
       const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone
       const localTimeSlots = convertTimeSlotsUTCToLocal(
@@ -670,6 +706,7 @@ const ROIConfiguration = () => {
     setDetectionType('ALL_DETECTION')
     setAlertPriority('High') // Reset to English 'High'
     setDisplayAlertPriority(t('roi.high')) // Reset display to translated 'High'
+    setTrackingType(false) // Reset tracking type to false
     if (addnew) {
       setPolygons([])
     }
@@ -690,6 +727,8 @@ const ROIConfiguration = () => {
     setDwellTimeSeconds(15)
     setAttendantAbsenceDwellTime(6)
     setConfidenceThreshold(40) // Reset confidence threshold to default 40
+    setMinDwellSeconds(12) // Reset min dwell seconds to default 12
+    setAlertCooldownSeconds(120) // Reset alert cooldown seconds to default 120
     setTargetedHourSlots([])
     setNewTimeSlot(['', ''])
     setCurrentRoiId(null)
@@ -1153,6 +1192,32 @@ const ROIConfiguration = () => {
                 </select>
               </div>
             </div>
+
+            <div className='mt-6 pt-4 border-t border-gray-700'>
+              <div className='flex items-center'>
+                <div className='flex items-center gap-5'>
+                  <label className='relative inline-flex items-center cursor-pointer'>
+                    <input
+                      type='checkbox'
+                      checked={trackingType}
+                      onChange={() => setTrackingType(!trackingType)}
+                      className='sr-only peer'
+                    />
+                    <div className="w-11 h-6 bg-gray-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-500"></div>
+                  </label>
+                  <div>
+                    <h3 className='text-sm font-medium text-gray-300'>
+                      {t('roi.enableActivityTracking') ||
+                        'Enable Activity Tracking'}
+                    </h3>
+                    <p className='text-xs text-gray-500 mt-1'>
+                      {t('roi.activityTrackingSubtext') ||
+                        'Track and record activity related to this ROI for monitoring and reporting purposes.'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -1231,19 +1296,39 @@ const ROIConfiguration = () => {
             </div>
           )}
 
-          {/* SUSPICIOUS_LOITERING – Confidence Threshold only */}
+          {/* SUSPICIOUS_LOITERING – All three fields */}
           {detectionType === 'SUSPICIOUS_LOITERING' && (
-            <div>
-              <label className='block text-sm text-gray-400 mb-2'>
-                {t('roi.confidenceThreshold')}
-              </label>
+            <>
+              <div>
+                <label className='block text-sm text-gray-400 mb-2'>
+                  {t('roi.minDwellSeconds')}
+                </label>
 
-              <p className='text-xs text-gray-500 mb-2'>
-                {t('roi.confidenceThresholdDescription')}
-              </p>
+                <p className='text-xs text-gray-500 mb-2'>
+                  {t('roi.minDwellSecondsDescription')}
+                </p>
 
-              {/* Optional: Number input for precise control */}
-              <div className='mt-2'>
+                <input
+                  type='number'
+                  min='1'
+                  value={minDwellSeconds}
+                  onChange={e => {
+                    const value = Number(e.target.value)
+                    setMinDwellSeconds(Math.max(value, 1))
+                  }}
+                  className='w-full bg-gray-700 border border-gray-600 rounded-lg py-2 px-4 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 transition-colors'
+                />
+              </div>
+
+              <div>
+                <label className='block text-sm text-gray-400 mb-2'>
+                  {t('roi.confidenceThreshold')}
+                </label>
+
+                <p className='text-xs text-gray-500 mb-2'>
+                  {t('roi.confidenceThresholdDescription')}
+                </p>
+
                 <input
                   type='number'
                   min='0'
@@ -1256,7 +1341,28 @@ const ROIConfiguration = () => {
                   className='w-full bg-gray-700 border border-gray-600 rounded-lg py-2 px-4 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 transition-colors'
                 />
               </div>
-            </div>
+
+              <div>
+                <label className='block text-sm text-gray-400 mb-2'>
+                  {t('roi.alertCooldownSeconds')}
+                </label>
+
+                <p className='text-xs text-gray-500 mb-2'>
+                  {t('roi.alertCooldownSecondsDescription')}
+                </p>
+
+                <input
+                  type='number'
+                  min='1'
+                  value={alertCooldownSeconds}
+                  onChange={e => {
+                    const value = Number(e.target.value)
+                    setAlertCooldownSeconds(Math.max(value, 1))
+                  }}
+                  className='w-full bg-gray-700 border border-gray-600 rounded-lg py-2 px-4 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 transition-colors'
+                />
+              </div>
+            </>
           )}
 
           {/* Attendant Absence On Pump Fields */}
