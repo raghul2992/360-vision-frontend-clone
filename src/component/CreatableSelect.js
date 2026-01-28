@@ -7,9 +7,11 @@ const CreateTableSelect = ({
   value,
   onChange,
   placeholder,
-  disabled
+  disabled,
+  onCreate,
+  onCreateNew 
 }) => {
-  const navigate = useNavigate()
+  // const navigate = useNavigate()
 
   // Normalize options from API
   const normalizedOptions = Array.isArray(options)
@@ -32,7 +34,8 @@ const CreateTableSelect = ({
 
   const handleCreateLocation = () => {
     setIsOpen(false)
-    navigate('/location')
+    // navigate('/location')
+     onCreateNew?.() 
   }
 
   const filteredOptions = validOptions.filter(option =>
