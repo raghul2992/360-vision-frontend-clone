@@ -1,8 +1,11 @@
-import React, { useState, useEffect } from 'react'
-import { Link, useNavigate, useSearchParams } from 'react-router-dom'
-import { useTranslation } from 'react-i18next'
-import { useSelector, useDispatch } from 'react-redux'
-import { bgcolors } from '../../theme'
+import React, { useState, useEffect } from "react";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { useTranslation } from "react-i18next";
+import { useSelector, useDispatch } from "react-redux";
+import { bgcolors } from "../../theme";
+import LocationFormModal from "../../component/LocationFormModal";
+import { useLoadScript } from "@react-google-maps/api";
+
 import {
   IoArrowBack,
   IoEyeOutline,
@@ -20,168 +23,176 @@ import {
   IoSyncCircleOutline,
   IoVideocamOutline,
   IoWifiOutline,
-  IoBan
-} from 'react-icons/io5'
-import { FaCircleNotch } from 'react-icons/fa'
+  IoBan,
+} from "react-icons/io5";
+import { FaCircleNotch } from "react-icons/fa";
 import {
   createCamera,
   updateCamera,
   testCameraConnection,
   getCameraSnapshot,
-  getCameras
-} from '../../features/cameras/cameraApiSlice'
+  getCameras,
+} from "../../features/cameras/cameraApiSlice";
 import {
   getLocations,
-  createLocation
-} from '../../features/locations/locationApiSlice'
+  createLocation,
+} from "../../features/locations/locationApiSlice";
 import {
   getRois,
   deleteRoi,
-  updateRoiStatus
-} from '../../features/cameras/roilistslice'
-import { toast } from 'react-toastify'
-import CreatableSelect from '../../component/CreatableSelect'
-import 'react-toastify/dist/ReactToastify.css'
-import CreateTableSelect from '../../component/CreatableSelect'
+  updateRoiStatus,
+} from "../../features/cameras/roilistslice";
+import { toast } from "react-toastify";
+import CreatableSelect from "../../component/CreatableSelect";
+import "react-toastify/dist/ReactToastify.css";
+import CreateTableSelect from "../../component/CreatableSelect";
 
+const libraries = ["places"];
 const AddCamera = () => {
-  const { t } = useTranslation()
-  const dispatch = useDispatch()
-  const navigate = useNavigate()
-  const [searchParams] = useSearchParams()
-  const current_cameraId = searchParams.get('id')
+  const { t } = useTranslation();
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const current_cameraId = searchParams.get("id");
+
+  // Load Google Maps (required for LocationFormModal)
+  const { isLoaded: isMapLoaded } = useLoadScript({
+    googleMapsApiKey: process.env.REACT_APP_GOOGLE_MAPS_API_KEY,
+    libraries,
+  });
 
   // Redux State
   const { cameras, isLoading, error, testConnectionResult, snapshotResult } =
-    useSelector(state => state.cameraApi)
+    useSelector((state) => state.cameraApi);
 
   const { locations, isLoading: locationsLoading } = useSelector(
-    state => state.locationApi
-  )
+    (state) => state.locationApi,
+  );
 
   const { rois: roiList, isLoading: roisLoading } = useSelector(
-    state => state.roilist
-  )
+    (state) => state.roilist,
+  );
 
   // Get tenant_id from auth state - Update this based on your auth implementation
-  const tenantId = localStorage.getItem('tenant_id')
+  const tenantId = localStorage.getItem("tenant_id");
 
   // Component State
-  const [cameraName, setCameraName] = useState('')
-  const [location, setLocation] = useState('')
-  const [rtspUrl, setRtspUrl] = useState('')
-  const [cameraType, setCameraType] = useState('ip')
-  const [username, setUsername] = useState('')
-  const [password, setPassword] = useState('')
-  const [showPassword, setShowPassword] = useState(false)
-  const [isTestingConnection, setIsTestingConnection] = useState(false)
-  const [showConfirm, setShowConfirm] = useState(false)
-  const [selectedRoiId, setSelectedRoiId] = useState(null)
-  const [isConnectionTested, setIsConnectionTested] = useState(false)
-  const [isCameraSaved, setIsCameraSaved] = useState(false)
-  const [cameraId, setCameraId] = useState(current_cameraId) // Store new camera ID
-  const [isAddingRoi, setIsAddingRoi] = useState(false)
-  const [cameraStatus, setCameraStatus] = useState('inactive') // Camera enable/disable state
-  const [cameraErrorMessage, setCameraErrorMessage] = useState(null)
+  const [cameraName, setCameraName] = useState("");
+  const [location, setLocation] = useState("");
+  const [rtspUrl, setRtspUrl] = useState("");
+  const [cameraType, setCameraType] = useState("ip");
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [isTestingConnection, setIsTestingConnection] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [selectedRoiId, setSelectedRoiId] = useState(null);
+  const [isConnectionTested, setIsConnectionTested] = useState(false);
+  const [isCameraSaved, setIsCameraSaved] = useState(false);
+  const [cameraId, setCameraId] = useState(current_cameraId); // Store new camera ID
+  const [isAddingRoi, setIsAddingRoi] = useState(false);
+  const [cameraStatus, setCameraStatus] = useState("inactive"); // Camera enable/disable state
+  const [cameraErrorMessage, setCameraErrorMessage] = useState(null);
+  const [isLocationModalOpen, setIsLocationModalOpen] = useState(false);
 
   // Fetch locations on component mount
   useEffect(() => {
-    console.log('tenant id', tenantId)
+    console.log("tenant id", tenantId);
     if (tenantId) {
-      dispatch(getLocations({ tenantId }))
+      dispatch(getLocations({ tenantId }));
     }
-  }, [dispatch, tenantId])
+  }, [dispatch, tenantId]);
 
   // Fetch cameras if editing
   useEffect(() => {
     if (cameraId && tenantId) {
-      dispatch(getCameras({ tenantId, cameraId: parseInt(cameraId) }))
-      dispatch(getRois({ tenantId, cameraId: parseInt(cameraId) }))
+      dispatch(getCameras({ tenantId, cameraId: parseInt(cameraId) }));
+      dispatch(getRois({ tenantId, cameraId: parseInt(cameraId) }));
       // For existing cameras, mark as saved and connection tested
-      setIsCameraSaved(true)
-      setIsConnectionTested(true)
-      setCameraId(parseInt(cameraId)) // Set the camera ID for editing case
-      console.log('roi list', roiList, cameras)
+      setIsCameraSaved(true);
+      setIsConnectionTested(true);
+      setCameraId(parseInt(cameraId)); // Set the camera ID for editing case
+      console.log("roi list", roiList, cameras);
     }
-  }, [dispatch, cameraId, tenantId])
+  }, [dispatch, cameraId, tenantId]);
 
   // Populate form when editing
   useEffect(() => {
     if (cameraId && cameras.length > 0) {
       const cameraToEdit = cameras.find(
-        camera => camera.id === parseInt(cameraId)
-      )
+        (camera) => camera.id === parseInt(cameraId),
+      );
       if (cameraToEdit) {
-        setCameraName(cameraToEdit.name || '')
-        setLocation(cameraToEdit.location_id || '')
-        setRtspUrl(cameraToEdit.rtsp_url || '')
-        setCameraType(cameraToEdit.camera_type || 'ip')
-        setUsername(cameraToEdit.username || '')
-        setPassword(cameraToEdit.password || '')
-        setCameraStatus(cameraToEdit.status || 'inactive') // Set camera status
-        setCameraErrorMessage(cameraToEdit.meta?.error_message || null) // Set potential error message
+        setCameraName(cameraToEdit.name || "");
+        setLocation(cameraToEdit.location_id || "");
+        setRtspUrl(cameraToEdit.rtsp_url || "");
+        setCameraType(cameraToEdit.camera_type || "ip");
+        setUsername(cameraToEdit.username || "");
+        setPassword(cameraToEdit.password || "");
+        setCameraStatus(cameraToEdit.status || "inactive"); // Set camera status
+        setCameraErrorMessage(cameraToEdit.meta?.error_message || null); // Set potential error message
       } else {
-        toast.error(t('addCamera.cameraNotFound'))
-        navigate('/camera')
+        toast.error(t("addCamera.cameraNotFound"));
+        navigate("/camera");
       }
     }
-  }, [cameraId, cameras, navigate, t])
+  }, [cameraId, cameras, navigate, t]);
 
   // Handle errors
   useEffect(() => {
     if (error) {
-      toast.error(error)
+      toast.error(error);
     }
-  }, [error])
+  }, [error]);
 
   // Reset flags when form data changes for new cameras
   useEffect(() => {
     if (!cameraId) {
-      setIsConnectionTested(false)
-      setIsCameraSaved(false)
-      setCameraId(null) // Reset camera ID when form changes
+      setIsConnectionTested(false);
+      setIsCameraSaved(false);
+      setCameraId(null); // Reset camera ID when form changes
     }
-  }, [cameraName, location, rtspUrl, cameraType, username, password, cameraId])
+  }, [cameraName, location, rtspUrl, cameraType, username, password, cameraId]);
 
   // Format detection type for display
-  const formatDetectionType = type => {
+  const formatDetectionType = (type) => {
     const typeMap = {
-      ALL_DETECTION: 'All Detection',
-      PERSON_DETECTION: 'Person Detection',
-      VEHICLE_DETECTION: 'Vehicle Detection',
-      MOTION_DETECTION: 'Motion Detection',
-      WEAPON_DETECTION: 'Weapon Detection',
-      FIRE_DETECTION: 'Fire Detection',
-      IDIE_VEHICLE: 'IDIE Vehicle'
-    }
-    return typeMap[type] || type
-  }
+      ALL_DETECTION: "All Detection",
+      PERSON_DETECTION: "Person Detection",
+      VEHICLE_DETECTION: "Vehicle Detection",
+      MOTION_DETECTION: "Motion Detection",
+      WEAPON_DETECTION: "Weapon Detection",
+      FIRE_DETECTION: "Fire Detection",
+      IDIE_VEHICLE: "IDIE Vehicle",
+    };
+    return typeMap[type] || type;
+  };
 
   // Format alert priority for display
-  const formatAlertPriority = priority => {
-    if (!priority) return 'Medium'
-    return priority.charAt(0).toUpperCase() + priority.slice(1).toLowerCase()
-  }
+  const formatAlertPriority = (priority) => {
+    if (!priority) return "Medium";
+    return priority.charAt(0).toUpperCase() + priority.slice(1).toLowerCase();
+  };
 
   // Validation
   const validateForm = () => {
     if (!cameraName.trim()) {
-      toast.error(t('addCamera.cameraNameRequired'))
-      return false
+      toast.error(t("addCamera.cameraNameRequired"));
+      return false;
     }
     if (!location) {
-      toast.error(t('addCamera.locationRequired'))
-      return false
+      toast.error(t("addCamera.locationRequired"));
+      return false;
     }
     if (!rtspUrl.trim()) {
-      toast.error(t('addCamera.rtspUrlRequired'))
-      return false
+      toast.error(t("addCamera.rtspUrlRequired"));
+      return false;
     }
-    return true
-  }
+    return true;
+  };
 
   const handleSaveCamera = () => {
-    if (!validateForm()) return
+    if (!validateForm()) return;
 
     // For new cameras, require connection test first
     // if (!cameraId && !isConnectionTested) {
@@ -195,164 +206,164 @@ const AddCamera = () => {
       rtsp_url: rtspUrl.trim(),
       username: username.trim(),
       password: password,
-      camera_type: 'ip',
+      camera_type: "ip",
       status: cameraStatus, // Include camera status
       location_id: parseInt(location),
       // location_id: 300,
-      meta: {}
-    }
+      meta: {},
+    };
 
     if (cameraId) {
       dispatch(
         updateCamera({
           tenantId,
           cameraId: parseInt(cameraId),
-          cameraData
-        })
+          cameraData,
+        }),
       )
         .unwrap()
         .then(() => {
-          toast.success(t('addCamera.cameraUpdateSuccess'))
-          navigate('/camera')
+          toast.success(t("addCamera.cameraUpdateSuccess"));
+          navigate("/camera");
         })
-        .catch(err => {
-          toast.error(err || t('addCamera.cameraUpdateFailed'))
-        })
+        .catch((err) => {
+          toast.error(err || t("addCamera.cameraUpdateFailed"));
+        });
     } else {
       dispatch(createCamera({ tenantId, cameraData }))
         .unwrap()
-        .then(result => {
-          console.log(result)
-          toast.success(t('addCamera.cameraAddSuccess'))
-          setIsCameraSaved(true)
-          console.log(result)
+        .then((result) => {
+          console.log(result);
+          toast.success(t("addCamera.cameraAddSuccess"));
+          setIsCameraSaved(true);
+          console.log(result);
           // Store the new camera ID
           if (result.id) {
-            setCameraId(result.id)
+            setCameraId(result.id);
           }
         })
-        .catch(err => {
-          console.log(err)
+        .catch((err) => {
+          console.log(err);
           // toast.error(err || t('addCamera.cameraAddFailed'))
-        })
+        });
     }
-  }
+  };
 
   const handleTestConnection = () => {
     if (!rtspUrl.trim()) {
-      toast.warn(t('addCamera.rtspUrlWarning'))
-      return false
+      toast.warn(t("addCamera.rtspUrlWarning"));
+      return false;
     }
-    toast.info(t('addCamera.testingConnectionMessage'))
-    setIsTestingConnection(true)
+    toast.info(t("addCamera.testingConnectionMessage"));
+    setIsTestingConnection(true);
     const connectionData = {
       rtsp_url: rtspUrl.trim(),
-      username: '',
-      password: ''
-    }
+      username: "",
+      password: "",
+    };
 
     return dispatch(testCameraConnection({ tenantId, connectionData }))
       .unwrap()
-      .then(result => {
-        setIsTestingConnection(false)
-        setIsConnectionTested(true)
-        toast.success(result.message || t('addCamera.testConnectionSuccess'))
-        return true
+      .then((result) => {
+        setIsTestingConnection(false);
+        setIsConnectionTested(true);
+        toast.success(result.message || t("addCamera.testConnectionSuccess"));
+        return true;
       })
-      .catch(err => {
-        console.log(err)
-        setIsTestingConnection(false)
-        setIsConnectionTested(false)
-        toast.error(err.message)
+      .catch((err) => {
+        console.log(err);
+        setIsTestingConnection(false);
+        setIsConnectionTested(false);
+        toast.error(err.message);
         // The error is now handled by the useEffect, but we still need to return false for the async flow
-        return false
-      })
-    return false
-  }
+        return false;
+      });
+    return false;
+  };
 
   const handleAddCameraWithTest = async () => {
-    if (!validateForm()) return
+    if (!validateForm()) return;
 
     // If connection is already tested, just save the camera
     if (!isConnectionTested) {
-      const status = await handleTestConnection()
-      console.log('1', status)
+      const status = await handleTestConnection();
+      console.log("1", status);
       if (status) {
-        console.log('2', status)
-        handleSaveCamera()
+        console.log("2", status);
+        handleSaveCamera();
       }
-      return
+      return;
     } else {
-      handleSaveCamera()
-      console.log('3')
+      handleSaveCamera();
+      console.log("3");
     }
 
-    return
-  }
+    return;
+  };
 
   const handleAddRoi = () => {
-    setIsAddingRoi(true)
+    setIsAddingRoi(true);
 
     // For new cameras, check if camera is saved and connection is tested
     if (!cameraId) {
       if (!isCameraSaved) {
-        toast.error(t('addCamera.saveCameraBeforeRoi'))
-        return
+        toast.error(t("addCamera.saveCameraBeforeRoi"));
+        return;
       }
       if (!isConnectionTested) {
-        toast.error(t('addCamera.testConnectionBeforeRoi'))
-        return
+        toast.error(t("addCamera.testConnectionBeforeRoi"));
+        return;
       }
       if (!cameraId) {
-        toast.error(t('addCamera.cameraIdNotFound'))
-        return
+        toast.error(t("addCamera.cameraIdNotFound"));
+        return;
       }
     }
 
-    const toastId = toast.loading(t('addCamera.retrievingFrame'))
+    const toastId = toast.loading(t("addCamera.retrievingFrame"));
 
     dispatch(
       getCameraSnapshot({
         tenantId,
         cameraId: cameraId,
         rtsp_url: rtspUrl,
-        username: '',
-        password: ''
-      })
+        username: "",
+        password: "",
+      }),
     )
       .unwrap()
-      .then(result => {
-        toast.dismiss(toastId)
-        setIsAddingRoi(false)
-        setIsAddingRoi(false)
-        console.log(result)
-        toast.success(t('addCamera.frameRetrievedSuccess'), { id: toastId })
+      .then((result) => {
+        toast.dismiss(toastId);
+        setIsAddingRoi(false);
+        setIsAddingRoi(false);
+        console.log(result);
+        toast.success(t("addCamera.frameRetrievedSuccess"), { id: toastId });
 
-        navigate('/roi-configuration', {
+        navigate("/roi-configuration", {
           state: {
             rtsp_url: rtspUrl,
             snapshot: result.frame_url,
             cameraId: cameraId,
             tenantId,
-            addnew: true
-          }
-        })
+            addnew: true,
+          },
+        });
       })
-      .catch(err => {
-        toast.dismiss(toastId)
-        setIsAddingRoi(false)
-        setIsAddingRoi(false)
+      .catch((err) => {
+        toast.dismiss(toastId);
+        setIsAddingRoi(false);
+        setIsAddingRoi(false);
 
         // Update toast to error
-        toast.error(err || t('addCamera.snapshotError'), { id: toastId })
-      })
-  }
+        toast.error(err || t("addCamera.snapshotError"), { id: toastId });
+      });
+  };
 
-  const handleEditRoi = roi => {
-    console.log(roi.id)
-    console.log(roi)
+  const handleEditRoi = (roi) => {
+    console.log(roi.id);
+    console.log(roi);
     // return
-    navigate('/roi-configuration', {
+    navigate("/roi-configuration", {
       state: {
         rtsp_url: rtspUrl,
         snapshot: roi.frame_url,
@@ -360,63 +371,67 @@ const AddCamera = () => {
         tenantId,
         roiToEdit: roi, // Pass the entire ROI object for editing
         currentRoi_Id: roi.id,
-        status: roi.status
-      }
-    })
-  }
+        status: roi.status,
+      },
+    });
+  };
 
-  const handleDeleteRoi = roiId => {
-    setSelectedRoiId(roiId)
-    setShowConfirm(true)
-  }
+  const handleDeleteRoi = (roiId) => {
+    setSelectedRoiId(roiId);
+    setShowConfirm(true);
+  };
 
   const confirmDelete = () => {
-    if (!selectedRoiId) return
+    if (!selectedRoiId) return;
     dispatch(
       deleteRoi({
         tenantId,
         cameraId: parseInt(cameraId),
-        roiId: selectedRoiId
-      })
+        roiId: selectedRoiId,
+      }),
     )
       .unwrap()
       .then(() => {
-        toast.success(t('addCamera.roiDeleteSuccess'))
-        dispatch(getRois({ tenantId, cameraId: parseInt(cameraId) }))
+        toast.success(t("addCamera.roiDeleteSuccess"));
+        dispatch(getRois({ tenantId, cameraId: parseInt(cameraId) }));
       })
-      .catch(err => {
-        toast.error(err || t('addCamera.roiDeleteFailed'))
+      .catch((err) => {
+        toast.error(err || t("addCamera.roiDeleteFailed"));
       })
       .finally(() => {
-        setShowConfirm(false)
-        setSelectedRoiId(null)
-      })
-  }
-  const handleCreateLocation = locationName => {
+        setShowConfirm(false);
+        setSelectedRoiId(null);
+      });
+  };
+  const handleCreateLocation = (locationName) => {
     const locationData = {
       tenant_id: tenantId,
       name: locationName,
-      meta: {}
-    }
+      meta: {},
+    };
     dispatch(createLocation({ tenantId, locationData }))
       .unwrap()
-      .then(newLocation => {
+      .then((newLocation) => {
         toast.success(
-          t('addCamera.locationCreateSuccess', { name: newLocation.name })
-        )
-        setLocation(newLocation.id)
-        dispatch(getLocations({ tenantId })) // Refresh locations
+          t("addCamera.locationCreateSuccess", { name: newLocation.name }),
+        );
+        setLocation(newLocation.id);
+        dispatch(getLocations({ tenantId })); // Refresh locations
+        setIsLocationModalOpen(false);
       })
-      .catch(err => {
-        toast.error(err || t('addCamera.locationCreateFailed'))
-      })
-  }
+      .catch((err) => {
+        toast.error(err || t("addCamera.locationCreateFailed"));
+      });
+  };
 
+  const handleOpenLocationModal = () => {
+    setIsLocationModalOpen(true);
+  };
   // Handle ROI status change (non-functional for now)
   const handleRoiStatusChange = (roiId, newStatus) => {
     if (!cameraId || !tenantId) {
-      toast.error(t('addCamera.cameraIdOrTenantIdNotFound'))
-      return
+      toast.error(t("addCamera.cameraIdOrTenantIdNotFound"));
+      return;
     }
 
     dispatch(
@@ -424,169 +439,170 @@ const AddCamera = () => {
         tenantId,
         cameraId: parseInt(cameraId),
         roiId,
-        status: newStatus
-      })
+        status: newStatus,
+      }),
     )
       .unwrap()
       .then(() => {
         toast.success(
-          t('addCamera.roiStatusUpdateSuccess', {
+          t("addCamera.roiStatusUpdateSuccess", {
             status:
-              newStatus === 'active'
-                ? t('common.enabled')
-                : t('common.disabled')
-          })
-        )
+              newStatus === "active"
+                ? t("common.enabled")
+                : t("common.disabled"),
+          }),
+        );
         // Refresh the ROI list to get updated data
-        dispatch(getRois({ tenantId, cameraId: parseInt(cameraId) }))
+        dispatch(getRois({ tenantId, cameraId: parseInt(cameraId) }));
       })
-      .catch(err => {
-        toast.error(err || t('addCamera.roiStatusUpdateFailed'))
+      .catch((err) => {
+        toast.error(err || t("addCamera.roiStatusUpdateFailed"));
         // Revert the select value by refreshing the ROI list
-        dispatch(getRois({ tenantId, cameraId: parseInt(cameraId) }))
-      })
-  }
+        dispatch(getRois({ tenantId, cameraId: parseInt(cameraId) }));
+      });
+  };
 
   // Utility function to determine status display details
-  const getStatusDisplay = status => {
+  const getStatusDisplay = (status) => {
     switch (status) {
-      case 'active':
+      case "active":
         return {
           icon: IoWifiOutline,
-          text: t('common.active'),
-          color: 'text-green-400'
-        }
-      case 'inactive':
+          text: t("common.active"),
+          color: "text-green-400",
+        };
+      case "inactive":
         return {
           icon: IoBan,
-          text: t('common.inactive'),
-          color: 'text-gray-400'
-        }
-      case 'error':
+          text: t("common.inactive"),
+          color: "text-gray-400",
+        };
+      case "error":
         return {
           icon: IoCloseCircle,
-          text: t('common.error'),
-          color: 'text-red-400'
-        }
-      case 'processing':
+          text: t("common.error"),
+          color: "text-red-400",
+        };
+      case "processing":
         return {
           icon: FaCircleNotch,
-          text: t('common.processing'),
-          color: 'text-yellow-400 animate-spin'
-        }
+          text: t("common.processing"),
+          color: "text-yellow-400 animate-spin",
+        };
       default:
         return {
           icon: IoBan,
-          text: t('common.unknown'),
-          color: 'text-gray-400'
-        }
+          text: t("common.unknown"),
+          color: "text-gray-400",
+        };
     }
-  }
+  };
 
   // Component to display the camera status
   const CameraStatusDisplay = ({ status, errorMessage }) => {
-    const { icon: Icon, text, color } = getStatusDisplay(status)
+    const { icon: Icon, text, color } = getStatusDisplay(status);
 
     return (
-      <div className='flex items-center gap-1'>
+      <div className="flex items-center gap-1">
         <Icon size={20} className={color} />
         <div>
           <span className={`text-sm font-medium ${color}`}>{text}</span>
-          {status === 'error' && errorMessage && (
-            <p className='text-xs text-red-400 mt-1 max-w-xs truncate'>
-              {t('common.error')}: {errorMessage}
+          {status === "error" && errorMessage && (
+            <p className="text-xs text-red-400 mt-1 max-w-xs truncate">
+              {t("common.error")}: {errorMessage}
             </p>
           )}
         </div>
       </div>
-    )
-  }
+    );
+  };
 
   return (
     <div className={`p-8 ${bgcolors.dark} text-white min-h-screen`}>
       {showConfirm && (
-        <div className='fixed inset-0 flex items-center justify-center bg-black/60 z-50'>
-          <div className='bg-[#2A2B36] rounded-xl p-6 w-[90%] max-w-sm border border-gray-700 shadow-lg text-center'>
-            <h3 className='text-lg font-semibold text-white mb-3'>
-              {t('addCamera.confirmDeletionTitle')}
+        <div className="fixed inset-0 flex items-center justify-center bg-black/60 z-50">
+          <div className="bg-[#2A2B36] rounded-xl p-6 w-[90%] max-w-sm border border-gray-700 shadow-lg text-center">
+            <h3 className="text-lg font-semibold text-white mb-3">
+              {t("addCamera.confirmDeletionTitle")}
             </h3>
-            <p className='text-gray-300 mb-6'>
-              {t('addCamera.confirmDeletionMessage')}
+            <p className="text-gray-300 mb-6">
+              {t("addCamera.confirmDeletionMessage")}
             </p>
-            <div className='flex justify-center gap-4'>
+            <div className="flex justify-center gap-4">
               <button
                 onClick={confirmDelete}
-                className='bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-md'
+                className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-md"
               >
-                {t('common.delete')}
+                {t("common.delete")}
               </button>
               <button
                 onClick={() => setShowConfirm(false)}
-                className='bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-md'
+                className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-md"
               >
-                {t('common.cancel')}
+                {t("common.cancel")}
               </button>
             </div>
           </div>
         </div>
       )}
-      <div className='flex justify-between items-center mb-8'>
+      <div className="flex justify-between items-center mb-8">
         <div>
-          <h1 className='text-3xl font-bold flex items-center gap-3'>
-            <IoVideocamOutline size={32} className='text-[#3885CC]' />
-            {cameraId ? t('addCamera.editTitle') : t('addCamera.addTitle')}
+          <h1 className="text-3xl font-bold flex items-center gap-3">
+            <IoVideocamOutline size={32} className="text-[#3885CC]" />
+            {cameraId ? t("addCamera.editTitle") : t("addCamera.addTitle")}
           </h1>
-          <p className='text-gray-400 mt-1'>
+          <p className="text-gray-400 mt-1">
             {cameraId
-              ? t('addCamera.editDescription')
-              : t('addCamera.addDescription')}
+              ? t("addCamera.editDescription")
+              : t("addCamera.addDescription")}
           </p>
         </div>
-        <Link to='/camera'>
-          <button className='flex items-center gap-2 bg-[#3885CC] hover:bg-blue-600 text-white font-semibold py-2.5 px-6 rounded-full transition-colors'>
+        <Link to="/camera">
+          <button className="flex items-center gap-2 bg-[#3885CC] hover:bg-blue-600 text-white font-semibold py-2.5 px-6 rounded-full transition-colors">
             <IoArrowBack size={18} />
-            {t('addCamera.backButton')}
+            {t("addCamera.backButton")}
           </button>
         </Link>
       </div>
 
-      <div className='bg-[#2A2B36] rounded-xl p-6 border border-gray-700/50'>
-        <h2 className='text-lg font-semibold mb-6'>
+      <div className="bg-[#2A2B36] rounded-xl p-6 border border-gray-700/50">
+        <h2 className="text-lg font-semibold mb-6">
           {cameraId
-            ? t('addCamera.editCameraDetails')
-            : t('addCamera.addCameraDetails')}
+            ? t("addCamera.editCameraDetails")
+            : t("addCamera.addCameraDetails")}
         </h2>
 
-        <div className='grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6'>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
           {/* Camera Name */}
           <div>
-            <label className='block text-white mb-2 text-sm font-medium'>
-              {t('cameraSetup.cameraNameLabel')} *
+            <label className="block text-white mb-2 text-sm font-medium">
+              {t("cameraSetup.cameraNameLabel")} *
             </label>
             <input
-              type='text'
-              className='w-full bg-[#3A3B47] border border-gray-600/50 rounded-lg py-2.5 px-4 text-white placeholder-gray-500 focus:outline-none focus:border-gray-500 text-sm'
-              placeholder={t('cameraSetup.cameraNamePlaceholder')}
+              type="text"
+              className="w-full bg-[#3A3B47] border border-gray-600/50 rounded-lg py-2.5 px-4 text-white placeholder-gray-500 focus:outline-none focus:border-gray-500 text-sm"
+              placeholder={t("cameraSetup.cameraNamePlaceholder")}
               value={cameraName}
-              onChange={e => setCameraName(e.target.value)}
+              onChange={(e) => setCameraName(e.target.value)}
             />
           </div>
 
           {/* Location Dropdown */}
           <div>
-            <label className='block text-white mb-2 text-sm font-medium'>
-              {t('cameraSetup.locationLabel')} *
+            <label className="block text-white mb-2 text-sm font-medium">
+              {t("cameraSetup.locationLabel")} *
             </label>
-            <div className='relative'>
+            <div className="relative">
               <CreateTableSelect
                 options={locations}
                 value={location}
-                onChange={e => setLocation(e.target.value)}
+                onChange={(e) => setLocation(e.target.value)}
                 onCreate={handleCreateLocation}
+                onCreateNew={handleOpenLocationModal}
                 placeholder={
                   locationsLoading
-                    ? t('addCamera.loadingLocations') || 'Loading locations...'
-                    : t('cameraSetup.locationPlaceholder') || 'Select Location'
+                    ? t("addCamera.loadingLocations") || "Loading locations..."
+                    : t("cameraSetup.locationPlaceholder") || "Select Location"
                 }
                 disabled={locationsLoading}
               />
@@ -595,52 +611,52 @@ const AddCamera = () => {
 
           {/* RTSP URL */}
           <div>
-            <label className='block text-white mb-2 text-sm font-medium'>
-              {t('cameraSetup.rtspUrlLabel')}
+            <label className="block text-white mb-2 text-sm font-medium">
+              {t("cameraSetup.rtspUrlLabel")}
             </label>
             <input
-              type='text'
-              className='w-full bg-[#3A3B47] border border-gray-600/50 rounded-lg py-2.5 px-4 text-white placeholder-gray-500 focus:outline-none focus:border-gray-500 text-sm'
+              type="text"
+              className="w-full bg-[#3A3B47] border border-gray-600/50 rounded-lg py-2.5 px-4 text-white placeholder-gray-500 focus:outline-none focus:border-gray-500 text-sm"
               placeholder={
-                'rtsp://[username]:[password]@[domain_or_ip]:[port]/[stream_path]'
+                "rtsp://[username]:[password]@[domain_or_ip]:[port]/[stream_path]"
               }
               value={rtspUrl}
-              onChange={e => setRtspUrl(e.target.value)}
+              onChange={(e) => setRtspUrl(e.target.value)}
             />
           </div>
 
           {/* Camera Status Display and Control */}
           {cameraId && (
-            <div className='flex flex-col'>
+            <div className="flex flex-col">
               {/* Dropdown for setting overall Active/Inactive status */}
-              <div className=''>
-                <label className='block text-white mb-2 text-sm font-medium'>
-                  {t('addCamera.statusControlLabel')}
+              <div className="">
+                <label className="block text-white mb-2 text-sm font-medium">
+                  {t("addCamera.statusControlLabel")}
                 </label>
-                <div className='relative'>
+                <div className="relative">
                   <select
-                    className='w-full bg-[#3A3B47] border border-gray-600/50 rounded-lg py-2.5 px-4 pr-10 text-white focus:outline-none focus:border-gray-500 text-sm appearance-none cursor-pointer'
+                    className="w-full bg-[#3A3B47] border border-gray-600/50 rounded-lg py-2.5 px-4 pr-10 text-white focus:outline-none focus:border-gray-500 text-sm appearance-none cursor-pointer"
                     value={
-                      cameraStatus === 'active' || cameraStatus === 'processing'
-                        ? 'active'
-                        : 'inactive'
+                      cameraStatus === "active" || cameraStatus === "processing"
+                        ? "active"
+                        : "inactive"
                     }
-                    onChange={e =>
+                    onChange={(e) =>
                       // The camera status is simplified to active/inactive based on dropdown selection
                       setCameraStatus(
-                        e.target.value === 'active' ? 'active' : 'inactive'
+                        e.target.value === "active" ? "active" : "inactive",
                       )
                     }
                   >
-                    <option value='active'>
-                      {t('common.active')} ({t('common.enable')})
+                    <option value="active">
+                      {t("common.active")} ({t("common.enable")})
                     </option>
-                    <option value='inactive'>
-                      {t('common.inactive')} ({t('common.disable')})
+                    <option value="inactive">
+                      {t("common.inactive")} ({t("common.disable")})
                     </option>
                   </select>
                   <IoChevronDown
-                    className='absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none'
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
                     size={16}
                   />
                 </div>
@@ -712,19 +728,19 @@ const AddCamera = () => {
             </div>
           </div> */}
         </div>
-        {cameras.status === 'error' && cameras.meta?.error?.message && (
-          <p style={{ color: '#f87171' }} className='mt-2 text-xs'>
-            <span className='text-sm'>Error: </span>
+        {cameras.status === "error" && cameras.meta?.error?.message && (
+          <p style={{ color: "#f87171" }} className="mt-2 text-xs">
+            <span className="text-sm">Error: </span>
             {cameras.meta.error.message}
           </p>
         )}
         {/* Test Connection Section */}
-        <div className='mt-8 pt-6 border-t border-gray-700/50'>
-          <div className='flex justify-between items-center'>
+        <div className="mt-8 pt-6 border-t border-gray-700/50">
+          <div className="flex justify-between items-center">
             <div>
-              <div className='flex gap-2 items-center justify-center'>
-                <label className='block text-white text-sm font-medium'>
-                  {t('addCamera.currentStatusLabel')}
+              <div className="flex gap-2 items-center justify-center">
+                <label className="block text-white text-sm font-medium">
+                  {t("addCamera.currentStatusLabel")}
                 </label>
                 {/* Display Current Status (Active, Inactive, Error, Processing) */}
                 <CameraStatusDisplay
@@ -750,8 +766,8 @@ const AddCamera = () => {
               )}
 
               {!cameraId && isConnectionTested && (
-                <p className='text-green-400 text-sm mt-1'>
-                  {t('addCamera.connectionTestedSuccessfully')}
+                <p className="text-green-400 text-sm mt-1">
+                  {t("addCamera.connectionTestedSuccessfully")}
                 </p>
               )}
               {/* {!cameraId && cameraId && (
@@ -760,32 +776,32 @@ const AddCamera = () => {
                 </p>
               )} */}
             </div>
-            <div className='flex items-center gap-4'>
+            <div className="flex items-center gap-4">
               <button
-                className='bg-gray-600 hover:bg-gray-700 text-white font-semibold py-2.5 px-6 rounded-full transition-colors text-sm'
-                onClick={() => navigate('/camera')}
+                className="bg-gray-600 hover:bg-gray-700 text-white font-semibold py-2.5 px-6 rounded-full transition-colors text-sm"
+                onClick={() => navigate("/camera")}
               >
-                {t('addCamera.cancelButton') || 'Cancel'}
+                {t("addCamera.cancelButton") || "Cancel"}
               </button>
               <button
-                className='bg-[#3885CC] hover:bg-blue-600 text-white font-semibold py-2.5 px-6 rounded-full transition-colors text-sm disabled:bg-gray-600 disabled:cursor-not-allowed'
+                className="bg-[#3885CC] hover:bg-blue-600 text-white font-semibold py-2.5 px-6 rounded-full transition-colors text-sm disabled:bg-gray-600 disabled:cursor-not-allowed"
                 onClick={handleTestConnection}
                 disabled={isTestingConnection}
               >
                 {isTestingConnection
-                  ? t('addCamera.testingConnection') || 'Testing...'
-                  : t('cameraSetup.testConnectionButton') || 'Test Connection'}
+                  ? t("addCamera.testingConnection") || "Testing..."
+                  : t("cameraSetup.testConnectionButton") || "Test Connection"}
               </button>
               <button
-                className='bg-[#3885CC] hover:bg-blue-600 text-white font-semibold py-2.5 px-6 rounded-full transition-colors text-sm disabled:bg-gray-600 disabled:cursor-not-allowed'
+                className="bg-[#3885CC] hover:bg-blue-600 text-white font-semibold py-2.5 px-6 rounded-full transition-colors text-sm disabled:bg-gray-600 disabled:cursor-not-allowed"
                 onClick={handleAddCameraWithTest}
                 disabled={isLoading || isTestingConnection || isAddingRoi}
               >
                 {isAddingRoi
-                  ? t('common.submit')
+                  ? t("common.submit")
                   : !isTestingConnection && isLoading
-                  ? t('addCamera.addingCamera')
-                  : t('addCamera.addCameraButton')}
+                    ? t("addCamera.addingCamera")
+                    : t("addCamera.addCameraButton")}
               </button>
 
               {/* {cameraId && (
@@ -807,19 +823,19 @@ const AddCamera = () => {
       </div>
 
       {/* ROI List Section */}
-      <div className='bg-[#2A2B36] rounded-xl p-6 border border-gray-700/50 mt-6'>
+      <div className="bg-[#2A2B36] rounded-xl p-6 border border-gray-700/50 mt-6">
         {!cameraId ? (
           // No Camera Selected (for new cameras)
-          <div className='text-center py-12'>
-            <h3 className='text-2xl font-bold mb-2'>
+          <div className="text-center py-12">
+            <h3 className="text-2xl font-bold mb-2">
               {isCameraSaved
-                ? t('addCamera.cameraSavedSuccessfully')
-                : t('addCamera.noCameraSaved')}
+                ? t("addCamera.cameraSavedSuccessfully")
+                : t("addCamera.noCameraSaved")}
             </h3>
-            <p className='text-gray-400 mb-6 text-sm'>
+            <p className="text-gray-400 mb-6 text-sm">
               {isCameraSaved
-                ? t('addCamera.canNowAddRois')
-                : t('addCamera.saveCameraFirstToAddRois')}
+                ? t("addCamera.canNowAddRois")
+                : t("addCamera.saveCameraFirstToAddRois")}
             </p>
             {/* {cameraId && (
               <p className='text-blue-400 text-sm mb-4'>
@@ -831,80 +847,80 @@ const AddCamera = () => {
               disabled={!isCameraSaved || !cameraId}
               className={`flex items-center gap-2 text-white font-semibold py-2.5 px-5 rounded-full transition-colors mx-auto ${
                 isCameraSaved && cameraId
-                  ? 'bg-[#3885CC] hover:bg-blue-600'
-                  : 'bg-gray-600 cursor-not-allowed'
+                  ? "bg-[#3885CC] hover:bg-blue-600"
+                  : "bg-gray-600 cursor-not-allowed"
               }`}
             >
-              <span className='text-lg'>+</span>
-              <span className='text-sm'>{t('addCamera.addRoiButton')}</span>
+              <span className="text-lg">+</span>
+              <span className="text-sm">{t("addCamera.addRoiButton")}</span>
             </button>
             {!isCameraSaved && (
-              <p className='text-yellow-400 text-sm mt-2'>
-                {t('addCamera.pleaseSaveCameraFirst')}
+              <p className="text-yellow-400 text-sm mt-2">
+                {t("addCamera.pleaseSaveCameraFirst")}
               </p>
             )}
             {isCameraSaved && !cameraId && (
-              <p className='text-yellow-400 text-sm mt-2'>
-                {t('addCamera.cameraIdNotAvailable')}
+              <p className="text-yellow-400 text-sm mt-2">
+                {t("addCamera.cameraIdNotAvailable")}
               </p>
             )}
           </div>
         ) : roiList.length === 0 ? (
           // Camera Selected but No ROI Found
-          <div className='text-center py-12'>
-            <h3 className='text-2xl font-bold mb-2'>
-              {t('addCamera.noRoiFound')}
+          <div className="text-center py-12">
+            <h3 className="text-2xl font-bold mb-2">
+              {t("addCamera.noRoiFound")}
             </h3>
-            <p className='text-gray-400 mb-6 text-sm'>
-              {t('addCamera.noRoiForThisCamera')}
+            <p className="text-gray-400 mb-6 text-sm">
+              {t("addCamera.noRoiForThisCamera")}
             </p>
             <button
               onClick={handleAddRoi}
-              className='flex items-center gap-2 bg-[#3885CC] hover:bg-blue-600 text-white font-semibold py-2.5 px-5 rounded-full transition-colors mx-auto'
+              className="flex items-center gap-2 bg-[#3885CC] hover:bg-blue-600 text-white font-semibold py-2.5 px-5 rounded-full transition-colors mx-auto"
             >
-              <span className='text-lg'>+</span>
-              <span className='text-sm'>{t('addCamera.addRoiButton')}</span>
+              <span className="text-lg">+</span>
+              <span className="text-sm">{t("addCamera.addRoiButton")}</span>
             </button>
           </div>
         ) : (
           <div>
-            <div className='flex justify-between items-center mb-6'>
-              <h3 className='text-lg font-semibold'>
-                {t('addCamera.roiListTitle')}
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-lg font-semibold">
+                {t("addCamera.roiListTitle")}
               </h3>
               <button
                 onClick={handleAddRoi}
-                className='flex items-center gap-2 bg-[#3885CC] hover:bg-blue-600 text-white font-semibold py-2.5 px-5 rounded-full transition-colors'
+                className="flex items-center gap-2 bg-[#3885CC] hover:bg-blue-600 text-white font-semibold py-2.5 px-5 rounded-full transition-colors"
               >
-                <span className='text-xl leading-none'>+</span>
-                <span className='text-sm'>{t('addCamera.addRoiButton')}</span>
+                <span className="text-xl leading-none">+</span>
+                <span className="text-sm">{t("addCamera.addRoiButton")}</span>
               </button>
             </div>
 
-            <div className='overflow-x-auto'>
-              <table className='w-full'>
+            <div className="overflow-x-auto">
+              <table className="w-full">
                 <thead>
-                  <tr className='bg-[#3A3B47] border-b border-gray-700/50'>
-                    <th className='text-left py-3 px-4 text-sm font-semibold text-gray-300'>
-                      {t('addCamera.roiNameHeader')}
+                  <tr className="bg-[#3A3B47] border-b border-gray-700/50">
+                    <th className="text-left py-3 px-4 text-sm font-semibold text-gray-300">
+                      {t("addCamera.roiNameHeader")}
                     </th>
-                    <th className='text-left py-3 px-4 text-sm font-semibold text-gray-300'>
-                      {t('addCamera.detectionTypeHeader')}
+                    <th className="text-left py-3 px-4 text-sm font-semibold text-gray-300">
+                      {t("addCamera.detectionTypeHeader")}
                     </th>
-                    <th className='text-left py-3 px-4 text-sm font-semibold text-gray-300'>
-                      {t('addCamera.alertPriorityHeader')}
+                    <th className="text-left py-3 px-4 text-sm font-semibold text-gray-300">
+                      {t("addCamera.alertPriorityHeader")}
                     </th>
-                    <th className='text-left py-3 px-4 text-sm font-semibold text-gray-300'>
-                      {t('common.status')}
+                    <th className="text-left py-3 px-4 text-sm font-semibold text-gray-300">
+                      {t("common.status")}
                     </th>
-                    <th className='text-left py-3 px-4 text-sm font-semibold text-gray-300'>
-                      {t('addCamera.enableDisableHeader')}
+                    <th className="text-left py-3 px-4 text-sm font-semibold text-gray-300">
+                      {t("addCamera.enableDisableHeader")}
                     </th>
-                    <th className='text-left py-3 px-4 text-sm font-semibold text-gray-300'>
-                      {t('addCamera.notificationsHeader')}
+                    <th className="text-left py-3 px-4 text-sm font-semibold text-gray-300">
+                      {t("addCamera.notificationsHeader")}
                     </th>
-                    <th className='text-left py-3 px-4 text-sm font-semibold text-gray-300'>
-                      {t('common.actions')}
+                    <th className="text-left py-3 px-4 text-sm font-semibold text-gray-300">
+                      {t("common.actions")}
                     </th>
                   </tr>
                 </thead>
@@ -912,66 +928,66 @@ const AddCamera = () => {
                   {roiList.map((roi, index) => (
                     <tr
                       key={index}
-                      className='border-b border-gray-700/30 hover:bg-[#1C1C24] transition-colors'
+                      className="border-b border-gray-700/30 hover:bg-[#1C1C24] transition-colors"
                     >
-                      <td className='py-4 px-4 text-sm text-white'>
+                      <td className="py-4 px-4 text-sm text-white">
                         {roi.name}
                       </td>
-                      <td className='py-4 px-4 text-sm text-gray-300'>
+                      <td className="py-4 px-4 text-sm text-gray-300">
                         {formatDetectionType(roi.detection_type)}
                       </td>
-                      <td className='py-4 px-4 text-sm'>
+                      <td className="py-4 px-4 text-sm">
                         <span
                           className={`px-3 py-1 rounded-full text-xs font-medium ${
-                            roi.alert_priority === 'high'
-                              ? 'bg-red-500/20 text-red-400'
-                              : roi.alert_priority === 'medium'
-                              ? 'bg-yellow-500/20 text-yellow-400'
-                              : 'bg-green-500/20 text-green-400'
+                            roi.alert_priority === "high"
+                              ? "bg-red-500/20 text-red-400"
+                              : roi.alert_priority === "medium"
+                                ? "bg-yellow-500/20 text-yellow-400"
+                                : "bg-green-500/20 text-green-400"
                           }`}
                         >
                           {formatAlertPriority(roi.alert_priority)}
                         </span>
                       </td>
-                      <td className='py-4 px-4 text-sm'>
+                      <td className="py-4 px-4 text-sm">
                         <span
                           className={`px-3 py-1 rounded-full text-xs font-medium ${
-                            roi.status === 'active'
-                              ? 'bg-green-500/20 text-green-400'
-                              : 'bg-red-500/20 text-red-400'
+                            roi.status === "active"
+                              ? "bg-green-500/20 text-green-400"
+                              : "bg-red-500/20 text-red-400"
                           }`}
                         >
-                          {roi.status === 'active'
-                            ? t('common.active')
-                            : t('common.inactive')}
+                          {roi.status === "active"
+                            ? t("common.active")
+                            : t("common.inactive")}
                         </span>
                       </td>
-                      <td className='py-4 px-4 text-sm'>
-                        <div className='relative'>
+                      <td className="py-4 px-4 text-sm">
+                        <div className="relative">
                           <select
-                            className='w-full bg-[#3A3B47] border border-gray-600/50 rounded-lg py-1.5 px-3 pr-8 text-white focus:outline-none focus:border-gray-500 text-xs appearance-none cursor-pointer'
-                            value={roi.status || 'active'}
-                            onChange={e =>
+                            className="w-full bg-[#3A3B47] border border-gray-600/50 rounded-lg py-1.5 px-3 pr-8 text-white focus:outline-none focus:border-gray-500 text-xs appearance-none cursor-pointer"
+                            value={roi.status || "active"}
+                            onChange={(e) =>
                               handleRoiStatusChange(roi.id, e.target.value)
                             }
                           >
-                            <option value='active'>{t('common.enable')}</option>
-                            <option value='inactive'>
-                              {t('common.disable')}
+                            <option value="active">{t("common.enable")}</option>
+                            <option value="inactive">
+                              {t("common.disable")}
                             </option>
                           </select>
                           <IoChevronDown
-                            className='absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none'
+                            className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
                             size={12}
                           />
                         </div>
                       </td>
-                      <td className='py-4 px-4'>
-                        <div className='flex items-center gap-3'>
+                      <td className="py-4 px-4">
+                        <div className="flex items-center gap-3">
                           {roi.notification_config?.email?.enabled && (
                             <button
-                              className='p-1.5 rounded bg-blue-500/20 text-blue-400'
-                              title={t('addCamera.emailNotifications')}
+                              className="p-1.5 rounded bg-blue-500/20 text-blue-400"
+                              title={t("addCamera.emailNotifications")}
                             >
                               <IoMailOutline size={16} />
                             </button>
@@ -979,8 +995,8 @@ const AddCamera = () => {
 
                           {roi.notification_config?.call?.enabled && (
                             <button
-                              className='p-1.5 rounded bg-green-500/20 text-green-400'
-                              title={t('addCamera.callNotifications')}
+                              className="p-1.5 rounded bg-green-500/20 text-green-400"
+                              title={t("addCamera.callNotifications")}
                             >
                               <IoCallOutline size={16} />
                             </button>
@@ -988,26 +1004,26 @@ const AddCamera = () => {
 
                           {roi.notification_config?.whatsapp?.enabled && (
                             <button
-                              className='p-1.5 rounded bg-purple-500/20 text-purple-400'
-                              title={t('addCamera.whatsappNotifications')}
+                              className="p-1.5 rounded bg-purple-500/20 text-purple-400"
+                              title={t("addCamera.whatsappNotifications")}
                             >
                               <IoChatbubbleOutline size={16} />
                             </button>
                           )}
                         </div>
                       </td>
-                      <td className='py-4 px-4'>
-                        <div className='flex items-center gap-2'>
+                      <td className="py-4 px-4">
+                        <div className="flex items-center gap-2">
                           <button
                             onClick={() => handleEditRoi(roi)}
-                            className='p-2 rounded-lg border flex items-center justify-center gap-2 px-4 border-[#0088FF] text-[12px] hover:border-gray-500 transition-all'
+                            className="p-2 rounded-lg border flex items-center justify-center gap-2 px-4 border-[#0088FF] text-[12px] hover:border-gray-500 transition-all"
                           >
                             <IoPencil size={12} />
-                            <p>{t('common.edit')}</p>
+                            <p>{t("common.edit")}</p>
                           </button>
                           <button
                             onClick={() => handleDeleteRoi(roi.id)}
-                            className='p-2 rounded-lg text-gray-400 hover:text-red-500 transition-all'
+                            className="p-2 rounded-lg text-gray-400 hover:text-red-500 transition-all"
                           >
                             <IoTrash size={14} />
                           </button>
@@ -1021,6 +1037,12 @@ const AddCamera = () => {
           </div>
         )}
       </div>
+      <LocationFormModal
+        isOpen={isLocationModalOpen}
+        onClose={() => setIsLocationModalOpen(false)}
+        locationToEdit={null}
+        isLoaded={isMapLoaded}
+      />
 
       {/* Action Buttons - Only show for editing existing cameras */}
       {/* {cameraId && (
@@ -1035,7 +1057,7 @@ const AddCamera = () => {
         </div>
       )} */}
     </div>
-  )
-}
+  );
+};
 
-export default AddCamera
+export default AddCamera;
