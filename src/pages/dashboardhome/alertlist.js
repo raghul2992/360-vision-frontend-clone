@@ -219,7 +219,11 @@ const AlertItem = ({ alert, tenantId, timezone }) => {
                     {t('alerts.date')}
                   </h4>
                   <p className='text-gray-600'>
-                    {formatDateTime(alert.created_at, t('date_locale'), timezone)}
+                    {formatDateTime(
+                      alert.created_at,
+                      t('date_locale'),
+                      timezone
+                    )}
                   </p>
                 </div>
               </div>
@@ -242,7 +246,11 @@ const AlertItem = ({ alert, tenantId, timezone }) => {
 
                   <p className='text-gray-600'>
                     <span className='font-medium'>{t('alerts.time')}:</span>{' '}
-                    {formatDateTime(alert.created_at, t('date_locale'), timezone)}
+                    {formatDateTime(
+                      alert.created_at,
+                      t('date_locale'),
+                      timezone
+                    )}
                   </p>
 
                   <p className='text-gray-600'>

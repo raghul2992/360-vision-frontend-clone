@@ -1,6 +1,18 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit'
 import api from '../../utils/apihelper'
 
+// Helper to append array params
+const appendLocationIds = (params, locationIds) => {
+  if (locationIds && Array.isArray(locationIds) && locationIds.length > 0) {
+    locationIds.forEach(id => {
+      params.append('location_ids', id)
+    })
+  } else if (locationIds && !Array.isArray(locationIds)) {
+    // Fallback if single ID is passed for backward compatibility
+    params.append('location_ids', locationIds)
+  }
+}
+
 export const updateWidgetLayout = createAsyncThunk(
   'widgets/updateLayout',
   async ({ tenantId, layout }, { rejectWithValue }) => {
@@ -36,14 +48,17 @@ export const getTenant = createAsyncThunk(
 export const getAlertTimeline = createAsyncThunk(
   'widgets/getAlertTimeline',
   async (
-    { tenant_id, camera_id, location_id, created_after, created_before },
+    { tenant_id, camera_id, location_ids, created_after, created_before },
     { rejectWithValue }
   ) => {
     try {
       let url = `/api/v1/tenants/${tenant_id}/reports/alert_timeline`
       const params = new URLSearchParams()
       if (camera_id) params.append('camera_id', camera_id)
-      if (location_id) params.append('location_id', location_id)
+
+      // Update: Handle multiple location_ids
+      appendLocationIds(params, location_ids)
+
       if (created_after) params.append('created_after', created_after)
       if (created_before) params.append('created_before', created_before)
       const query = params.toString()
@@ -63,7 +78,7 @@ export const getAlertTimeline = createAsyncThunk(
 export const getDetectionAnalytics = createAsyncThunk(
   'widgets/getDetectionAnalytics',
   async (
-    { tenant_id, camera_id, location_id, created_after, created_before },
+    { tenant_id, camera_id, location_ids, created_after, created_before },
     { rejectWithValue }
   ) => {
     try {
@@ -71,7 +86,10 @@ export const getDetectionAnalytics = createAsyncThunk(
       const params = new URLSearchParams()
       params.append('type', 'event_alert')
       if (camera_id) params.append('camera_id', camera_id)
-      if (location_id) params.append('location_id', location_id)
+
+      // Update: Handle multiple location_ids
+      appendLocationIds(params, location_ids)
+
       if (created_after) params.append('created_after', created_after)
       if (created_before) params.append('created_before', created_before)
       params.append('skip', 0)
@@ -93,7 +111,7 @@ export const getDetectionAnalytics = createAsyncThunk(
 export const getPriorityAnalytics = createAsyncThunk(
   'widgets/getPriorityAnalytics',
   async (
-    { tenant_id, camera_id, location_id, created_after, created_before },
+    { tenant_id, camera_id, location_ids, created_after, created_before },
     { rejectWithValue }
   ) => {
     try {
@@ -101,7 +119,10 @@ export const getPriorityAnalytics = createAsyncThunk(
       const params = new URLSearchParams()
       params.append('type', 'event_alert')
       if (camera_id) params.append('camera_id', camera_id)
-      if (location_id) params.append('location_id', location_id)
+
+      // Update: Handle multiple location_ids
+      appendLocationIds(params, location_ids)
+
       if (created_after) params.append('created_after', created_after)
       if (created_before) params.append('created_before', created_before)
       params.append('skip', 0)
@@ -123,7 +144,7 @@ export const getPriorityAnalytics = createAsyncThunk(
 export const getAlertTypeBreakdown = createAsyncThunk(
   'widgets/getAlertTypeBreakdown',
   async (
-    { tenant_id, created_after, created_before, location_id, camera_id },
+    { tenant_id, created_after, created_before, location_ids, camera_id },
     { rejectWithValue }
   ) => {
     try {
@@ -131,7 +152,10 @@ export const getAlertTypeBreakdown = createAsyncThunk(
       const params = new URLSearchParams()
       if (created_after) params.append('created_after', created_after)
       if (created_before) params.append('created_before', created_before)
-      if (location_id) params.append('location_id', location_id)
+
+      // Update: Handle multiple location_ids
+      appendLocationIds(params, location_ids)
+
       if (camera_id) params.append('camera_id', camera_id)
       const query = params.toString()
       if (query) {
@@ -154,7 +178,7 @@ export const getTopProblematicRois = createAsyncThunk(
       tenant_id,
       created_after,
       created_before,
-      location_id,
+      location_ids,
       camera_id,
       limit = 5
     },
@@ -165,7 +189,10 @@ export const getTopProblematicRois = createAsyncThunk(
       const params = new URLSearchParams()
       if (created_after) params.append('created_after', created_after)
       if (created_before) params.append('created_before', created_before)
-      if (location_id) params.append('location_id', location_id)
+
+      // Update: Handle multiple location_ids
+      appendLocationIds(params, location_ids)
+
       if (camera_id) params.append('camera_id', camera_id)
       params.append('limit', limit)
 
@@ -306,7 +333,7 @@ const widgetApiSlice = createSlice({
       })
       .addCase(getDetectionAnalytics.fulfilled, (state, action) => {
         state.isDetectionAnalyticsLoading = false
-        // Assuming action.payload is the list of alerts, which usually comes nested in a response object (e.g., action.payload.data)
+        // Assuming action.payload is the list of alerts
         state.detectionAnalytics = action.payload?.data || []
       })
       .addCase(getDetectionAnalytics.rejected, (state, action) => {

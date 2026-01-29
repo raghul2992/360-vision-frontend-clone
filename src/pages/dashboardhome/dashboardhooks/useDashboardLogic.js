@@ -28,11 +28,10 @@ export const useDashboardLogic = () => {
   const navigate = useNavigate()
 
   // --- 1. MERGE CONFIGURATIONS ---
-  // Create a unified list of all possible widgets (KPIs + Charts)
   const ALL_AVAILABLE_WIDGETS = useMemo(() => {
     const kpis = KPI_WIDGETS_CONFIG.map(k => ({
       ...k,
-      widget_name: k.id, // Normalize ID field to match charts
+      widget_name: k.id,
       isKpi: true
     }))
     return [...CHART_WIDGETS, ...kpis]
@@ -52,45 +51,48 @@ export const useDashboardLogic = () => {
   } = useSelector(state => state.widgetApi || {})
 
   // --- Local UI State ---
-  const [layout, setLayout] = useState([]) // Master layout (contains both types)
+  const [layout, setLayout] = useState([])
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const [activeWidgets, setActiveWidgets] = useState([]) // Stores BOTH types
+  const [activeWidgets, setActiveWidgets] = useState([])
   const [hasInitialized, setHasInitialized] = useState(false)
 
   // --- Global Filter State ---
-  const today = new Date()
-  const [selectedGlobalLocation, setSelectedGlobalLocation] = useState('all')
+  const [selectedGlobalLocation, setSelectedGlobalLocation] = useState([])
 
-  // --- Section Specific States ---
-  const [kpiLocation, setKpiLocation] = useState(null)
+  // --- Section Specific States (Dates init to null) ---
+  const [kpiLocation, setKpiLocation] = useState([])
   const [kpiCamera, setKpiCamera] = useState(null)
-  const [kpiDateRange, setKpiDateRange] = useState([today, today])
+  const [kpiDateRange, setKpiDateRange] = useState([null, null])
 
-  const [healthLocation, setHealthLocation] = useState(null)
+  const [healthLocation, setHealthLocation] = useState([])
   const [healthCamera, setHealthCamera] = useState(null)
-  const [healthDateRange, setHealthDateRange] = useState([today, today])
+  const [healthDateRange, setHealthDateRange] = useState([null, null])
 
-  const [detectionLocation, setDetectionLocation] = useState(null)
+  const [detectionLocation, setDetectionLocation] = useState([])
   const [detectionCamera, setDetectionCamera] = useState(null)
-  const [detectionDateRange, setDetectionDateRange] = useState([today, today])
+  const [detectionDateRange, setDetectionDateRange] = useState([null, null])
 
-  const [priorityLocation, setPriorityLocation] = useState(null)
+  const [priorityLocation, setPriorityLocation] = useState([])
   const [priorityCamera, setPriorityCamera] = useState(null)
-  const [priorityDateRange, setPriorityDateRange] = useState([today, today])
+  const [priorityDateRange, setPriorityDateRange] = useState([null, null])
 
-  const [alertTimelineLocation, setAlertTimelineLocation] = useState(null)
+  const [alertTimelineLocation, setAlertTimelineLocation] = useState([])
   const [alertTimelineCamera, setAlertTimelineCamera] = useState(null)
-  const [alertTimelineDateRange, setAlertTimelineDateRange] = useState(null)
+  const [alertTimelineDateRange, setAlertTimelineDateRange] = useState([
+    null,
+    null
+  ])
 
-  const [alertTypeBreakdownLocation, setAlertTypeBreakdownLocation] =
-    useState(null)
+  const [alertTypeBreakdownLocation, setAlertTypeBreakdownLocation] = useState(
+    []
+  )
   const [alertTypeBreakdownCamera, setAlertTypeBreakdownCamera] = useState(null)
   const [alertTypeBreakdownDateRange, setAlertTypeBreakdownDateRange] =
-    useState(null)
+    useState([null, null])
 
-  const [topRoisLocation, setTopRoisLocation] = useState(null)
+  const [topRoisLocation, setTopRoisLocation] = useState([])
   const [topRoisCamera, setTopRoisCamera] = useState(null)
-  const [topRoisDateRange, setTopRoisDateRange] = useState(null)
+  const [topRoisDateRange, setTopRoisDateRange] = useState([null, null])
 
   // --- Data State ---
   const [kpiData, setKpiData] = useState({
@@ -136,6 +138,20 @@ export const useDashboardLogic = () => {
     return {}
   }, [])
 
+  // --- Helper: Extract Location IDs ---
+  const getLocationIds = useCallback(selectedLocs => {
+    if (Array.isArray(selectedLocs) && selectedLocs.length > 0) {
+      return selectedLocs.map(l => l.value)
+    }
+    return null
+  }, [])
+
+  // --- Helper: Check if Camera is in Locations (Used in KPI & Client Filter) ---
+  const isInLocations = useCallback((cam, selectedLocs) => {
+    if (!selectedLocs || selectedLocs.length === 0) return true
+    return selectedLocs.some(l => String(l.value) === String(cam.location_id))
+  }, [])
+
   const refreshTenantData = useCallback(() => {
     const tenantId = localStorage.getItem('tenant_id')
     if (tenantId) {
@@ -154,7 +170,6 @@ export const useDashboardLogic = () => {
         return
       }
 
-      // Avoid duplicate API calls
       if (
         JSON.stringify(lastSavedLayoutRef.current) ===
         JSON.stringify(layoutToSave)
@@ -182,39 +197,26 @@ export const useDashboardLogic = () => {
   )
 
   // --- SPLIT LAYOUT HANDLERS ---
-
-  // 1. Chart Layout Change: Updates Charts, preserves existing KPI positions
   const handleChartLayoutChange = useCallback(
     newChartLayout => {
       if (!hasInitialized) return
-
-      // Find items in current layout that are KPIs
       const currentKpiItems = layout.filter(item =>
         KPI_WIDGETS_CONFIG.some(k => k.id === item.i)
       )
-
-      // Merge new chart positions with existing KPI positions
       const mergedLayout = [...newChartLayout, ...currentKpiItems]
-
       setLayout(mergedLayout)
       saveLayoutToApi(mergedLayout)
     },
     [layout, hasInitialized, saveLayoutToApi]
   )
 
-  // 2. KPI Layout Change: Updates KPIs, preserves existing Chart positions
   const handleKpiLayoutChange = useCallback(
     newKpiLayout => {
       if (!hasInitialized) return
-
-      // Find items in current layout that are Charts
       const currentChartItems = layout.filter(
         item => !KPI_WIDGETS_CONFIG.some(k => k.id === item.i)
       )
-
-      // Merge new KPI positions with existing Chart positions
       const mergedLayout = [...newKpiLayout, ...currentChartItems]
-
       setLayout(mergedLayout)
       saveLayoutToApi(mergedLayout)
     },
@@ -227,14 +229,12 @@ export const useDashboardLogic = () => {
       const widgetConfig = tenant?.meta?.widget_config || []
 
       if (widgetConfig.length > 0) {
-        // Map backend config to Layout format
         const mappedLayout = widgetConfig.map(item => ({
           i: item.widget_name,
           x: item.x || 0,
           y: item.y || 0,
           w: item.w,
           h: item.h,
-          // If KPI, set min 1x1, else 3x8
           minW: KPI_WIDGETS_CONFIG.some(k => k.id === item.widget_name) ? 1 : 3,
           minH: KPI_WIDGETS_CONFIG.some(k => k.id === item.widget_name) ? 1 : 8
         }))
@@ -255,23 +255,19 @@ export const useDashboardLogic = () => {
     }
   }, [tenant, layoutLoading, hasInitialized, ALL_AVAILABLE_WIDGETS])
 
-  // --- Unified Add Widget ---
+  // --- Unified Add/Remove Widget ---
   const addWidget = useCallback(
     widgetName => {
       const newWidget = ALL_AVAILABLE_WIDGETS.find(
         w => w.widget_name === widgetName
       )
-
       if (!newWidget || activeWidgets.some(w => w.widget_name === widgetName)) {
         setIsModalOpen(false)
         return
       }
-
       const isKpi = newWidget.isKpi
-
       const newLayoutItem = {
         i: newWidget.widget_name,
-        // Append to end. 'Infinity' forces grid-layout to place it at the bottom.
         x: 0,
         y: Infinity,
         w: isKpi ? 1 : 6,
@@ -279,9 +275,7 @@ export const useDashboardLogic = () => {
         minW: isKpi ? 1 : 3,
         minH: isKpi ? 1 : 8
       }
-
       const newLayout = [...layout, newLayoutItem]
-
       setLayout(newLayout)
       setActiveWidgets(prev => [...prev, newWidget])
       saveLayoutToApi(newLayout)
@@ -290,14 +284,12 @@ export const useDashboardLogic = () => {
     [activeWidgets, layout, saveLayoutToApi, ALL_AVAILABLE_WIDGETS]
   )
 
-  // --- Unified Remove Widget ---
   const removeWidget = useCallback(
     widgetName => {
       const newLayout = layout.filter(item => item.i !== widgetName)
       const newActiveWidgets = activeWidgets.filter(
         w => w.widget_name !== widgetName
       )
-
       setLayout(newLayout)
       setActiveWidgets(newActiveWidgets)
       saveLayoutToApi(newLayout)
@@ -305,7 +297,7 @@ export const useDashboardLogic = () => {
     [layout, activeWidgets, saveLayoutToApi]
   )
 
-  // --- Initial API Fetches (Tenant, Locations, Cameras) ---
+  // --- Initial API Fetches ---
   useEffect(() => {
     const tenantId = localStorage.getItem('tenant_id')
     if (tenantId && !hasRequestedTenant.current) {
@@ -338,7 +330,10 @@ export const useDashboardLogic = () => {
       setIsKpiLoading(true)
       try {
         const params = { ...getDateParams(kpiDateRange) }
-        if (kpiLocation?.value) params.location_id = kpiLocation.value
+
+        const locIds = getLocationIds(kpiLocation)
+        if (locIds) params.location_ids = locIds
+
         if (kpiCamera?.value) params.camera_id = kpiCamera.value
 
         const res = await dispatch(
@@ -346,10 +341,25 @@ export const useDashboardLogic = () => {
         )
         if (res.payload) {
           const overviewData = res.payload
-          const totalCameras = cameras.length
-          const activeCameras = cameras.filter(
+
+          // UPDATED: Filter cameras based on kpiLocation/kpiCamera BEFORE counting
+          let filteredCameras = cameras
+          if (kpiLocation && kpiLocation.length > 0) {
+            filteredCameras = filteredCameras.filter(c =>
+              isInLocations(c, kpiLocation)
+            )
+          }
+          if (kpiCamera?.value) {
+            filteredCameras = filteredCameras.filter(
+              c => c.id === kpiCamera.value
+            )
+          }
+
+          const totalCameras = filteredCameras.length
+          const activeCameras = filteredCameras.filter(
             c => c.status === 'active'
           ).length
+
           const detectionEfficiency =
             totalCameras > 0
               ? `${Math.round((activeCameras / totalCameras) * 100)}%`
@@ -391,11 +401,19 @@ export const useDashboardLogic = () => {
       }
     }
     fetchKpiData()
-  }, [dispatch, kpiLocation, kpiCamera, kpiDateRange, cameras, getDateParams])
+  }, [
+    dispatch,
+    kpiLocation,
+    kpiCamera,
+    kpiDateRange,
+    cameras,
+    getDateParams,
+    getLocationIds,
+    isInLocations // Added dependency
+  ])
 
-  // --- Widget Data Fetching ---
+  // --- Widget Data Fetching Hooks ---
 
-  // Detection Chart
   useEffect(() => {
     if (!activeWidgets.some(w => w.widget_name === 'detection')) return
     const tenantId = localStorage.getItem('tenant_id')
@@ -406,8 +424,8 @@ export const useDashboardLogic = () => {
       limit: 10,
       ...getDateParams(detectionDateRange)
     }
-    if (detectionLocation?.value)
-      queryParams.location_id = detectionLocation.value
+    const locIds = getLocationIds(detectionLocation)
+    if (locIds) queryParams.location_ids = locIds
     if (detectionCamera?.value) queryParams.camera_id = detectionCamera.value
     dispatch(fetchAlerts({ tenantId, queryParams }))
   }, [
@@ -416,10 +434,10 @@ export const useDashboardLogic = () => {
     detectionDateRange,
     detectionLocation,
     detectionCamera,
-    getDateParams
+    getDateParams,
+    getLocationIds
   ])
 
-  // Priority Chart
   useEffect(() => {
     if (!activeWidgets.some(w => w.widget_name === 'priority')) return
     const tenantId = localStorage.getItem('tenant_id')
@@ -430,8 +448,8 @@ export const useDashboardLogic = () => {
       limit: 10,
       ...getDateParams(priorityDateRange)
     }
-    if (priorityLocation?.value)
-      queryParams.location_id = priorityLocation.value
+    const locIds = getLocationIds(priorityLocation)
+    if (locIds) queryParams.location_ids = locIds
     if (priorityCamera?.value) queryParams.camera_id = priorityCamera.value
     dispatch(fetchAlerts({ tenantId, queryParams }))
   }, [
@@ -440,10 +458,10 @@ export const useDashboardLogic = () => {
     priorityDateRange,
     priorityLocation,
     priorityCamera,
-    getDateParams
+    getDateParams,
+    getLocationIds
   ])
 
-  // Alert Timeline
   useEffect(() => {
     if (!activeWidgets.some(w => w.widget_name === 'alert_timeline')) return
     const tenantId = localStorage.getItem('tenant_id')
@@ -452,8 +470,8 @@ export const useDashboardLogic = () => {
       tenant_id: tenantId,
       ...getDateParams(alertTimelineDateRange)
     }
-    if (alertTimelineLocation?.value)
-      params.location_id = alertTimelineLocation.value
+    const locIds = getLocationIds(alertTimelineLocation)
+    if (locIds) params.location_ids = locIds
     if (alertTimelineCamera?.value) params.camera_id = alertTimelineCamera.value
     dispatch(getAlertTimeline(params))
   }, [
@@ -462,10 +480,10 @@ export const useDashboardLogic = () => {
     alertTimelineDateRange,
     alertTimelineLocation,
     alertTimelineCamera,
-    getDateParams
+    getDateParams,
+    getLocationIds
   ])
 
-  // Alert Type Breakdown
   useEffect(() => {
     if (!activeWidgets.some(w => w.widget_name === 'alert_type_breakdown'))
       return
@@ -475,8 +493,8 @@ export const useDashboardLogic = () => {
       tenant_id: tenantId,
       ...getDateParams(alertTypeBreakdownDateRange)
     }
-    if (alertTypeBreakdownLocation?.value)
-      params.location_id = alertTypeBreakdownLocation.value
+    const locIds = getLocationIds(alertTypeBreakdownLocation)
+    if (locIds) params.location_ids = locIds
     if (alertTypeBreakdownCamera?.value)
       params.camera_id = alertTypeBreakdownCamera.value
     dispatch(getAlertTypeBreakdown(params))
@@ -486,17 +504,18 @@ export const useDashboardLogic = () => {
     alertTypeBreakdownDateRange,
     alertTypeBreakdownLocation,
     alertTypeBreakdownCamera,
-    getDateParams
+    getDateParams,
+    getLocationIds
   ])
 
-  // Top Problematic ROIs
   useEffect(() => {
     if (!activeWidgets.some(w => w.widget_name === 'top_problematic_rois'))
       return
     const tenantId = localStorage.getItem('tenant_id')
     if (!tenantId) return
     const params = { tenant_id: tenantId, ...getDateParams(topRoisDateRange) }
-    if (topRoisLocation?.value) params.location_id = topRoisLocation.value
+    const locIds = getLocationIds(topRoisLocation)
+    if (locIds) params.location_ids = locIds
     if (topRoisCamera?.value) params.camera_id = topRoisCamera.value
     dispatch(getTopProblematicRois(params))
   }, [
@@ -505,16 +524,15 @@ export const useDashboardLogic = () => {
     topRoisDateRange,
     topRoisLocation,
     topRoisCamera,
-    getDateParams
+    getDateParams,
+    getLocationIds
   ])
 
-  // --- Client Side Filtering (Health, Detection Local Aggregation) ---
+  // --- Client Side Filtering ---
   useEffect(() => {
     if (cameras.length > 0 && !isCamerasLoading) {
-      // Health Data
       const filtered = cameras.filter(c => {
-        const locMatch =
-          !healthLocation || c.location_id === healthLocation.value
+        const locMatch = isInLocations(c, healthLocation)
         const camMatch = !healthCamera || c.id === healthCamera.value
         return locMatch && camMatch
       })
@@ -526,11 +544,11 @@ export const useDashboardLogic = () => {
         error: filtered.filter(c => c.status === 'error').length
       })
 
-      // Detection Data Aggregation
+      // Client-side aggregations for Detection/Priority
       const detectionDetections = {}
       const detectionFiltered = cameras.filter(
         cam =>
-          (!detectionLocation || cam.location_id === detectionLocation.value) &&
+          isInLocations(cam, detectionLocation) &&
           (!detectionCamera || cam.id === detectionCamera.value)
       )
       detectionFiltered.forEach(cam =>
@@ -552,11 +570,10 @@ export const useDashboardLogic = () => {
         Object.values(detectionDetections).reduce((a, b) => a + b, 0)
       )
 
-      // Priority Data Aggregation
       const priorityPriorities = {}
       const priorityFiltered = cameras.filter(
         cam =>
-          (!priorityLocation || cam.location_id === priorityLocation.value) &&
+          isInLocations(cam, priorityLocation) &&
           (!priorityCamera || cam.id === priorityCamera.value)
       )
       priorityFiltered.forEach(cam =>
@@ -586,7 +603,8 @@ export const useDashboardLogic = () => {
     detectionCamera,
     priorityLocation,
     priorityCamera,
-    isCamerasLoading
+    isCamerasLoading,
+    isInLocations // Added dependency
   ])
 
   // --- Props Generators ---
@@ -594,10 +612,14 @@ export const useDashboardLogic = () => {
     value: loc.id || loc._id,
     label: loc.name
   }))
+
   const getCamOpts = useCallback(
-    locFilter =>
+    locFilters =>
       cameras
-        .filter(c => !locFilter || c.location_id === locFilter.value)
+        .filter(c => {
+          if (!locFilters || locFilters.length === 0) return true
+          return locFilters.some(l => String(l.value) === String(c.location_id))
+        })
         .map(c => ({ value: c.id, label: c.name })),
     [cameras]
   )
@@ -607,7 +629,7 @@ export const useDashboardLogic = () => {
     cameraOptions: getCamOpts(kpiLocation),
     selectedLocation: kpiLocation,
     setSelectedLocation: o => {
-      setKpiLocation(o)
+      setKpiLocation(o || [])
       setKpiCamera(null)
     },
     selectedCamera: kpiCamera,
@@ -621,7 +643,7 @@ export const useDashboardLogic = () => {
     cameraOptions: getCamOpts(healthLocation),
     selectedLocation: healthLocation,
     setSelectedLocation: o => {
-      setHealthLocation(o)
+      setHealthLocation(o || [])
       setHealthCamera(null)
     },
     selectedCamera: healthCamera,
@@ -633,77 +655,73 @@ export const useDashboardLogic = () => {
   const getWidgetProps = useCallback(
     widgetName => {
       const base = { locationOptions }
+      const generateProps = (
+        locState,
+        setLocState,
+        camState,
+        setCamState,
+        dateState,
+        setDateState
+      ) => ({
+        ...base,
+        cameraOptions: getCamOpts(locState),
+        selectedLocation: locState,
+        setSelectedLocation: o => {
+          setLocState(o || [])
+          setCamState(null)
+        },
+        selectedCamera: camState,
+        setSelectedCamera: setCamState,
+        setDateRange: setDateState,
+        dateRange: dateState
+      })
+
       switch (widgetName) {
         case 'detection':
-          return {
-            ...base,
-            cameraOptions: getCamOpts(detectionLocation),
-            selectedLocation: detectionLocation,
-            setSelectedLocation: o => {
-              setDetectionLocation(o)
-              setDetectionCamera(null)
-            },
-            selectedCamera: detectionCamera,
-            setSelectedCamera: setDetectionCamera,
-            setDateRange: setDetectionDateRange,
-            dateRange: detectionDateRange
-          }
+          return generateProps(
+            detectionLocation,
+            setDetectionLocation,
+            detectionCamera,
+            setDetectionCamera,
+            detectionDateRange,
+            setDetectionDateRange
+          )
         case 'priority':
-          return {
-            ...base,
-            cameraOptions: getCamOpts(priorityLocation),
-            selectedLocation: priorityLocation,
-            setSelectedLocation: o => {
-              setPriorityLocation(o)
-              setPriorityCamera(null)
-            },
-            selectedCamera: priorityCamera,
-            setSelectedCamera: setPriorityCamera,
-            setDateRange: setPriorityDateRange,
-            dateRange: priorityDateRange
-          }
+          return generateProps(
+            priorityLocation,
+            setPriorityLocation,
+            priorityCamera,
+            setPriorityCamera,
+            priorityDateRange,
+            setPriorityDateRange
+          )
         case 'alert_timeline':
-          return {
-            ...base,
-            cameraOptions: getCamOpts(alertTimelineLocation),
-            selectedLocation: alertTimelineLocation,
-            setSelectedLocation: o => {
-              setAlertTimelineLocation(o)
-              setAlertTimelineCamera(null)
-            },
-            selectedCamera: alertTimelineCamera,
-            setSelectedCamera: setAlertTimelineCamera,
-            setDateRange: setAlertTimelineDateRange,
-            dateRange: alertTimelineDateRange
-          }
+          return generateProps(
+            alertTimelineLocation,
+            setAlertTimelineLocation,
+            alertTimelineCamera,
+            setAlertTimelineCamera,
+            alertTimelineDateRange,
+            setAlertTimelineDateRange
+          )
         case 'alert_type_breakdown':
-          return {
-            ...base,
-            cameraOptions: getCamOpts(alertTypeBreakdownLocation),
-            selectedLocation: alertTypeBreakdownLocation,
-            setSelectedLocation: o => {
-              setAlertTypeBreakdownLocation(o)
-              setAlertTypeBreakdownCamera(null)
-            },
-            selectedCamera: alertTypeBreakdownCamera,
-            setSelectedCamera: setAlertTypeBreakdownCamera,
-            setDateRange: setAlertTypeBreakdownDateRange,
-            dateRange: alertTypeBreakdownDateRange
-          }
+          return generateProps(
+            alertTypeBreakdownLocation,
+            setAlertTypeBreakdownLocation,
+            alertTypeBreakdownCamera,
+            setAlertTypeBreakdownCamera,
+            alertTypeBreakdownDateRange,
+            setAlertTypeBreakdownDateRange
+          )
         case 'top_problematic_rois':
-          return {
-            ...base,
-            cameraOptions: getCamOpts(topRoisLocation),
-            selectedLocation: topRoisLocation,
-            setSelectedLocation: o => {
-              setTopRoisLocation(o)
-              setTopRoisCamera(null)
-            },
-            selectedCamera: topRoisCamera,
-            setSelectedCamera: setTopRoisCamera,
-            setDateRange: setTopRoisDateRange,
-            dateRange: topRoisDateRange
-          }
+          return generateProps(
+            topRoisLocation,
+            setTopRoisLocation,
+            topRoisCamera,
+            setTopRoisCamera,
+            topRoisDateRange,
+            setTopRoisDateRange
+          )
         default:
           return {}
       }
@@ -729,61 +747,86 @@ export const useDashboardLogic = () => {
     ]
   )
 
-  // --- Logic for Global Location application ---
+  // --- LOGIC FOR MULTI-SELECT GLOBAL LOCATION ---
+
   const applyLocationFilter = useCallback(
-    newLocationId => {
-      setSelectedGlobalLocation(newLocationId)
-      let locationObj = null
-      if (newLocationId && newLocationId !== 'all') {
-        const loc = locations.find(
-          l =>
-            String(l.id) === String(newLocationId) ||
-            String(l._id) === String(newLocationId)
-        )
-        if (loc) locationObj = { value: loc.id || loc._id, label: loc.name }
+    newLocationIds => {
+      let locationObjArr = []
+
+      if (newLocationIds && newLocationIds.length > 0) {
+        locationObjArr = locations
+          .filter(
+            l =>
+              newLocationIds.includes(String(l.id)) ||
+              newLocationIds.includes(String(l._id))
+          )
+          .map(l => ({ value: l.id || l._id, label: l.name }))
       }
-      // Apply to all local states
-      setKpiLocation(locationObj)
+
+      setSelectedGlobalLocation(locationObjArr)
+
+      setKpiLocation(locationObjArr)
       setKpiCamera(null)
-      setHealthLocation(locationObj)
+
+      setHealthLocation(locationObjArr)
       setHealthCamera(null)
-      setDetectionLocation(locationObj)
+
+      setDetectionLocation(locationObjArr)
       setDetectionCamera(null)
-      setPriorityLocation(locationObj)
+
+      setPriorityLocation(locationObjArr)
       setPriorityCamera(null)
-      setAlertTimelineLocation(locationObj)
+
+      setAlertTimelineLocation(locationObjArr)
       setAlertTimelineCamera(null)
-      setAlertTypeBreakdownLocation(locationObj)
+
+      setAlertTypeBreakdownLocation(locationObjArr)
       setAlertTypeBreakdownCamera(null)
-      setTopRoisLocation(locationObj)
+
+      setTopRoisLocation(locationObjArr)
       setTopRoisCamera(null)
     },
     [locations]
   )
 
   const handleGlobalLocationChange = useCallback(
-    e => {
-      const newLocationId = e.target.value
-      if (newLocationId === 'all')
+    selectedOptions => {
+      const selected = selectedOptions || []
+
+      if (selected.length === 0) {
         navigate(location.pathname, { replace: true })
-      else
-        navigate(`${location.pathname}?locationId=${newLocationId}`, {
+      } else {
+        const ids = selected.map(opt => opt.value).join(',')
+        navigate(`${location.pathname}?locationIds=${ids}`, {
           replace: true
         })
+      }
     },
     [navigate, location.pathname]
   )
 
   useEffect(() => {
     const searchParams = new URLSearchParams(location.search)
-    const incomingId = searchParams.get('locationId') || 'all'
-    if (locations.length > 0 || incomingId === 'all') {
-      if (String(incomingId) !== String(selectedGlobalLocation))
-        applyLocationFilter(incomingId)
+    const locationIdsParam = searchParams.get('locationIds')
+
+    if (locations.length > 0) {
+      if (locationIdsParam) {
+        const idsFromUrl = locationIdsParam.split(',')
+        const currentIds = selectedGlobalLocation.map(l => String(l.value))
+
+        const isDifferent =
+          idsFromUrl.length !== currentIds.length ||
+          !idsFromUrl.every(id => currentIds.includes(id))
+
+        if (isDifferent) {
+          applyLocationFilter(idsFromUrl)
+        }
+      } else if (selectedGlobalLocation.length > 0) {
+        applyLocationFilter([])
+      }
     }
   }, [location.search, locations, selectedGlobalLocation, applyLocationFilter])
 
-  // --- EXPORT ---
   return {
     kpiData,
     healthData,
@@ -792,12 +835,10 @@ export const useDashboardLogic = () => {
     totalDetection,
     totalAlerts,
 
-    // Unified State & Config
     activeWidgets,
     layout,
     ALL_AVAILABLE_WIDGETS,
 
-    // Loading State
     layoutLoading,
     hasInitialized,
     isKpiLoading,
@@ -805,33 +846,22 @@ export const useDashboardLogic = () => {
     isAlertTypeBreakdownLoading,
     isTopProblematicRoisLoading,
 
-    // UI State
     isModalOpen,
     setIsModalOpen,
-
-    // Unified Actions
     addWidget,
     removeWidget,
-
-    // Split Layout Handlers (Crucial for preventing grid conflicts)
     handleChartLayoutChange,
     handleKpiLayoutChange,
 
-    // Helpers
     t,
     kpiFilterProps,
     healthFilterProps,
     getWidgetProps,
 
-    // Raw Data & Locations
     rawLocations: locations || [],
     rawCameras: cameras || [],
-    locations: [
-      { id: 'all', name: t('dashboard.all_locations') || 'All Locations' },
-      ...(locations || []).map(l => ({ id: l.id || l._id, name: l.name }))
-    ],
+    dashboardLocationOptions: locationOptions,
 
-    // Global Location Filter
     selectedGlobalLocation,
     handleGlobalLocationChange
   }

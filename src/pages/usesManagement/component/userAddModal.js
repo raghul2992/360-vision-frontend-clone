@@ -14,8 +14,7 @@ import {
   addNewUser,
   inviteUser
 } from '../../../features/userManagement/userApiSlice'
-
-// Removed SendInvitationConfirm import as it is no longer needed here
+import generateRandomPassword from '../../../utils/generatePassword'
 
 const containerStyle = { width: '100%', height: '100%' }
 const defaultCenter = { lat: -14.235, lng: -51.9253 }
@@ -40,7 +39,7 @@ const AddUserModal = ({ isOpen, onClose, tenantId }) => {
     email: '',
     role: 'admin',
     meta: { assign_locations: [] },
-    password: 'T9#kL2@vQ7!x'
+    password: generateRandomPassword()
   })
 
   const currentUserRole = localStorage.getItem('user_role')
@@ -97,8 +96,10 @@ const AddUserModal = ({ isOpen, onClose, tenantId }) => {
 
     try {
       // 1. Create the User
-      await dispatch(addNewUser({ tenant_id: tenantId, ...formData })).unwrap()
-
+      const res = await dispatch(
+        addNewUser({ tenant_id: tenantId, ...formData })
+      ).unwrap()
+      console.log(res)
       // 2. Immediately Send Invitation
       try {
         await dispatch(
@@ -126,6 +127,7 @@ const AddUserModal = ({ isOpen, onClose, tenantId }) => {
       window.dispatchEvent(new CustomEvent('triggeruserapi', { detail: true }))
       onClose()
     } catch (err) {
+      console.log(err)
       toast.error(err.message || t('userManagement.errors.addFailed'))
     }
   }

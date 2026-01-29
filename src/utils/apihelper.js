@@ -22,7 +22,8 @@ api.interceptors.response.use(
   response => response,
   error => {
     if (error.response) {
-      const { status } = error.response
+      const { status, data } = error.response
+      console.log('Server Error Body:', data)
       console.log(error)
       if (status === 401) {
         console.warn('⚠️ Unauthorized (401) - Logging out...')

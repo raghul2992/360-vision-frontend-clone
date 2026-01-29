@@ -68,7 +68,7 @@ const AuthPage = () => {
     <div className='flex h-screen flex-col lg:flex-row relative'>
       {/* --- LEFT BANNER (CAROUSEL) --- */}
       <div
-        className={`max-h-screen w-[50%] h-[100%] hidden lg:block overflow-hidden relative`}
+        className={`max-h-screen w-[45%] h-[100%] hidden lg:block overflow-hidden relative`}
       >
         <Swiper
           spaceBetween={0}

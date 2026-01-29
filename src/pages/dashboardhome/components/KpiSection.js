@@ -16,8 +16,8 @@ const KpiSection = ({
   kpiData,
   isLoading,
   visibleWidgets = [],
-  layout = [], // Received from parent
-  onLayoutChange, // Received from parent
+  layout = [],
+  onLayoutChange,
   onRemoveWidget,
   locations = [],
   cameras = []
@@ -29,6 +29,17 @@ const KpiSection = ({
   const [widgetFilters, setWidgetFilters] = useState({})
   const [specificWidgetData, setSpecificWidgetData] = useState({})
   const [loadingWidgets, setLoadingWidgets] = useState({})
+
+  // --- HELPER: Extract Location IDs (Handles Array or Single) ---
+  const getLocationIds = selectedLocs => {
+    if (Array.isArray(selectedLocs) && selectedLocs.length > 0) {
+      return selectedLocs.map(l => l.value)
+    }
+    if (selectedLocs && selectedLocs.value) {
+      return [selectedLocs.value]
+    }
+    return null
+  }
 
   // --- HELPER: Format Date for API ---
   const getDateParams = dateRange => {
@@ -48,10 +59,16 @@ const KpiSection = ({
     if (!tenantId) return
 
     const params = { ...getDateParams(filters.dateRange) }
-    if (filters.selectedLocation?.value)
-      params.location_id = filters.selectedLocation.value
-    if (filters.selectedCamera?.value)
+
+    // Updated: Handle multiple location IDs
+    const locIds = getLocationIds(filters.selectedLocation)
+    if (locIds) {
+      params.location_ids = locIds
+    }
+
+    if (filters.selectedCamera?.value) {
       params.camera_id = filters.selectedCamera.value
+    }
 
     setLoadingWidgets(prev => ({ ...prev, [widgetId]: true }))
 
@@ -105,7 +122,7 @@ const KpiSection = ({
         newFilters = {
           ...newFilters,
           selectedLocation: value,
-          selectedCamera: null
+          selectedCamera: null // Reset camera when locations change
         }
       } else {
         newFilters = { ...newFilters, [key]: value }
@@ -118,30 +135,42 @@ const KpiSection = ({
   // --- HELPER: Get Data for Rendering ---
   const getWidgetData = widgetId => {
     const filters = widgetFilters[widgetId]
-    const hasFilters =
+
+    // Check if there are ACTUAL local filters active
+    const hasLocalFilters =
       filters &&
-      (filters.selectedLocation ||
+      ((filters.selectedLocation && filters.selectedLocation.length > 0) ||
         filters.selectedCamera ||
         (filters.dateRange && filters.dateRange[0]))
-    let displayData =
-      hasFilters && specificWidgetData[widgetId]
-        ? { ...specificWidgetData[widgetId] }
-        : { ...kpiData }
 
-    if (cameras.length > 0) {
+    // Start with either specific data (if filtered locally) or global data (if no local filters)
+    let displayData =
+      hasLocalFilters && specificWidgetData[widgetId]
+        ? { ...specificWidgetData[widgetId] }
+        : { ...kpiData } // Trust the parent data if no local filters
+
+    // Recalculate Active Cameras / Efficiency based on Local Selection ONLY if local filters exist
+    if (hasLocalFilters && cameras.length > 0) {
       let filteredCameras = [...cameras]
-      if (filters?.selectedLocation?.value)
-        filteredCameras = filteredCameras.filter(
-          c => c.location_id === filters.selectedLocation.value
+
+      const locIds = getLocationIds(filters?.selectedLocation)
+      if (locIds) {
+        filteredCameras = filteredCameras.filter(c =>
+          locIds.includes(c.location_id)
         )
-      if (filters?.selectedCamera?.value)
+      }
+
+      if (filters?.selectedCamera?.value) {
         filteredCameras = filteredCameras.filter(
           c => c.id === filters.selectedCamera.value
         )
+      }
+
       displayData.activeCameras = filteredCameras.filter(
         c => c.status === 'active'
       ).length
       displayData.totalCameras = filteredCameras.length
+
       const eff =
         displayData.totalCameras > 0
           ? Math.round(
@@ -153,10 +182,18 @@ const KpiSection = ({
     return displayData
   }
 
-  const getLocalCameraOptions = selectedLoc => {
-    if (!selectedLoc || !cameras) return []
+  // --- HELPER: Get Cameras matching ANY selected location ---
+  const getLocalCameraOptions = selectedLocs => {
+    if (!cameras) return []
+
+    // Updated: Handle multiple locations
+    const locIds = getLocationIds(selectedLocs)
+
+    // If no location selected locally, show nothing (to avoid confusion with global list)
+    if (!locIds) return []
+
     return cameras
-      .filter(c => c.location_id === selectedLoc.value)
+      .filter(c => locIds.includes(c.location_id))
       .map(c => ({ value: c.id, label: c.name }))
   }
 
@@ -166,7 +203,7 @@ const KpiSection = ({
     [visibleWidgets]
   )
 
-  // Generate fallback layout if none provided (e.g. fresh add)
+  // Generate fallback layout
   const displayLayout = useMemo(() => {
     if (layout && layout.length > 0) return layout
     return activeWidgets.map((w, i) => ({
@@ -197,13 +234,15 @@ const KpiSection = ({
         margin={[16, 16]}
         isDraggable={true}
         isResizable={false}
-        draggableHandle='.drag-handle' // Ensure KpiWidget has a drag-handle class (or remove to drag whole card)
+        draggableHandle='.drag-handle'
         onLayoutChange={l => onLayoutChange && onLayoutChange(l)}
       >
         {activeWidgets.map(widget => {
           const widgetFilter = widgetFilters[widget.id] || {}
           const isWidgetLoading = loadingWidgets[widget.id]
           const finalData = getWidgetData(widget.id)
+
+          // Get cameras based on the multi-location selection
           const specificCameraOptions = getLocalCameraOptions(
             widgetFilter.selectedLocation
           )
@@ -211,7 +250,7 @@ const KpiSection = ({
           const specificFilterProps = {
             locationOptions: globalLocationOptions,
             cameraOptions: specificCameraOptions,
-            selectedLocation: widgetFilter.selectedLocation || null,
+            selectedLocation: widgetFilter.selectedLocation || [], // Default to empty array for multi
             selectedCamera: widgetFilter.selectedCamera || null,
             dateRange: widgetFilter.dateRange || [null, null],
             setSelectedLocation: val =>
