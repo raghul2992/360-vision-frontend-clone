@@ -19,30 +19,38 @@ import 'swiper/css/effect-fade'
 import banner_1 from '../../assets/banner/1.jpg'
 import banner_2 from '../../assets/banner/2.jpg'
 import banner_3 from '../../assets/banner/3.png'
+import backgroundImage from '../../assets/auth-left-banner.png'
 
 // 3. Define your Carousel Images/Data
 // Updated with your specific text and added a 'description' field
 const carouselSlides = [
+  // {
+  //   id: 1,
+  //   image: banner_1,
+  //   title: 'Conformidade e segurança real',
+  //   description:
+  //     'Previna acidentes monitorando o uso de EPIs e proibindo comportamentos de risco, como o uso de celulares nas bombas de abastecimento.'
+  // },
+  // {
+  //   id: 2,
+  //   image: banner_2,
+  //   title: 'Maximize a rentabilidade do posto de abastecimento',
+  //   description:
+  //     'Monitore as filas, reduza o tempo ocioso das bombas e garanta que sua equipe atenda a todos os clientes no momento certo.'
+  // },
+  // {
+  //   id: 3,
+  //   image: banner_3,
+  //   title: 'Proteção inteligente 24 horas por dia, 7 dias por semana.',
+  //   description:
+  //     'Detecte intrusões em áreas restritas, comportamentos suspeitos e proteja seus ativos fora do horário comercial com alertas em tempo real.'
+  // },
   {
     id: 1,
-    image: banner_1,
-    title: 'Conformidade e segurança real',
-    description:
-      'Previna acidentes monitorando o uso de EPIs e proibindo comportamentos de risco, como o uso de celulares nas bombas de abastecimento.'
-  },
-  {
-    id: 2,
-    image: banner_2,
-    title: 'Maximize a rentabilidade do posto de abastecimento',
-    description:
-      'Monitore as filas, reduza o tempo ocioso das bombas e garanta que sua equipe atenda a todos os clientes no momento certo.'
-  },
-  {
-    id: 3,
-    image: banner_3,
-    title: 'Proteção inteligente 24 horas por dia, 7 dias por semana.',
-    description:
-      'Detecte intrusões em áreas restritas, comportamentos suspeitos e proteja seus ativos fora do horário comercial com alertas em tempo real.'
+    image: backgroundImage,
+    // title: 'Conformidade e segurança real',
+    // description:
+    //   'Previna acidentes monitorando o uso de EPIs e proibindo comportamentos de risco, como o uso de celulares nas bombas de abastecimento.'
   }
 ]
 
@@ -121,7 +129,6 @@ const AuthPage = () => {
 
       {/* right banner */}
       <div
-        className={`max-h-screen ${bgcolors.white} flex-1 py-16 sm:py-16 ${
         className={`max-h-screen  ${bgcolors.white} flex-1 sm:py-8  ${
           authscreen !== 'login' ? 'lg:py-52' : 'lg:py-20'
         } overflow-y-scroll`}
