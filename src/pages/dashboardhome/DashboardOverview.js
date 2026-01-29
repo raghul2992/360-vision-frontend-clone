@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useMemo } from 'react'
 import { Responsive, WidthProvider } from 'react-grid-layout'
 import 'react-grid-layout/css/styles.css'
 import 'react-resizable/css/styles.css'
@@ -10,54 +10,97 @@ import { useDashboardLogic } from './dashboardhooks/useDashboardLogic'
 
 // Components
 import AddWidgetModal from './components/AddWidgetModal'
-// import KpiSection from './components/KpiSection'
-// import HealthSection from './components/HealthSection'
 import DashboardWidget from './components/DashboardWidget'
+import KpiSection from './components/KpiSection'
 
 const ResponsiveGridLayout = WidthProvider(Responsive)
 
 export default function DashboardOverview () {
   const {
-    // Data
+    // Data & State
     kpiData,
     healthData,
     detectionData,
     priorityData,
     totalDetection,
     totalAlerts,
+
     activeWidgets,
     layout,
-    WIDGETS,
+    ALL_AVAILABLE_WIDGETS,
 
-    // Loading
+    // Loading & Filters
     layoutLoading,
     hasInitialized,
     isKpiLoading,
     kpiFilterProps,
-    isAlertTimelineLoading,
-    isAlertTypeBreakdownLoading,
-    isTopProblematicRoisLoading,
 
-    // UI & Actions
+    // Actions
     isModalOpen,
     setIsModalOpen,
     addWidget,
     removeWidget,
-    handleLayoutChange,
-    saveLayoutToApi,
+
+    // Handlers
+    handleChartLayoutChange,
+    handleKpiLayoutChange,
 
     // Helpers
-    healthFilterProps,
     getWidgetProps,
     t,
+    rawLocations,
+    rawCameras,
 
-    // Global Filter Props (From Hook)
-    locations,
+    // Global Location
     selectedGlobalLocation,
-    handleGlobalLocationChange
+    handleGlobalLocationChange,
+    locations: dashboardLocations
   } = useDashboardLogic()
 
-  // Loading Skeleton
+  // --- 1. SEPARATE WIDGETS ---
+  const activeKpiWidgets = useMemo(
+    () => activeWidgets.filter(w => w.isKpi),
+    [activeWidgets]
+  )
+  const activeChartWidgets = useMemo(
+    () => activeWidgets.filter(w => !w.isKpi),
+    [activeWidgets]
+  )
+
+  // --- 2. SEPARATE LAYOUTS ---
+  // Create specific layout subsets for each grid to avoid "dropping" items on re-render
+  const kpiLayout = useMemo(() => {
+    const kpiIds = new Set(activeKpiWidgets.map(w => w.widget_name))
+    return layout.filter(item => kpiIds.has(item.i))
+  }, [layout, activeKpiWidgets])
+
+  const chartLayout = useMemo(() => {
+    const chartIds = new Set(activeChartWidgets.map(w => w.widget_name))
+    return layout.filter(item => chartIds.has(item.i))
+  }, [layout, activeChartWidgets])
+
+  const visibleKpiIds = useMemo(
+    () => activeKpiWidgets.map(w => w.widget_name),
+    [activeKpiWidgets]
+  )
+
+  // --- 3. MODAL DATA ---
+  const availableWidgetsForModal = useMemo(() => {
+    return ALL_AVAILABLE_WIDGETS.filter(
+      w => !activeWidgets.some(aw => aw.widget_name === w.widget_name)
+    ).map(w => {
+      if (w.isKpi)
+        return { ...w, titleKey: w.titleKey, descriptionKey: w.descriptionKey }
+      return w
+    })
+  }, [ALL_AVAILABLE_WIDGETS, activeWidgets])
+
+  const mergedKpiData = {
+    ...kpiData,
+    activeCameras: healthData?.active ?? 0,
+    totalCameras: rawCameras?.length ?? 0
+  }
+
   if (layoutLoading && !hasInitialized) {
     return (
       <div className={`min-h-screen ${bgcolors.white} p-6 w-full`}>
@@ -100,152 +143,106 @@ export default function DashboardOverview () {
               <FiMapPin className='text-[#3885CC]' size={18} />
             </div>
             <div className='flex flex-col'>
-              {/* <label
-                htmlFor='global-location'
-                className='text-[10px] uppercase tracking-wider text-gray-400 font-semibold mb-0.5'
-              >
-                Location
-              </label> */}
+              <span className='text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-0.5'>
+                {t('dashboard.location') || 'Location'}
+              </span>
               <select
-                id='global-location'
                 value={selectedGlobalLocation}
                 onChange={handleGlobalLocationChange}
-                className='bg-transparent text-white text-sm font-medium focus:outline-none cursor-pointer min-w-[80px]'
+                className='bg-transparent text-white text-sm font-medium focus:outline-none cursor-pointer min-w-[140px]'
                 style={{ backgroundImage: 'none' }}
               >
-                {/* 
-                   The hook already provides "All Locations" as the first item 
-                   in the 'locations' array, so we just map directly.
-                */}
-                {locations &&
-                  locations.map(loc => (
-                    <option
-                      key={loc.id}
-                      value={loc.id}
-                      className='bg-[#2a2f45] text-white'
-                    >
-                      {loc.name}
-                    </option>
-                  ))}
+                {dashboardLocations.map(loc => (
+                  <option
+                    key={loc.id}
+                    value={loc.id}
+                    className='bg-[#2a2f45] text-white'
+                  >
+                    {loc.name}
+                  </option>
+                ))}
               </select>
             </div>
           </div>
         </div>
-        {/* ================================= */}
 
-        {/* <KpiSection
-          kpiData={kpiData}
-          isLoading={isKpiLoading}
-          filterProps={kpiFilterProps}
-        /> */}
-        {/* <HealthSection
-          healthData={healthData}
-          filterProps={healthFilterProps}
-        /> */}
-
-        {/* Analytics Header */}
+        {/* === KPI SECTION === */}
         <div className='flex items-center justify-between mt-8 mb-6'>
           <h2 className={`${textcolors.dark} text-2xl font-semibold`}>
             {t('dashboard.analytics_overview')}
           </h2>
           <button
             onClick={() => setIsModalOpen(true)}
-            className='flex items-center gap-2 bg-[#3885CC] text-white font-semibold py-2.5 px-5 rounded-full transition-colors hover:bg-[#2d6ca3]'
+            className='flex items-center gap-2 bg-[#3885CC] text-white font-semibold py-2.5 px-5 rounded-full hover:bg-[#2d6ca3]'
           >
             <FiPlus size={20} />
             <span>{t('dashboard.add_widget')}</span>
           </button>
         </div>
 
-        {/* Grid Layout */}
-        {activeWidgets.length > 0 ? (
+        <KpiSection
+          kpiData={mergedKpiData}
+          isLoading={isKpiLoading}
+          filterProps={kpiFilterProps}
+          locations={rawLocations}
+          cameras={rawCameras}
+          visibleWidgets={visibleKpiIds}
+          layout={kpiLayout}
+          onLayoutChange={handleKpiLayoutChange}
+          onRemoveWidget={removeWidget}
+        />
+
+        {/* === CHART SECTION === */}
+        {activeChartWidgets.length > 0 ? (
           <ResponsiveGridLayout
-            className='layout'
-            layouts={{ lg: layout }}
+            className='layout z-40'
+            layouts={{ lg: chartLayout }} // Use filtered layout
             breakpoints={{ lg: 1200 }}
             cols={{ lg: 12 }}
             rowHeight={30}
-            onLayoutChange={handleLayoutChange}
-            onDragStop={l => {
-              handleLayoutChange(l)
-              saveLayoutToApi(l)
-            }}
-            onResizeStop={l => {
-              handleLayoutChange(l)
-              saveLayoutToApi(l)
-            }}
+            onLayoutChange={l => handleChartLayoutChange(l)}
+            onDragStop={l => handleChartLayoutChange(l)}
+            onResizeStop={l => handleChartLayoutChange(l)}
             dragHandleClassName='drag-handle'
             draggableCancel='.no-drag'
             margin={[16, 16]}
           >
-            {activeWidgets.map(widget => {
-              const data =
-                widget.dataKey === 'detectionData'
-                  ? detectionData
-                  : priorityData
-              const total =
-                widget.totalKey === 'totalDetection'
-                  ? totalDetection
-                  : totalAlerts
-
-              const footerText =
-                widget.dataKey === 'detectionData'
-                  ? `Total Detections: ${totalDetection}`
-                  : widget.dataKey === 'priorityData'
-                  ? `Total Alerts: ${totalAlerts}`
-                  : ''
-
-              const isLoadingWidget =
-                widget.widget_name === 'alert_timeline'
-                  ? isAlertTimelineLoading
-                  : widget.widget_name === 'alert_type_breakdown'
-                  ? isAlertTypeBreakdownLoading
-                  : widget.widget_name === 'top_problematic_rois'
-                  ? isTopProblematicRoisLoading
-                  : false
-
-              return (
-                <div key={widget.widget_name}>
-                  <DashboardWidget
-                    title={t(widget.titleKey)}
-                    widgetName={widget.widget_name}
-                    onRemove={removeWidget}
-                    filterProps={getWidgetProps(widget.widget_name)}
-                    footerText={footerText}
-                  >
-                    <widget.component
-                      title={t(widget.titleKey)}
-                      data={data}
-                      total={total}
-                      tenantId={localStorage.getItem('tenant_id')}
-                      isLoading={isLoadingWidget}
-                      {...widget.chartProps}
-                    />
-                  </DashboardWidget>
-                </div>
-              )
-            })}
+            {activeChartWidgets.map(widget => (
+              <div key={widget.widget_name}>
+                <DashboardWidget
+                  title={t(widget.titleKey)}
+                  widgetName={widget.widget_name}
+                  onRemove={removeWidget}
+                  filterProps={getWidgetProps(widget.widget_name)}
+                >
+                  <widget.component
+                    data={
+                      widget.dataKey === 'detectionData'
+                        ? detectionData
+                        : priorityData
+                    }
+                    total={
+                      widget.totalKey === 'totalDetection'
+                        ? totalDetection
+                        : totalAlerts
+                    }
+                    tenantId={localStorage.getItem('tenant_id')}
+                  />
+                </DashboardWidget>
+              </div>
+            ))}
           </ResponsiveGridLayout>
         ) : (
-          <div className='bg-[#2a2f45] rounded-xl p-12 text-center flex flex-col justify-center items-center'>
+          <div className='bg-[#2a2f45] rounded-xl p-12 text-center mt-6'>
             <p className='text-gray-400 text-lg mb-4'>
               {t('dashboard.no_widgets_yet')}
             </p>
-            <button
-              onClick={() => setIsModalOpen(true)}
-              className='flex items-center gap-2 bg-[#3885CC] text-white font-semibold py-2.5 px-5 rounded-full transition-colors'
-            >
-              <FiPlus size={20} />
-              <span>{t('dashboard.add_first_widget')}</span>
-            </button>
           </div>
         )}
 
         {isModalOpen && (
           <AddWidgetModal
-            widgets={WIDGETS.filter(
-              w => !activeWidgets.some(aw => aw.widget_name === w.widget_name)
-            )}
+            widgets={availableWidgetsForModal}
             onAddWidget={addWidget}
             onClose={() => setIsModalOpen(false)}
           />

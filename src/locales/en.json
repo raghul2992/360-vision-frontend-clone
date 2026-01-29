@@ -504,7 +504,24 @@
     "average_dwell_time": "Average Dwell Time",
     "total_safety_violations_24h": "Total Safety Violations (24h)",
     "count": "Count",
-    "all_locations": "All Locations"
+    "all_locations": "All Locations",
+    "kpi": {
+      "total_alerts": "Total Alerts",
+      "total_alerts_desc": "Displays the total number of alerts generated over the last 7 days.",
+      "last_7_days": "Last 7 Days",
+      "most_frequent": "Most Frequent Alert",
+      "most_frequent_desc": "Shows the detection type that has occurred most frequently.",
+      "occurrences": "occurrences",
+      "busiest_hour": "Busiest Hour",
+      "busiest_hour_desc": "Identifies the hour of the day with the highest alert activity.",
+      "alerts": "Alerts",
+      "avg_dwell": "Average Dwell Time",
+      "avg_dwell_desc": "Calculates the average time objects remain in the frame.",
+      "avg_duration": "Avg duration",
+      "camera_status": "Camera Status",
+      "camera_status_desc": "Monitors the number of active cameras versus total cameras.",
+      "live": "Live"
+    }
   },
   "date_locale": "en-US",
   "date": {

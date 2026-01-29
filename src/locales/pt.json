@@ -488,7 +488,24 @@
     "average_dwell_time": "Tempo Médio de Permanência",
     "total_safety_violations_24h": "Total de Violações de Segurança (24h)",
     "count": "Contagem",
-    "all_locations": "Todos os locais"
+    "all_locations": "Todos os locais",
+    "kpi": {
+      "total_alerts": "Total de Alertas",
+      "total_alerts_desc": "Exibe o número total de alertas gerados nos últimos 7 dias.",
+      "last_7_days": "Últimos 7 dias",
+      "most_frequent": "Alerta Mais Frequente",
+      "most_frequent_desc": "Mostra o tipo de detecção que ocorreu com mais frequência.",
+      "occurrences": "ocorrências",
+      "busiest_hour": "Hora Mais Movimentada",
+      "busiest_hour_desc": "Identifica a hora do dia com a maior atividade de alertas.",
+      "alerts": "Alertas",
+      "avg_dwell": "Tempo Médio de Permanência",
+      "avg_dwell_desc": "Calcula o tempo médio que os objetos permanecem no quadro.",
+      "avg_duration": "Duração média",
+      "camera_status": "Status da Câmera",
+      "camera_status_desc": "Monitora o número de câmeras ativas versus o total de câmeras.",
+      "live": "Ao Vivo"
+    }
   },
   "date_locale": "pt",
   "date": {

@@ -18,6 +18,45 @@ import { resetPassword } from '../../features/auth/authSlice'
 import { toast } from 'react-toastify'
 import SuccessDisplay from '../../component/SuccessDisplay'
 
+// 1. Import Swiper and Modules
+import { Swiper, SwiperSlide } from 'swiper/react'
+import { Autoplay, Pagination, EffectFade } from 'swiper/modules'
+
+// 2. Import Swiper Styles
+import 'swiper/css'
+import 'swiper/css/pagination'
+import 'swiper/css/effect-fade'
+
+// Import Images
+import banner_1 from '../../assets/banner/1.jpg'
+import banner_2 from '../../assets/banner/2.jpg'
+import banner_3 from '../../assets/banner/3.png'
+
+// 3. Define Carousel Data
+const carouselSlides = [
+  {
+    id: 1,
+    image: banner_1,
+    title: 'Conformidade e segurança real',
+    description:
+      'Previna acidentes monitorando o uso de EPIs e proibindo comportamentos de risco, como o uso de celulares nas bombas de abastecimento.'
+  },
+  {
+    id: 2,
+    image: banner_2,
+    title: 'Conformidade e segurança real',
+    description:
+      'Previna acidentes monitorando o uso de EPIs e proibindo comportamentos de risco, como o uso de celulares nas bombas de abastecimento.'
+  },
+  {
+    id: 3,
+    image: banner_3,
+    title: 'Conformidade e segurança real',
+    description:
+      'Previna acidentes monitorando o uso de EPIs e proibindo comportamentos de risco, como o uso de celulares nas bombas de abastecimento.'
+  }
+]
+
 const ResetPasswordPage = ({ acceptinvitation = false }) => {
   const { t } = useTranslation()
   const dispatch = useDispatch()
