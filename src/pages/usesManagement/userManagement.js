@@ -192,7 +192,7 @@ const UserManagement = () => {
       : 'bg-gray-600/20 text-gray-400 border border-gray-500/30'
 
   return (
-    <div className='bg-[#1c1c24] min-h-screen p-8 text-white relative font-sans'>
+    <div className='min-h-screen p-8 relative font-sans'>
       {/* MODALS */}
       {isAddModalOpen && (
         <AddUserModal
@@ -232,12 +232,12 @@ const UserManagement = () => {
 
       {deleteModal.isOpen && (
         <div className='fixed inset-0 z-[110] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4'>
-          <div className='bg-[#2c2d3a] w-full max-w-sm rounded-2xl p-6 border border-gray-700 text-center'>
+          <div className='bg-[#2c2d3a] text-white w-full max-w-sm rounded-2xl p-6 border border-gray-700 text-center'>
             <IoAlertCircleOutline className='text-red-500 text-5xl mx-auto mb-4' />
-            <h3 className='text-xl font-bold mb-2'>
+            <h3 className='text-xl font-bold mb-2 text-white '>
               {t('userManagement.modals.deleteTitle')}
             </h3>
-            <p className='text-gray-400 text-sm mb-6'>
+            <p className='text-white text-sm mb-6'>
               {t('userManagement.modals.deleteText')}
             </p>
             <div className='flex gap-3'>
@@ -264,13 +264,13 @@ const UserManagement = () => {
           <h1 className='text-2xl font-bold tracking-tight'>
             {t('userManagement.title')}
           </h1>
-          <p className='text-gray-400 text-sm'>
+          <p className='text-sm'>
             {t('userManagement.subtitle')}
           </p>
         </div>
         <button
           onClick={() => setIsAddModalOpen(true)}
-          className='bg-[#3885CC] hover:bg-[#2d6da8] transition-colors px-6 py-2.5 rounded-xl flex items-center gap-2 font-medium shadow-lg shadow-blue-500/20'
+          className='bg-[#3885CC] text-white hover:bg-[#2d6da8] transition-colors px-6 py-2.5 rounded-xl flex items-center gap-2 font-medium shadow-lg shadow-blue-500/20'
         >
           <IoPersonAddOutline size={18} /> {t('userManagement.addUser')}
         </button>
@@ -322,7 +322,7 @@ const UserManagement = () => {
             placeholder={t('userManagement.searchPlaceholder')}
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
-            className='w-full bg-[#3a3b4a] border-none rounded-lg py-3 px-4 text-sm focus:ring-1 focus:ring-blue-500 outline-none placeholder:text-gray-500 transition-all'
+            className='w-full bg-[#3a3b4a] border-none rounded-lg py-3 px-4 text-sm focus:ring-1 focus:ring-blue-500 outline-none transition-all'
           />
         </div>
 
@@ -332,7 +332,7 @@ const UserManagement = () => {
             <select
               value={roleFilter}
               onChange={e => setRoleFilter(e.target.value)}
-              className='w-full appearance-none bg-[#3a3b4a] border-none rounded-lg py-3 px-4 text-sm focus:ring-1 focus:ring-blue-500 outline-none cursor-pointer pr-10'
+              className='w-full appearance-none bg-[#3a3b4a] text-white border-none rounded-lg py-3 px-4 text-sm focus:ring-1 focus:ring-blue-500 outline-none cursor-pointer pr-10'
             >
               <option value='all'>{t('userManagement.allRoles')}</option>
               <option value='admin'>Admin</option>
@@ -347,12 +347,12 @@ const UserManagement = () => {
               setSearchQuery('')
               setRoleFilter('all')
             }}
-            className='px-6 py-3 rounded-lg bg-[#3a3b4a] hover:bg-gray-700 text-sm font-medium transition-colors'
+            className='px-6 py-3 rounded-lg bg-[#3a3b4a] text-white hover:bg-gray-700 text-sm font-medium transition-colors'
           >
             {t('userManagement.clear')}
           </button>
 
-          <button className='px-6 py-3 rounded-lg bg-[#3885CC] hover:bg-blue-600 flex items-center gap-2 text-sm font-medium transition-colors'>
+          <button className='px-6 py-3 rounded-lg bg-[#3885CC] text-white hover:bg-blue-600 flex items-center gap-2 text-sm font-medium transition-colors'>
             <IoSearchOutline size={16} /> {t('userManagement.search')}
           </button>
         </div>

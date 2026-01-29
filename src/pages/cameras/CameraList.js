@@ -268,22 +268,35 @@ const CameraList = () => {
       </div>
 
       <CameraStatusSummary cameras={filteredCameras} />
-
+      
       {isLoading && (
-        <p className='text-center text-gray-400'>
-          {t('cameraList.loading') || 'Loading cameras...'}
-        </p>
+        <div
+          className='bg-[#2A2B36] rounded-xl p-5 border border-gray-700/50 mb-2'
+        >
+          <p className='text-center'>
+            {t('cameraList.loading') || 'Loading cameras...'}
+          </p>
+        </div>
       )}
       {error && (
-        <p className='text-center text-red-400'>
-          {t('cameraList.error') || 'Error loading cameras.'}: {error}
-        </p>
+        <div
+          className='bg-[#2A2B36] rounded-xl p-5 border border-gray-700/50 mb-2'
+        >
+          <p className='text-center text-red-400'>
+            {t('cameraList.error') || 'Error loading cameras.'}: {error}
+          </p>
+        </div>
       )}
       {!isLoading && filteredCameras.length === 0 && (
-        <p className='text-center text-gray-400'>
-          {t('cameraList.noCameras') || 'No cameras found.'}
-        </p>
+        <div
+          className='bg-[#2A2B36] rounded-xl p-5 border border-gray-700/50 mb-2'
+        >
+          <p className='text-center'>
+            {t('cameraList.noCameras') || 'No cameras found.'}
+          </p>
+        </div>
       )}
+
       <div className='flex flex-col gap-4'>
         {filteredCameras.map(camera => (
           <div

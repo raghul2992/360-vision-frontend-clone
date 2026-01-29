@@ -37,13 +37,13 @@ const LocationManagementPage = () => {
     )
 
   return (
-    <div className={`p-8 ${bgcolors.dark} text-white min-h-screen`}>
+    <div className={`p-8 min-h-screen`}>
       <div className='flex justify-between items-center mb-6'>
         <div>
           <h1 className='text-3xl font-bold'>
             {t('location.management.title', 'Location Management')}
           </h1>
-          <p className='text-gray-400 mt-1'>
+          <p className='mt-1'>
             {t(
               'location.management.description',
               'Manage all physical locations.'
@@ -67,8 +67,8 @@ const LocationManagementPage = () => {
 
       <div className='grid grid-cols-1 gap-6'>
         {/* Map View Section */}
-        <div className='bg-[#1c1c24] py-4 rounded-lg shadow-md'>
-          <h2 className='text-xl font-semibold mb-3 text-white px-4'>
+        <div className='bg-[#1c1c24] p-4 rounded-lg shadow-md'>
+          <h2 className='text-xl font-semibold mb-3 text-white'>
             {t('location.map.title', 'Location Overview Map')}
           </h2>
           {/* 3. Pass readOnly prop to Map */}
@@ -76,7 +76,7 @@ const LocationManagementPage = () => {
         </div>
 
         {/* List View Section */}
-        <div className='bg-[#1c1c24] py-4 rounded-lg shadow-md'>
+        <div className='bg-[#1c1c24] p-4 rounded-lg shadow-md'>
           {/* 4. Pass readOnly prop to List */}
           <LocationList isMapLoaded={isLoaded} readOnly={isViewer} />
         </div>

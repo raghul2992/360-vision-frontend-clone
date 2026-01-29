@@ -33,7 +33,7 @@ const AuthPage = () => {
 
       {/* right banner */}
       <div
-        className={`max-h-screen  ${bgcolors.dark} flex-1 py-16 sm:py-16  ${
+        className={`max-h-screen  ${bgcolors.white} flex-1 sm:py-8  ${
           authscreen !== 'login' ? 'lg:py-52' : 'lg:py-20'
         } overflow-y-scroll`}
       >
@@ -42,17 +42,17 @@ const AuthPage = () => {
             className={`flex flex-col items-center justify-center text-center h-full lg:h-screen px-4 sm:px-6 lg:px-0`}
           >
             <h1
-              className={`${textSizes.title2} ${textcolors.white} mb-2 text-xl sm:text-2xl lg:text-3xl 4k:text-5xl`}
+              className={`${textSizes.title2} ${textcolors.dark} mb-2 text-xl sm:text-2xl lg:text-3xl 4k:text-5xl`}
             >
               {t('auth_page.welcome')}
             </h1>
             <span
-              className={`${textcolors.white} ${textSizes.extrasmall} mb-3 text-sm sm:text-base lg:text-lg 4k:text-2xl`}
+              className={`${textcolors.dark} ${textSizes.extrasmall} mb-3 text-sm sm:text-base lg:text-lg 4k:text-2xl`}
             >
               {t('auth_page.help_message')}
             </span>
             <div
-              className={`${bgcolors.white} p-4 sm:p-8 flex flex-col w-full sm:min-w-[340px] lg:min-w-[440px] mb-2 rounded-[20px] justify-start items-start`}
+              className={`border-2 ${bgcolors.white} p-4 sm:p-8 flex flex-col w-full sm:min-w-[340px] lg:min-w-[440px] mb-2 rounded-[20px] justify-start items-start`}
             >
               <div
                 className={`${bgcolors.gray} rounded-[20px] p-1 w-full flex items-start justify-center mb-2`}
@@ -91,7 +91,7 @@ const AuthPage = () => {
               {authscreen === 'login' ? <LoginPage  callbackScreen={Setauthscreen} /> : <RegisterPage callbackScreen={Setauthscreen}  />}
             </div>
             <div
-              className={`text-center min-w-[64px] ${textcolors.white} text-xs sm:text-sm lg:text-base 4k:text-xl`}
+              className={`text-center min-w-[64px] ${textcolors.dark} text-xs sm:text-sm lg:text-base 4k:text-xl`}
             >
               <p className='w-full sm:w-[341.99px]'>
                 {t('auth_page.terms')}{' '}

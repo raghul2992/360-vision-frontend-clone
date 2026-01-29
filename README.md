@@ -1,4 +1,4 @@
-# sst-gas-station-frontend
+# 360-vision-frontend
 
 ## Available Scripts
 

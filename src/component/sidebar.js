@@ -1,14 +1,14 @@
 import React, { useEffect } from 'react'
-import ssticon from '../assets/sst-icon.png'
+import company_logo from '../assets/company-icon.png'
 import {
-  IoHome,
+  IoHomeOutline,
   IoLocationOutline,
   IoCameraOutline,
   IoSettingsOutline,
   IoLogOutOutline,
   IoPeopleOutline
 } from 'react-icons/io5'
-import { textcolors } from '../theme'
+import { textcolors, bgcolors } from '../theme'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useDispatch } from 'react-redux'
 import { logoutUser } from '../features/auth/authSlice'
@@ -33,32 +33,32 @@ const Sidebar = () => {
 
   const isActive = path =>
     location.pathname === path
-      ? 'bg-[#30313F] rounded-[16px] text-[#3885CC]'
-      : `${textcolors.white}`
+      ? 'rounded-[16px] active-menu'
+      : ''
 
   useEffect(() => {
     console.log('Current Role:', userRole)
   }, [userRole])
 
   return (
-    <div className='sticky w-[90px] h-screen bg-[#1c1c24] flex flex-col items-center py-3'>
+    <div className={`sticky w-[90px] h-screen flex flex-col items-center py-3`}>
       <div className='flex justify-center items-center mb-4'>
-        <img src={ssticon} alt='logo' className='w-10 h-10' />
+        <img src={company_logo} alt='logo' className='w-10 h-10' />
       </div>
 
       <div className='flex flex-col items-center justify-center flex-1 gap-5 text-xl'>
         {/* Dashboard - Visible to everyone */}
         <Link to='/dashboard'>
-          <div className='w-12 h-12 flex justify-center items-center cursor-pointer hover:bg-[#30313F] hover:rounded-[16px]'>
-            <IoHome className={`text-2xl ${isActive('/dashboard')}`} />
+          <div className={`menu-item w-12 h-12 flex justify-center items-center cursor-pointer hover:rounded-[16px] ${isActive('/dashboard')}`}>
+            <IoHomeOutline className={`text-2xl`} />
           </div>
         </Link>
 
         {/* Location - Visible to everyone */}
         <Link to='/location'>
-          <div className='w-12 h-12 flex justify-center items-center cursor-pointer hover:bg-[#30313F] hover:rounded-[16px]'>
+          <div className={`menu-item w-12 h-12 flex justify-center items-center cursor-pointer hover:rounded-[16px] ${isActive('/location')}`}>
             <IoLocationOutline
-              className={`text-2xl ${isActive('/location')}`}
+              className={`text-2xl`}
             />
           </div>
         </Link>
@@ -66,8 +66,8 @@ const Sidebar = () => {
         {/* Camera - HIDDEN for viewer */}
         {userRole !== 'viewer' && (
           <Link to='/camera'>
-            <div className='w-12 h-12 flex justify-center items-center cursor-pointer hover:bg-[#30313F] hover:rounded-[16px]'>
-              <IoCameraOutline className={`text-2xl ${isActive('/camera')}`} />
+            <div className={`menu-item w-12 h-12 flex justify-center items-center cursor-pointer hover:rounded-[16px] ${isActive('/camera')}`}>
+              <IoCameraOutline className={`text-2xl`} />
             </div>
           </Link>
         )}
@@ -75,28 +75,19 @@ const Sidebar = () => {
         {/* People/User Mgmt - HIDDEN for viewer */}
         {userRole !== 'viewer' && (
           <Link to='/user-management'>
-            <div className='w-12 h-12 flex justify-center items-center cursor-pointer hover:bg-[#30313F] hover:rounded-[16px]'>
+            <div className={`menu-item w-12 h-12 flex justify-center items-center cursor-pointer hover:rounded-[16px] ${isActive('/user-management')}`}>
               <IoPeopleOutline
-                className={`text-2xl ${isActive('/user-management')}`}
+                className={`text-2xl`}
               />
             </div>
           </Link>
         )}
-
-        {/* Settings */}
-        {/* <Link to='/settings'>
-          <div className='w-12 h-12 flex justify-center items-center cursor-pointer hover:bg-[#30313F] hover:rounded-[16px]'>
-            <IoSettingsOutline
-              className={`text-2xl ${isActive('/settings')}`}
-            />
-          </div>
-        </Link> */}
       </div>
 
       {/* Logout */}
-      <div className='flex justify-center items-center mt-4 text-2xl'>
+        <div className={`menu-item w-12 h-12 flex justify-center items-center cursor-pointer hover:rounded-[16px]`}>
         <IoLogOutOutline
-          className={`${textcolors.white} rotate-180 cursor-pointer`}
+          className={`text-2xl`}
           onClick={handleLogout}
         />
       </div>

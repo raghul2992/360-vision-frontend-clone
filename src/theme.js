@@ -5,6 +5,7 @@ export const textcolors = {
   success: "text-green-500",
   danger: "text-red-500",
   white: "text-white",
+  dark: "text-[#2a2f45]",
   link: "text-[#0088FF]"
 };
 
@@ -15,6 +16,7 @@ export const bgcolors = {
   secondarygray: "bg-[#DDDDDDx]",
   primary: "bg-[#3885CC]",
   secondary: "bg-[#3885CC]",
+  body: "bg-[#D9F3FD]",
   inputbg: "bg-[#F3F3F5]"
 };
 

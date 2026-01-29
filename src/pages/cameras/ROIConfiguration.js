@@ -836,14 +836,14 @@ const ROIConfiguration = () => {
   }
 
   return (
-    <div className={`p-6 ${bgcolors.dark} text-white min-h-screen`}>
+    <div className={`p-6 min-h-screen`}>
       {/* Header */}
       <div className='flex justify-between items-center mb-6'>
         <div>
           <h1 className='text-2xl font-bold'>
             {t('roi.cameraConfigurationSettings')}
           </h1>
-          <p className='text-sm text-gray-400'>
+          <p className='text-sm'>
             {t('roi.configureCameraConnectionSettings')}
           </p>
         </div>
@@ -858,7 +858,7 @@ const ROIConfiguration = () => {
 
       {/* ROI Setting Section */}
       <div className='bg-[#30313F] rounded-lg p-6 mb-6'>
-        <h2 className='text-xl font-bold mb-4'>{t('roi.roiSetting')}</h2>
+        <h2 className='text-xl text-white font-bold mb-4'>{t('roi.roiSetting')}</h2>
 
         <div className='relative'>
           {/* Camera Feed */}
@@ -1046,7 +1046,7 @@ const ROIConfiguration = () => {
           {/* Polygon management */}
           {polygons.length > 0 && (
             <div className='mt-4'>
-              <h3 className='text-lg font-semibold mb-2'>
+              <h3 className='text-lg text-white font-semibold mb-2'>
                 {t('roi.drawnAreas')}
               </h3>
               <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2'>
@@ -1055,7 +1055,7 @@ const ROIConfiguration = () => {
                     key={index}
                     className='bg-gray-700 rounded p-2 flex justify-between items-center'
                   >
-                    <span className='text-sm'>
+                    <span className='text-sm text-white'>
                       {t('roi.area')} {index + 1} ({polygon.length}{' '}
                       {t('roi.points')})
                     </span>
@@ -1107,7 +1107,7 @@ const ROIConfiguration = () => {
 
             <div className='grid grid-cols-2 gap-4'>
               <div>
-                <label className='block text-sm text-gray-400 mb-2'>
+                <label className='block text-sm mb-2'>
                   {t('roi.detectionType')}
                 </label>
                 <select
@@ -1159,7 +1159,7 @@ const ROIConfiguration = () => {
 
       {/* Detection Configuration Section */}
       <div className='bg-[#30313F] rounded-lg p-6 mb-6'>
-        <h2 className='text-xl font-bold mb-4'>
+        <h2 className='text-xl text-white font-bold mb-4'>
           {t('roi.detectionConfiguration')}
         </h2>
         <p className='text-sm text-gray-400 mb-6'>
@@ -1346,7 +1346,7 @@ const ROIConfiguration = () => {
 
       {/* Notifications Section */}
       <div className='bg-[#30313F] rounded-lg p-6 mb-6'>
-        <h2 className='text-xl font-bold mb-1'>{t('roi.notifications')}</h2>
+        <h2 className='text-xl text-white font-bold mb-1'>{t('roi.notifications')}</h2>
         <p className='text-xs text-gray-500 leading-relaxed mb-2'>
           {t('roi.notificationsubtext')}
         </p>
@@ -1355,8 +1355,8 @@ const ROIConfiguration = () => {
           <div className='bg-gray-900 rounded-lg p-4 border border-gray-700'>
             <div className='flex items-center justify-between mb-4'>
               <div className='flex items-center gap-2'>
-                <IoLogoWhatsapp size={20} />
-                <span className='font-semibold'>
+                <IoLogoWhatsapp size={20} color='white'/>
+                <span className='font-semibold text-white'>
                   {t('roi.whatsAppNotification')}
                 </span>
               </div>
@@ -1477,8 +1477,8 @@ const ROIConfiguration = () => {
           <div className='bg-gray-900 rounded-lg p-4 border border-gray-700'>
             <div className='flex items-center justify-between mb-4'>
               <div className='flex items-center gap-2'>
-                <IoMailOutline size={20} />
-                <span className='font-semibold'>
+                <IoMailOutline size={20} color='white'/>
+                <span className='font-semibold text-white'>
                   {t('roi.emailNotification')}
                 </span>
               </div>
@@ -1592,8 +1592,8 @@ const ROIConfiguration = () => {
           <div className='bg-gray-900 rounded-lg p-4 border border-gray-700'>
             <div className='flex items-center justify-between mb-4'>
               <div className='flex items-center gap-2'>
-                <IoChatboxEllipsesOutline size={20} />
-                <span className='font-semibold'>
+                <IoChatboxEllipsesOutline size={20} color='white' />
+                <span className='font-semibold text-white'>
                   {t('roi.callNotification')}
                 </span>
               </div>

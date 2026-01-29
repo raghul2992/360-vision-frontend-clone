@@ -326,7 +326,7 @@ const RegisterPage = ({ callbackScreen }) => {
           <ButtonComponent
             onClick={() => handleRegisterWithOtp()}
             disabled={isLoading || timeLeft === 0 || otp.length !== 6}
-            className={`${fontWeights.semibold} ${textcolors.white} ${
+            className={`${fontWeights.semibold} ${textcolors.dark} ${
               textSizes.base
             } ${
               bgcolors.primary

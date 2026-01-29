@@ -81,7 +81,7 @@
     "success_message": "Your password has been reset successfully. You can now sign in with your new password."
   },
   "auth_page": {
-    "welcome": "Welcome to SST",
+    "welcome": "Welcome to 360 Vision",
     "help_message": "We are here to help you!",
     "login": "Sign In",
     "register": "Register",
@@ -434,6 +434,7 @@
     "date_range": "Date Range",
     "select_date_range": "Select Date Range",
     "latest_alerts": "Alerts",
+    "alert_subtitle": "Review your recent alerts",
     "error": "Error",
     "no_alerts_at_this_time": "No alerts at this time",
     "unread": "Unread",

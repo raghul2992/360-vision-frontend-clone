@@ -76,18 +76,20 @@ const ResetPasswordPage = ({ acceptinvitation = false }) => {
   }
 
   return (
-    <div className='flex h-screen flex-col lg:flex-row'>
+    <div className='flex h-screen  flex-col lg:flex-row relative'>
       {/* left banner */}
-      <div className={`max-h-screen flex-1 login-left hidden lg:block`}></div>
+      <div
+        className={`max-h-screen flex-1 h-[100%] login-left hidden lg:block`}
+      ></div>
 
       {/* right content */}
-      <div className={`max-h-screen ${bgcolors.dark} flex-1`}>
+      <div className={`max-h-screen ${bgcolors.white} flex-1 sm:py-8 overflow-y-scroll`}>
         <div className='flex justify-center items-center'>
           <div
             className={`flex flex-col items-center justify-center text-center h-full lg:h-screen px-4 sm:px-6 lg:px-0`}
           >
             <h1
-              className={`${textSizes.title2} ${textcolors.white} mb-2 text-xl sm:text-2xl lg:text-3xl 4k:text-5xl`}
+              className={`${textSizes.title2} ${textcolors.dark} mb-2 text-xl sm:text-2xl lg:text-3xl 4k:text-5xl`}
             >
               {acceptinvitation
                 ? 'Complete Your Registration'
@@ -95,7 +97,7 @@ const ResetPasswordPage = ({ acceptinvitation = false }) => {
             </h1>
 
             <span
-              className={`${textcolors.white} ${textSizes.extrasmall} mb-2 text-sm sm:text-base lg:text-lg 4k:text-2xl`}
+              className={`${textcolors.dark} ${textSizes.extrasmall} mb-2 text-sm sm:text-base lg:text-lg 4k:text-2xl`}
             >
               {acceptinvitation
                 ? 'Create a secure password to finish setting up your account.'
@@ -106,7 +108,7 @@ const ResetPasswordPage = ({ acceptinvitation = false }) => {
               <SuccessDisplay message={t('reset_password.success_message')} />
             ) : (
               <div
-                className={`${bgcolors.white} p-4 sm:p-8 flex flex-col w-full sm:min-w-[340px] lg:min-w-[440px] mb-2 rounded-[20px] justify-start items-start`}
+                className={`border-2 ${bgcolors.white} p-4 sm:p-8 flex flex-col w-full sm:min-w-[340px] lg:min-w-[440px] mb-2 rounded-[20px] justify-start items-start`}
               >
                 <Link to={'/'}>
                   <div className='flex gap-3 items-center justify-start'>
@@ -174,7 +176,7 @@ const ResetPasswordPage = ({ acceptinvitation = false }) => {
               </div>
             )}
             <div className='mt-1'>
-              <p className={`${textSizes.base} ${textcolors.white}`}>
+              <p className={`${textSizes.base} ${textcolors.dark}`}>
                 {t('reset_password.remember_password')}{' '}
                 <Link to='/' className={`${textcolors.link}`}>
                   {t('reset_password.sign_in_here')}

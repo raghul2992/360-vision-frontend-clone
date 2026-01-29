@@ -503,7 +503,7 @@ const AddCamera = () => {
   }
 
   return (
-    <div className={`p-8 ${bgcolors.dark} text-white min-h-screen`}>
+    <div className={`p-8 min-h-screen`}>
       {showConfirm && (
         <div className='fixed inset-0 flex items-center justify-center bg-black/60 z-50'>
           <div className='bg-[#2A2B36] rounded-xl p-6 w-[90%] max-w-sm border border-gray-700 shadow-lg text-center'>
@@ -533,10 +533,10 @@ const AddCamera = () => {
       <div className='flex justify-between items-center mb-8'>
         <div>
           <h1 className='text-3xl font-bold flex items-center gap-3'>
-            <IoVideocamOutline size={32} className='text-[#3885CC]' />
+            <IoVideocamOutline size={35}/>
             {cameraId ? t('addCamera.editTitle') : t('addCamera.addTitle')}
           </h1>
-          <p className='text-gray-400 mt-1'>
+          <p className='mt-1'>
             {cameraId
               ? t('addCamera.editDescription')
               : t('addCamera.addDescription')}
@@ -551,7 +551,7 @@ const AddCamera = () => {
       </div>
 
       <div className='bg-[#2A2B36] rounded-xl p-6 border border-gray-700/50'>
-        <h2 className='text-lg font-semibold mb-6'>
+        <h2 className='text-lg text-white font-semibold mb-6'>
           {cameraId
             ? t('addCamera.editCameraDetails')
             : t('addCamera.addCameraDetails')}
@@ -852,7 +852,7 @@ const AddCamera = () => {
         ) : roiList.length === 0 ? (
           // Camera Selected but No ROI Found
           <div className='text-center py-12'>
-            <h3 className='text-2xl font-bold mb-2'>
+            <h3 className='text-2xl text-white font-bold mb-2'>
               {t('addCamera.noRoiFound')}
             </h3>
             <p className='text-gray-400 mb-6 text-sm'>

@@ -29,7 +29,7 @@ class ErrorBoundary extends React.Component {
         <div style={{ padding: '2rem', textAlign: 'center', backgroundColor: '#fff', color: '#000', borderRadius: '8px', boxShadow: '0 4px 8px rgba(0,0,0,0.1)' }}>
           <h1 style={{ color: '#e74c3c', marginBottom: '1rem' }}>Oops! Something went wrong.</h1>
           <p style={{ fontSize: '1.1rem', marginBottom: '1.5rem' }}>
-            Please take a screenshot of this error and send it to support at <a href="mailto:contact@sst.vision" style={{ color: '#3498db', textDecoration: 'none' }}>contact@sst.vision</a>
+            Please take a screenshot of this error and send it to support at <a href="mailto:contact@360vision.ai" style={{ color: '#3498db', textDecoration: 'none' }}>contact@360vision.ai</a>
           </p>
 
           <div style={{ border: '1px solid #e74c3c', borderRadius: '4px', background: '#fdeded', padding: '1rem', marginBottom: '1.5rem', overflowWrap: 'break-word', textAlign: 'left' }}>

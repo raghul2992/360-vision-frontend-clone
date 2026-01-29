@@ -1,6 +1,6 @@
 import moment from 'moment-timezone'
 
-export const formatDateTime = (dateString, locale = 'en-US') => {
+export const formatDateTime = (dateString, locale = 'en-US', timezone = 'Etc/UTC') => {
   if (!dateString) return ''
 
   let processedDateString = dateString
@@ -20,17 +20,21 @@ export const formatDateTime = (dateString, locale = 'en-US') => {
   const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone
 
   const options = {
-    timeZone: userTimeZone, // Use user's local timezone
+    timeZone: timezone,
     year: 'numeric',
-    month: 'long',
+    month: 'short',
     day: 'numeric',
     hour: '2-digit',
     minute: '2-digit',
-    second: '2-digit'
+    // second: '2-digit',
+    // timeZoneName: 'short'
   }
 
+  
   try {
-    return new Date(processedDateString).toLocaleString(locale, options)
+    const formatter = new Intl.DateTimeFormat(locale, options);
+    const utcDate = new Date(processedDateString);
+    return formatter.format(utcDate)
   } catch (error) {
     console.error('Invalid date format:', dateString, error)
     return ''

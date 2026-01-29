@@ -16,6 +16,10 @@ import 'react-datepicker/dist/react-datepicker.css'
 import format from 'date-fns/format'
 import { useTranslation } from 'react-i18next'
 
+import { bgcolors, textcolors } from '../../theme'
+
+
+
 const Alerts = () => {
   const { t } = useTranslation()
   const dispatch = useDispatch()
@@ -132,8 +136,8 @@ const Alerts = () => {
         fetchAlerts({ tenantId: tenant_id, queryParams, reset })
       )
 
-      if (result.payload && result.payload.results) {
-        setHasMore(result.payload.results.length === currentLimit)
+      if (result.payload) {
+        setHasMore(result.payload.length === currentLimit)
       } else {
         setHasMore(false)
       }
@@ -237,42 +241,43 @@ const Alerts = () => {
   const customStyles = {
     control: (provided, state) => ({
       ...provided,
-      backgroundColor: '#393A4A',
-      borderColor: '#393A4A',
+      backgroundColor: '#4D4D4D',
+      borderColor: '#4D4D4D',
       color: 'white',
-      borderRadius: '9999px',
+      borderRadius: '0.5rem',
       paddingLeft: '0.4rem',
       paddingRight: '0.4rem',
       boxShadow: state.isFocused ? '0 0 0 1px #6366F1' : 'none',
-      '&:hover': { borderColor: '#393A4A' }
+      '&:hover': { borderColor: '#4D4D4D' }
     }),
-    singleValue: provided => ({ ...provided, color: 'white' }),
-    placeholder: provided => ({ ...provided, color: '#A0AEC0' }),
-    dropdownIndicator: provided => ({ ...provided, color: '#A0AEC0' }),
+    singleValue: provided => ({ ...provided }),
+    placeholder: provided => ({ ...provided, color: 'white' }),
+    dropdownIndicator: provided => ({ ...provided }),
     menu: provided => ({
       ...provided,
-      backgroundColor: '#393A4A',
+      backgroundColor: '#4D4D4D',
       borderRadius: '0.5rem'
     }),
     option: (provided, state) => ({
       ...provided,
-      backgroundColor: state.isFocused ? '#4A5568' : '#393A4A',
+      backgroundColor: state.isFocused ? '#4A5568' : '#4D4D4D',
       color: 'white'
     })
   }
 
   return (
-    <div className='min-h-screen bg-[#1a1d29] p-6 w-full'>
+    <div className='min-h-screen p-6 w-full'>
       <div className='mx-auto max-w-full'>
         {/* Header */}
-        <div className='flex items-center justify-between mb-4'>
-          <h1 className='text-white text-2xl font-semibold'>
+        <div className='mb-4'>
+          <h1 className={`${textcolors.dark} text-2xl font-bold`}>
             {t('alerts.latest_alerts')}
           </h1>
+          <p className='text-sm mt-1'>{t('alerts.alert_subtitle')}</p>
         </div>
 
         {/* Filters */}
-        <div className='flex justify-start gap-4 mb-6 flex-wrap'>
+        <div className='flex bg-[#2a2f45] p-6 rounded-lg justify-start gap-4 mb-6 flex-wrap'>
           <div className='w-48'>
             <Select
               options={priorityOptions}
@@ -323,7 +328,7 @@ const Alerts = () => {
               onChange={update => setDateRange(update)}
               isClearable
               placeholderText={t('alerts.select_date_range')}
-              className='w-full px-6 py-2 rounded-full bg-[#393A4A] text-white placeholder-[#A0AEC0] focus:outline-none focus:ring-1 focus:ring-[#6366F1]'
+              className='w-full bg-[#4D4D4D] placeholder-white px-6 py-2 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#6366F1]'
             />
           </div>
         </div>
@@ -352,10 +357,13 @@ const Alerts = () => {
                 ref={containerRef}
                 className='space-y-4 w-full max-h-[650px] overflow-y-auto scrollbar-thin scrollbar-thumb-[#3b405e] scrollbar-track-[#1f2333] hover:scrollbar-thumb-[#4a5070] rounded-lg pr-2'
               >
-                {alerts.map(alert => {
+                {
+                alerts.map(alert => {
+                  var location = filteredLocations?.find(loc => loc?.id == alert?.location_id);
+                  const timezone = location?.meta?.timezone || "Etc/UTC";
                   return (
                     <div key={alert.id}>
-                      <AlertItem alert={alert} tenantId={tenant_id} />
+                      <AlertItem alert={alert} tenantId={tenant_id} timezone={timezone} />
                     </div>
                   )
                 })}

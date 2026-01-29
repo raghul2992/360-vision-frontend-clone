@@ -29,7 +29,7 @@ const SuccessDisplay = ({ email, tenantId, appUrl }) => {
 
   return (
     <div
-      className={`${bgcolors.white} p-4 sm:p-8 flex flex-col w-full sm:min-w-[280px] lg:min-w-[340px] mb-2 rounded-[20px]`}
+      className={`border-2 ${bgcolors.white} p-4 sm:p-8 flex flex-col w-full sm:min-w-[340px] lg:w-[440px] mb-2 rounded-[20px] justify-start items-start`}
     >
       {/* Title Row */}
       {/* <div className='flex gap-3 items-center mb-4'>

@@ -3,6 +3,7 @@ import { Responsive, WidthProvider } from 'react-grid-layout'
 import 'react-grid-layout/css/styles.css'
 import 'react-resizable/css/styles.css'
 import { FiPlus, FiMapPin } from 'react-icons/fi'
+import { bgcolors, textcolors } from '../../theme'
 
 // Hooks
 import { useDashboardLogic } from './dashboardhooks/useDashboardLogic'
@@ -59,7 +60,7 @@ export default function DashboardOverview () {
   // Loading Skeleton
   if (layoutLoading && !hasInitialized) {
     return (
-      <div className='min-h-screen bg-[#1a1d29] p-6 w-full'>
+      <div className={`min-h-screen ${bgcolors.white} p-6 w-full`}>
         <div className='mx-auto max-w-7xl animate-pulse'>
           <div className='flex items-center justify-between mb-8'>
             <div className='h-6 w-64 bg-[#2a2f45] rounded' />
@@ -83,13 +84,13 @@ export default function DashboardOverview () {
   }
 
   return (
-    <div className='min-h-screen bg-[#1a1d29] p-6 w-full'>
-      <div className='mx-auto max-w-7xl'>
+    <div className={`min-h-screen p-6 w-full`}>
+      <div className='mx-auto'>
         {/* === GLOBAL FILTER SECTION === */}
         <div className='flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4'>
           <div>
-            <h1 className='text-white text-2xl font-bold'>Dashboard</h1>
-            <p className='text-gray-400 text-sm mt-1'>
+            <h1 className={`${textcolors.dark} text-2xl font-bold`}>Dashboard</h1>
+            <p className={`${textcolors.dark} text-sm mt-1`}>
               Real-time monitoring and analytics
             </p>
           </div>
@@ -144,7 +145,7 @@ export default function DashboardOverview () {
 
         {/* Analytics Header */}
         <div className='flex items-center justify-between mt-8 mb-6'>
-          <h2 className='text-white text-2xl font-semibold'>
+          <h2 className={`${textcolors.dark} text-2xl font-semibold`}>
             {t('dashboard.analytics_overview')}
           </h2>
           <button

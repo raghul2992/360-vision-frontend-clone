@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react'
 import { IoGlobeOutline } from 'react-icons/io5'
 import { useTranslation } from 'react-i18next'
-import { bgcolors } from '../theme'
+import { bgcolors, textcolors } from '../theme'
 import NotificationBell from './NotificationBell'
 import useWebSocket from '../hooks/useWebSocket'
 import { useSelector, useDispatch } from 'react-redux'
@@ -51,7 +51,7 @@ const Navbar = () => {
 
   return (
     <div
-      className={`${bgcolors.dark} text-white h-16 flex items-center justify-end px-4`}
+      className={`text-white h-16 flex items-center justify-end px-4`}
     >
       <div className='flex items-center gap-6'>
         {/* WebSocket Connection Indicator */}
@@ -71,7 +71,7 @@ const Navbar = () => {
               }`}
             ></div>
 
-            <span className='text-xs text-gray-400'>
+            <span className={`text-xs font-semibold ${textcolors.dark}`}>
               {wsStatus === 'connected'
                 ? t('realtime_sync.connected_text')
                 : t('realtime_sync.disconnected_text')}
@@ -79,7 +79,7 @@ const Navbar = () => {
           </div>
         </Tooltip>
         {/* Language Selector */}
-        <div className='relative'>
+        {/* <div className='relative'>
           <button
             onClick={() => setIsOpen(!isOpen)}
             className='flex items-center gap-2 p-2 rounded-full bg-gray-700 hover:bg-gray-600 transition-colors'
@@ -114,7 +114,7 @@ const Navbar = () => {
               </button>
             </div>
           )}
-        </div>
+        </div> */}
 
         {/* Notification Bell Component */}
         <NotificationBell unreadCount={unreadCount} />

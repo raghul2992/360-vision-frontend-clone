@@ -7,6 +7,24 @@
   pointer-events: none;
 }
 
+.body-background {
+  background-image: url("./assets/background.jpg");
+  background-repeat: no-repeat;
+  background-size: cover;
+}
+
+.menu-item svg {
+  color: #2A2B36;
+}
+
+.menu-item:hover, .active-menu {
+  background-color: #2A2B36;
+}
+
+.menu-item:hover svg, .active-menu svg {
+  color: white;
+}
+
 @media (prefers-reduced-motion: no-preference) {
   .App-logo {
     animation: App-logo-spin infinite 20s linear;

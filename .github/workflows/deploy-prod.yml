@@ -43,4 +43,4 @@ jobs:
           export_default_credentials: true
       
       - name: Deploy to GCS (Prod)
-        run: gsutil -m rsync -R build/ gs://sst-frontend-prod
+        run: gsutil -m rsync -R build/ gs://360-vision-frontend-prod
