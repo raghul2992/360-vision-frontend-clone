@@ -41,9 +41,9 @@ const Sidebar = () => {
   }, [userRole])
 
   return (
-    <div className={`sticky w-[90px] h-screen flex flex-col items-center py-3`}>
+    <div className={`sticky border-r-2 border-solid border-[#2a2f454d] w-[100px] h-screen flex flex-col items-center py-3`}>
       <div className='flex justify-center items-center mb-4'>
-        <img src={company_logo} alt='logo' className='w-10 h-10' />
+        <img src={company_logo} alt='logo' className='w-[80px] h-[80px] object-contain' />
       </div>
 
       <div className='flex flex-col items-center justify-center flex-1 gap-5 text-xl'>
