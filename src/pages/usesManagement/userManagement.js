@@ -296,7 +296,7 @@ const UserManagement = () => {
           />
         </div>
         <div className='flex items-center gap-4'>
-          <IoFilterOutline className='text-gray-400' size={20} />
+          {/* <IoFilterOutline className='text-gray-400' size={20} /> */}
           <div className='relative min-w-[160px]'>
             <select
               value={roleFilter}
