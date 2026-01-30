@@ -339,7 +339,7 @@ const CameraGrid = () => {
                 >
                   <button className='flex items-center gap-2 px-2 py-2 rounded-lg border border-[#0088FF] text-gray-300 hover:text-white hover:border-gray-600 transition-all text-[12px]'>
                     <IoPencil size={13} />
-                    {t('cameraGrid.editButton') || 'Edit'}
+                    {t('cameraGrid.editButton') || 'Editt'}
                   </button>
                 </Link>
                 <button
