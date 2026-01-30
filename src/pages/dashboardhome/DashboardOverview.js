@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react'
 import { Responsive, WidthProvider } from 'react-grid-layout'
+import Select, { components } from 'react-select'
 import 'react-grid-layout/css/styles.css'
 import 'react-resizable/css/styles.css'
 import { FiPlus, FiMapPin } from 'react-icons/fi'
@@ -14,6 +15,121 @@ import DashboardWidget from './components/DashboardWidget'
 import KpiSection from './components/KpiSection'
 
 const ResponsiveGridLayout = WidthProvider(Responsive)
+
+// --- 1. Custom Checkbox Option ---
+const CheckboxOption = props => {
+  return (
+    <components.Option {...props}>
+      <div className='flex items-center gap-2'>
+        <input
+          type='checkbox'
+          checked={props.isSelected}
+          onChange={() => null}
+          className='w-3 h-3 rounded border-gray-500 text-[#6366F1] focus:ring-0 focus:ring-offset-0 bg-transparent'
+        />
+        <label>{props.label}</label>
+      </div>
+    </components.Option>
+  )
+}
+
+// --- 2. Custom Value Container (The Logic to Hide/Show tags) ---
+const CustomValueContainer = ({ children, ...props }) => {
+  const { getValue, hasValue } = props
+  const selectedCount = getValue().length
+  const MAX_DISPLAY_TAGS = 1 // How many tags to show before "+N"
+
+  if (!hasValue) {
+    return (
+      <components.ValueContainer {...props}>
+        {children}
+      </components.ValueContainer>
+    )
+  }
+
+  const [values, input] = children
+
+  if (selectedCount > MAX_DISPLAY_TAGS) {
+    return (
+      <components.ValueContainer {...props}>
+        {/* Render only the first N tags */}
+        {values.slice(0, MAX_DISPLAY_TAGS)}
+
+        {/* Render the "+N" Badge */}
+        <div className='flex items-center justify-center px-1.5 py-0.5 ml-1 text-[10px] font-medium text-white bg-[#3885CC] rounded'>
+          +{selectedCount - MAX_DISPLAY_TAGS}
+        </div>
+
+        {/* Keep input for search functionality */}
+        {input}
+      </components.ValueContainer>
+    )
+  }
+
+  return (
+    <components.ValueContainer {...props}>{children}</components.ValueContainer>
+  )
+}
+
+// --- 3. Select Styles (Updated to prevent wrapping) ---
+const selectStyles = {
+  control: (base, state) => ({
+    ...base,
+    backgroundColor: 'transparent',
+    border: 'none',
+    boxShadow: 'none',
+    color: 'white',
+    minHeight: '32px',
+    cursor: 'pointer',
+    flexWrap: 'nowrap' // Important: prevent wrapping
+  }),
+  menu: base => ({
+    ...base,
+    backgroundColor: '#2a2f45',
+    color: '#FFFFFF',
+    borderRadius: '8px',
+    border: '1px solid #4B5563',
+    zIndex: 9999
+  }),
+  option: (base, { isFocused }) => ({
+    ...base,
+    backgroundColor: isFocused ? '#3B3F58' : 'transparent',
+    color: '#E0E0E0',
+    cursor: 'pointer',
+    fontSize: '14px'
+  }),
+  multiValue: base => ({
+    ...base,
+    backgroundColor: '#3885CC',
+    borderRadius: '4px',
+    maxWidth: '120px' // Limit individual tag width
+  }),
+  multiValueLabel: base => ({
+    ...base,
+    color: '#FFFFFF',
+    whiteSpace: 'nowrap',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis'
+  }),
+  multiValueRemove: base => ({
+    ...base,
+    color: '#FFFFFF',
+    ':hover': {
+      backgroundColor: '#2d6ca3',
+      color: '#FFFFFF'
+    }
+  }),
+  singleValue: base => ({ ...base, color: '#FFFFFF' }),
+  placeholder: base => ({ ...base, color: '#A5ADC9' }),
+  input: base => ({ ...base, color: '#FFFFFF' }),
+  // Ensure container doesn't wrap
+  valueContainer: base => ({
+    ...base,
+    flexWrap: 'nowrap',
+    whiteSpace: 'nowrap',
+    overflow: 'hidden'
+  })
+}
 
 export default function DashboardOverview () {
   const {
@@ -54,7 +170,7 @@ export default function DashboardOverview () {
     // Global Location
     selectedGlobalLocation,
     handleGlobalLocationChange,
-    locations: dashboardLocations
+    dashboardLocationOptions
   } = useDashboardLogic()
 
   // --- 1. SEPARATE WIDGETS ---
@@ -68,7 +184,6 @@ export default function DashboardOverview () {
   )
 
   // --- 2. SEPARATE LAYOUTS ---
-  // Create specific layout subsets for each grid to avoid "dropping" items on re-render
   const kpiLayout = useMemo(() => {
     const kpiIds = new Set(activeKpiWidgets.map(w => w.widget_name))
     return layout.filter(item => kpiIds.has(item.i))
@@ -142,26 +257,23 @@ export default function DashboardOverview () {
             <div className='bg-[#3885CC]/10 p-2 rounded-full mr-3'>
               <FiMapPin className='text-[#3885CC]' size={18} />
             </div>
-            <div className='flex flex-col'>
-              <span className='text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-0.5'>
-                {t('dashboard.location') || 'Location'}
-              </span>
-              <select
+            <div className='flex flex-col min-w-[200px]'>
+              {/* Updated: React-Select with Custom ValueContainer */}
+              <Select
+                options={dashboardLocationOptions}
                 value={selectedGlobalLocation}
                 onChange={handleGlobalLocationChange}
-                className='bg-transparent text-white text-sm font-medium focus:outline-none cursor-pointer min-w-[140px]'
-                style={{ backgroundImage: 'none' }}
-              >
-                {dashboardLocations.map(loc => (
-                  <option
-                    key={loc.id}
-                    value={loc.id}
-                    className='bg-[#2a2f45] text-white'
-                  >
-                    {loc.name}
-                  </option>
-                ))}
-              </select>
+                placeholder='All Locations'
+                isMulti
+                closeMenuOnSelect={false}
+                hideSelectedOptions={false}
+                components={{
+                  Option: CheckboxOption,
+                  ValueContainer: CustomValueContainer // Injected here
+                }}
+                styles={selectStyles}
+                classNamePrefix='react-select'
+              />
             </div>
           </div>
         </div>
@@ -196,7 +308,7 @@ export default function DashboardOverview () {
         {activeChartWidgets.length > 0 ? (
           <ResponsiveGridLayout
             className='layout z-40'
-            layouts={{ lg: chartLayout }} // Use filtered layout
+            layouts={{ lg: chartLayout }}
             breakpoints={{ lg: 1200 }}
             cols={{ lg: 12 }}
             rowHeight={30}

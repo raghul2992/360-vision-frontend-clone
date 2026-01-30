@@ -28,6 +28,7 @@ export const addNewUser = createAsyncThunk(
         `/api/v1/tenants/${tenant_id}/users/`,
         userData
       )
+      console.log(response)
       return response.data
     } catch (err) {
       return rejectWithValue(err.response?.data || err.message)

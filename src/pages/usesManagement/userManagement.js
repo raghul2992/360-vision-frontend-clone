@@ -10,7 +10,8 @@ import {
   IoSearchOutline,
   IoFilterOutline,
   IoChevronDownOutline,
-  IoInformationCircleOutline
+  IoInformationCircleOutline,
+  IoLockClosedOutline
 } from 'react-icons/io5'
 import { toast } from 'react-toastify'
 
@@ -32,10 +33,14 @@ const UserManagement = () => {
   const dispatch = useDispatch()
   const tenantId = localStorage.getItem('tenant_id')
 
+  /* ---------------- AUTH / PERMISSIONS ---------------- */
+  // Access the logged-in user's info to check permissions
+  const { user: currentUser } = useSelector(state => state.auth)
+  const currentUserRole = currentUser?.role?.toLowerCase()
+
   /* ---------------- FILTER STATES ---------------- */
   const [searchQuery, setSearchQuery] = useState('')
   const [roleFilter, setRoleFilter] = useState('all')
-
   const [refreshTrigger, setRefreshTrigger] = useState(0)
 
   /* ---------------- MODAL STATES ---------------- */
@@ -48,17 +53,13 @@ const UserManagement = () => {
   const [inviteModal, setInviteModal] = useState({ isOpen: false, user: null })
 
   const { users, isLoading, isInviting } = useSelector(state => state.users)
-
-  // --- Retrieve locations from Redux to map IDs to Names ---
   const { locations = [] } = useSelector(state => state.locationApi)
 
   useEffect(() => {
     const handleRefresh = () => {
       setRefreshTrigger(prev => prev + 1)
     }
-
     window.addEventListener('triggeruserapi', handleRefresh)
-
     return () => {
       window.removeEventListener('triggeruserapi', handleRefresh)
     }
@@ -100,25 +101,6 @@ const UserManagement = () => {
     }
   }
 
-  const handleToggleStatus = async (e, user) => {
-    e.preventDefault()
-    e.stopPropagation()
-
-    const newStatus = user.status === 'active' ? 'inactive' : 'active'
-    try {
-      await dispatch(
-        updateTenantUser({
-          tenant_id: tenantId,
-          user_id: user.id,
-          status: newStatus
-        })
-      ).unwrap()
-      toast.info(t('userManagement.toast.statusUpdate', { status: newStatus }))
-    } catch {
-      toast.error('Status update failed')
-    }
-  }
-
   const handleSendInvitation = async () => {
     try {
       await dispatch(
@@ -130,26 +112,21 @@ const UserManagement = () => {
       ).unwrap()
       toast.success(t('userManagement.toast.inviteSuccess'))
       window.dispatchEvent(new CustomEvent('triggeruserapi', { detail: true }))
-
       setInviteModal({ isOpen: false, user: null })
     } catch (err) {
       toast.error(err || 'Failed to send invitation')
     }
   }
 
-  // --- Helper to convert ID array to Name string ---
   const getLocationLabel = assignedIds => {
     if (!assignedIds || assignedIds.length === 0) return null
-
     const locationNames = assignedIds.map(id => {
       const foundLoc = locations?.find(loc => loc.id == id)
       return foundLoc ? foundLoc.name : id
     })
-
     return locationNames.join(', ')
   }
 
-  // --- UPDATED STATS CONFIGURATION WITH DESCRIPTIONS ---
   const stats = useMemo(
     () => [
       {
@@ -166,19 +143,19 @@ const UserManagement = () => {
         label: t('userManagement.stats.admins'),
         value: users.filter(u => u.role === 'admin').length,
         color: 'text-blue-500',
-        description: t('userManagement.roleInfo.admin') // Added description
+        description: t('userManagement.roleInfo.admin')
       },
       {
         label: t('userManagement.stats.operator'),
         value: users.filter(u => u.role === 'operator').length,
         color: 'text-purple-500',
-        description: t('userManagement.roleInfo.operator') // Added description
+        description: t('userManagement.roleInfo.operator')
       },
       {
         label: t('userManagement.stats.viewers'),
         value: users.filter(u => u.role === 'viewer').length,
         color: 'text-gray-400',
-        description: t('userManagement.roleInfo.viewer') // Added description
+        description: t('userManagement.roleInfo.viewer')
       }
     ],
     [users, t]
@@ -276,29 +253,24 @@ const UserManagement = () => {
         </button>
       </div>
 
-      {/* --- UPDATED STATS SECTION --- */}
+      {/* STATS SECTION */}
       <div className='grid grid-cols-5 gap-4 mb-8'>
         {stats.map((s, i) => (
           <div
             key={i}
             className='bg-[#2c2d3a] p-5 rounded-2xl border border-gray-800/50 shadow-sm'
           >
-            {/* Label Wrapper with Conditional Icon */}
             <div className='flex items-center gap-2 mb-1'>
               <p className='text-gray-400 text-[10px] uppercase font-bold tracking-wider'>
                 {s.label}
               </p>
-
-              {/* Conditional Info Icon & Tooltip */}
               {s.description && (
                 <div className='group relative cursor-help'>
                   <IoInformationCircleOutline
                     className='text-gray-500 hover:text-blue-400 transition-colors'
                     size={14}
                   />
-                  {/* Tooltip Content */}
                   <div className='absolute left-0 top-6 hidden group-hover:block z-50 w-48 p-3 bg-[#3a3b4a] border border-gray-700 rounded-lg shadow-2xl'>
-                    {/* Decorative Arrow */}
                     <div className='absolute -top-1 left-1 w-2 h-2 bg-[#3a3b4a] border-t border-l border-gray-700 transform rotate-45'></div>
                     <p className='text-[10px] normal-case tracking-normal text-gray-200 leading-relaxed'>
                       {s.description}
@@ -307,7 +279,6 @@ const UserManagement = () => {
                 </div>
               )}
             </div>
-
             <p className={`text-3xl font-bold ${s.color}`}>{s.value}</p>
           </div>
         ))}
@@ -318,16 +289,14 @@ const UserManagement = () => {
         <div className='relative flex-1'>
           <input
             type='text'
-            name='user-search-input'
             placeholder={t('userManagement.searchPlaceholder')}
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
             className='w-full bg-[#3a3b4a] border-none rounded-lg py-3 px-4 text-sm focus:ring-1 focus:ring-blue-500 outline-none transition-all'
           />
         </div>
-
         <div className='flex items-center gap-4'>
-          <IoFilterOutline className='text-gray-400' size={20} />
+          {/* <IoFilterOutline className='text-gray-400' size={20} /> */}
           <div className='relative min-w-[160px]'>
             <select
               value={roleFilter}
@@ -341,7 +310,6 @@ const UserManagement = () => {
             </select>
             <IoChevronDownOutline className='absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none' />
           </div>
-
           <button
             onClick={() => {
               setSearchQuery('')
@@ -350,10 +318,6 @@ const UserManagement = () => {
             className='px-6 py-3 rounded-lg bg-[#3a3b4a] text-white hover:bg-gray-700 text-sm font-medium transition-colors'
           >
             {t('userManagement.clear')}
-          </button>
-
-          <button className='px-6 py-3 rounded-lg bg-[#3885CC] text-white hover:bg-blue-600 flex items-center gap-2 text-sm font-medium transition-colors'>
-            <IoSearchOutline size={16} /> {t('userManagement.search')}
           </button>
         </div>
       </div>
@@ -372,8 +336,6 @@ const UserManagement = () => {
                 <th className='p-5 font-semibold'>
                   {t('userManagement.table.user')}
                 </th>
-
-                {/* ROLE COLUMN WITH INFO ICON */}
                 <th className='p-5 font-semibold'>
                   <div className='flex items-center gap-1.5'>
                     {t('userManagement.table.role')}
@@ -382,7 +344,6 @@ const UserManagement = () => {
                         className='text-gray-500 hover:text-blue-400 transition-colors'
                         size={16}
                       />
-                      {/* Tooltip content */}
                       <div className='absolute left-0 top-6 hidden group-hover:block z-50 w-64 p-3 bg-[#3a3b4a] border border-gray-700 rounded-lg shadow-2xl text-[12px] normal-case tracking-normal'>
                         <div className='space-y-2 text-gray-200'>
                           <p>
@@ -404,7 +365,6 @@ const UserManagement = () => {
                     </div>
                   </div>
                 </th>
-
                 <th className='p-5 font-semibold'>
                   {t('userManagement.table.locations')}
                 </th>
@@ -418,86 +378,103 @@ const UserManagement = () => {
             </thead>
             <tbody className='divide-y divide-gray-800/30'>
               {filteredUsers.length > 0 ? (
-                filteredUsers.map(u => (
-                  <tr
-                    key={u.id}
-                    className='hover:bg-gray-800/30 transition-colors group'
-                  >
-                    <td className='p-5'>
-                      <p className='font-semibold text-gray-200'>
-                        {u.full_name}
-                      </p>
-                      <p className='text-xs text-gray-500'>{u.email}</p>
-                    </td>
-                    <td className='p-5'>
-                      <span
-                        className={`px-2.5 py-1 text-[10px] font-bold uppercase rounded ${getRoleStyle(
-                          u.role
-                        )}`}
-                      >
-                        {u.role}
-                      </span>
-                    </td>
+                filteredUsers.map(u => {
+                  // --- PERMISSION CHECK ---
+                  // If current user is Operator, they cannot edit/delete Admins
+                  const isRestricted =
+                    currentUserRole === 'operator' &&
+                    u.role?.toLowerCase() === 'admin'
 
-                    <td className='p-5 max-w-52 text-xs text-gray-400'>
-                      {getLocationLabel(u.meta?.assign_locations) ||
-                        t('userManagement.table.global')}
-                    </td>
-
-                    <td className='p-5'>
-                      <button
-                        type='button'
-                        // onClick={e => handleToggleStatus(e, u)}
-                        className={`text-[10px] font-bold uppercase px-4 py-1.5 rounded-full transition-all cursor-pointer border ring-offset-2 focus:ring-2 focus:ring-blue-500 ${
-                          u.status === 'active'
-                            ? 'bg-green-500/10 text-green-400 border-green-500/20 hover:bg-green-500/20'
-                            : u.status === 'invite'
-                            ? 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20 hover:bg-yellow-500/20'
-                            : 'bg-red-500/10 text-red-400 border-red-500/20 hover:bg-red-500/20'
-                        }`}
-                      >
-                        {u.status}
-                      </button>
-                    </td>
-                    <td className='p-5'>
-                      <div className='flex justify-center gap-4 text-gray-400'>
-                        {u.status !== 'active' && (
-                          <button
-                            type='button'
-                            title={t('userManagement.modals.sendInvitation')}
-                            onClick={() =>
-                              setInviteModal({ isOpen: true, user: u })
-                            }
-                            className='hover:text-green-400 transition-colors'
-                          >
-                            <IoMailOpenOutline size={20} />
-                          </button>
-                        )}
-
+                  return (
+                    <tr
+                      key={u.id}
+                      className='hover:bg-gray-800/30 transition-colors group'
+                    >
+                      <td className='p-5'>
+                        <p className='font-semibold text-gray-200'>
+                          {u.full_name}
+                        </p>
+                        <p className='text-xs text-gray-500'>{u.email}</p>
+                      </td>
+                      <td className='p-5'>
+                        <span
+                          className={`px-2.5 py-1 text-[10px] font-bold uppercase rounded ${getRoleStyle(
+                            u.role
+                          )}`}
+                        >
+                          {u.role}
+                        </span>
+                      </td>
+                      <td className='p-5 max-w-52 text-xs text-gray-400'>
+                        {getLocationLabel(u.meta?.assign_locations) ||
+                          t('userManagement.table.global')}
+                      </td>
+                      <td className='p-5'>
                         <button
                           type='button'
-                          title='Edit'
-                          onClick={() =>
-                            setUpdateModal({ isOpen: true, user: u })
-                          }
-                          className='hover:text-blue-400 transition-colors'
+                          className={`text-[10px] font-bold uppercase px-4 py-1.5 rounded-full transition-all border ${
+                            u.status === 'active'
+                              ? 'bg-green-500/10 text-green-400 border-green-500/20'
+                              : u.status === 'invite'
+                              ? 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20'
+                              : 'bg-red-500/10 text-red-400 border-red-500/20'
+                          }`}
                         >
-                          <IoPencilOutline size={20} />
+                          {u.status}
                         </button>
-                        <button
-                          type='button'
-                          title='Delete'
-                          onClick={() =>
-                            setDeleteModal({ isOpen: true, userId: u.id })
-                          }
-                          className='hover:text-red-500 transition-colors'
-                        >
-                          <IoTrashOutline size={20} />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
+                      </td>
+                      <td className='p-5'>
+                        <div className='flex justify-center gap-4 text-gray-400'>
+                          {u.status !== 'active' && !isRestricted && (
+                            <button
+                              type='button'
+                              title={t('userManagement.modals.sendInvitation')}
+                              onClick={() =>
+                                setInviteModal({ isOpen: true, user: u })
+                              }
+                              className='hover:text-green-400 transition-colors'
+                            >
+                              <IoMailOpenOutline size={20} />
+                            </button>
+                          )}
+
+                          {/* Render Actions only if not restricted */}
+                          {!isRestricted ? (
+                            <>
+                              <button
+                                type='button'
+                                title='Edit'
+                                onClick={() =>
+                                  setUpdateModal({ isOpen: true, user: u })
+                                }
+                                className='hover:text-blue-400 transition-colors'
+                              >
+                                <IoPencilOutline size={20} />
+                              </button>
+                              <button
+                                type='button'
+                                title='Delete'
+                                onClick={() =>
+                                  setDeleteModal({ isOpen: true, userId: u.id })
+                                }
+                                className='hover:text-red-500 transition-colors'
+                              >
+                                <IoTrashOutline size={20} />
+                              </button>
+                            </>
+                          ) : (
+                            <div
+                              title='Permission restricted'
+                              className='cursor-not-allowed opacity-30'
+                            >
+                              <IoLockClosedOutline size={20} />
+                            </div>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  )
+                })
               ) : (
                 <tr>
                   <td

@@ -76,7 +76,7 @@ const AuthPage = () => {
     <div className='flex h-screen flex-col lg:flex-row relative'>
       {/* --- LEFT BANNER (CAROUSEL) --- */}
       <div
-        className={`max-h-screen w-[50%] h-[100%] hidden lg:block overflow-hidden relative`}
+        className={`max-h-screen w-[45%] h-[100%] hidden lg:block overflow-hidden relative`}
       >
         <Swiper
           spaceBetween={0}
@@ -195,11 +195,11 @@ const AuthPage = () => {
             >
               <p className='w-full sm:w-[341.99px]'>
                 {t('auth_page.terms')}{' '}
-                <a href='' className={`${textcolors.link}`}>
+                <a href='https://sst.vision/terms-of-use' target='_blank' className={`${textcolors.link}`}>
                   {t('auth_page.terms_of_service')}
                 </a>{' '}
                 {t('auth_page.and')}{' '}
-                <a href='' className={`${textcolors.link}`}>
+                <a href='https://sst.vision/privacy-policy' target='_blank' className={`${textcolors.link}`}>
                   {t('auth_page.privacy_policy')}
                 </a>
               </p>
