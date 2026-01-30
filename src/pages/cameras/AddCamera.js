@@ -885,7 +885,7 @@ const AddCamera = () => {
         ) : (
           <div>
             <div className="flex justify-between items-center mb-6">
-              <h3 className="text-lg font-semibold">
+              <h3 className="text-lg font-semibold text-white">
                 {t("addCamera.roiListTitle")}
               </h3>
               <button
@@ -1016,7 +1016,7 @@ const AddCamera = () => {
                         <div className="flex items-center gap-2">
                           <button
                             onClick={() => handleEditRoi(roi)}
-                            className="p-2 rounded-lg border flex items-center justify-center gap-2 px-4 border-[#0088FF] text-[12px] hover:border-gray-500 transition-all"
+                            className="p-2 rounded-lg border text-white flex items-center justify-center gap-2 px-4 border-[#0088FF] text-[12px] hover:border-gray-500 transition-all"
                           >
                             <IoPencil size={12} />
                             <p>{t("common.edit")}</p>

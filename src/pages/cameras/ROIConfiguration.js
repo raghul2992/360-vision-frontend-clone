@@ -1,15 +1,15 @@
-import React, { useState, useRef, useEffect } from 'react'
+import React, { useState, useRef, useEffect } from "react";
 import {
   Stage,
   Layer,
   Line,
   Circle,
   Image as KonvaImage,
-  Rect
-} from 'react-konva'
-import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { useTranslation } from 'react-i18next'
-import { bgcolors } from '../../theme'
+  Rect,
+} from "react-konva";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
+import { bgcolors } from "../../theme";
 import {
   IoArrowBackCircle,
   IoChatboxEllipsesOutline,
@@ -19,30 +19,30 @@ import {
   IoScanCircle,
   IoPencil,
   IoTrash,
-  IoCamera
-} from 'react-icons/io5'
-import { useDispatch, useSelector } from 'react-redux'
-import { toast } from 'react-toastify'
-import 'react-toastify/dist/ReactToastify.css'
+  IoCamera,
+} from "react-icons/io5";
+import { useDispatch, useSelector } from "react-redux";
+import { toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import {
   createRoi,
   getRois,
   updateRoi,
   deleteRoi,
-  clearRoiOperationSuccess
-} from '../../features/cameras/roilistslice'
-import useImage from 'use-image'
-import { getCameraSnapshot } from '../../features/cameras/cameraApiSlice'
+  clearRoiOperationSuccess,
+} from "../../features/cameras/roilistslice";
+import useImage from "use-image";
+import { getCameraSnapshot } from "../../features/cameras/cameraApiSlice";
 import {
   convertTimeSlotsLocalToUTC,
-  convertTimeSlotsUTCToLocal
-} from '../../utils/datehelper'
+  convertTimeSlotsUTCToLocal,
+} from "../../utils/datehelper";
 
 const ROIConfiguration = () => {
-  const { t } = useTranslation()
-  const location = useLocation()
-  const navigate = useNavigate()
-  const dispatch = useDispatch()
+  const { t } = useTranslation();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
 
   const {
     snapshot,
@@ -54,131 +54,138 @@ const ROIConfiguration = () => {
     roiToEdit,
     currentRoi_Id,
     status,
-    addnew
-  } = location.state || {}
-  const tenantId = propTenantId
+    addnew,
+  } = location.state || {};
+  const tenantId = propTenantId;
 
-  const [polygons, setPolygons] = useState([])
-  const [currentPolygon, setCurrentPolygon] = useState([])
-  const [isDrawing, setIsDrawing] = useState(false)
-  const [drawingMode, setDrawingMode] = useState('polygon')
-  const [isDrawingRectangle, setIsDrawingRectangle] = useState(false)
-  const [rectangleStart, setRectangleStart] = useState(null)
-  const [currentRectangle, setCurrentRectangle] = useState(null)
-  const stageRef = useRef(null)
-  const SNAPSHOT_DIR = `${process.env.REACT_APP_BASE_URL}/api/v1/tenants/${tenantId}/cameras/snapshot/image`
-  const SNAPSHOT_URL = `${SNAPSHOT_DIR}/${snapshot}`
-  const [snapshotUrl, setSnapshotUrl] = useState(SNAPSHOT_URL)
-  const [image] = useImage(snapshotUrl)
+  const [polygons, setPolygons] = useState([]);
+  const [currentPolygon, setCurrentPolygon] = useState([]);
+  const [isDrawing, setIsDrawing] = useState(false);
+  const [drawingMode, setDrawingMode] = useState("polygon");
+  const [isDrawingRectangle, setIsDrawingRectangle] = useState(false);
+  const [rectangleStart, setRectangleStart] = useState(null);
+  const [currentRectangle, setCurrentRectangle] = useState(null);
+  const stageRef = useRef(null);
+  const SNAPSHOT_DIR = `${process.env.REACT_APP_BASE_URL}/api/v1/tenants/${tenantId}/cameras/snapshot/image`;
+  const SNAPSHOT_URL = `${SNAPSHOT_DIR}/${snapshot}`;
+  const [snapshotUrl, setSnapshotUrl] = useState(SNAPSHOT_URL);
+  const [image] = useImage(snapshotUrl);
 
   /** @type {Record<string, string>} */
   const dwellDescriptions = {
-    VEHICLE_DWELL_TIME: t('roi.dwellTimeSecondsDescription'),
-    ATTENDANT_CELLPHONE_DETECTION: t('roi.cellphoneDwellTimeDescription'),
-    SUSPICIOUS_LOITERING: t('roi.suspiciousLoiteringDescription'),
-    PERSON_QUEUE_DETECTION: t('roi.queueDwellTimeSecondsDescription')
-  }
+    VEHICLE_DWELL_TIME: t("roi.dwellTimeSecondsDescription"),
+    ATTENDANT_CELLPHONE_DETECTION: t("roi.cellphoneDwellTimeDescription"),
+    SUSPICIOUS_LOITERING: t("roi.suspiciousLoiteringDescription"),
+    PERSON_QUEUE_DETECTION: t("roi.queueDwellTimeSecondsDescription"),
+  };
 
   const [stageDimensions, setStageDimensions] = useState({
     width: 1100,
-    height: 640
-  })
+    height: 640,
+  });
 
   const { rois, isLoading, error, operationSuccess } = useSelector(
-    state => state.roilist
-  )
+    (state) => state.roilist,
+  );
   const { snapshotResult, isLoading: isSnapshotLoading } = useSelector(
-    state => state.cameraApi
-  )
+    (state) => state.cameraApi,
+  );
 
   // Image dimensions state
   const [imageDimensions, setImageDimensions] = useState({
     width: 0,
-    height: 0
-  })
+    height: 0,
+  });
 
   useEffect(() => {
-    console.log(`${snapshotUrl}`)
-  }, [])
+    console.log(`${snapshotUrl}`);
+  }, []);
 
-  const [emailNotification, setEmailNotification] = useState(false)
-  const [callNotification, setCallNotification] = useState(false)
-  const [whatsappNotification, setWhatsappNotification] = useState(false)
-  const [emailAddress, setEmailAddress] = useState('')
-  const [emailAddressError, setEmailAddressError] = useState('')
-  const [emailName, setEmailName] = useState('')
-  const [phoneNumber, setPhoneNumber] = useState('')
-  const [phoneNumberError, setPhoneNumberError] = useState('')
-  const [callName, setCallName] = useState('')
-  const [whatsappNumber, setWhatsappNumber] = useState('')
-  const [whatsappNumberError, setWhatsappNumberError] = useState('')
-  const [whatsappName, setWhatsappName] = useState('')
-  const [emailRecipients, setEmailRecipients] = useState([])
-  const [callRecipients, setCallRecipients] = useState([])
-  const [whatsappRecipients, setWhatsappRecipients] = useState([])
+  const [emailNotification, setEmailNotification] = useState(false);
+  const [callNotification, setCallNotification] = useState(false);
+  const [whatsappNotification, setWhatsappNotification] = useState(false);
+  const [emailAddress, setEmailAddress] = useState("");
+  const [emailAddressError, setEmailAddressError] = useState("");
+  const [emailName, setEmailName] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [phoneNumberError, setPhoneNumberError] = useState("");
+  const [callName, setCallName] = useState("");
+  const [whatsappNumber, setWhatsappNumber] = useState("");
+  const [whatsappNumberError, setWhatsappNumberError] = useState("");
+  const [whatsappName, setWhatsappName] = useState("");
+  const [emailRecipients, setEmailRecipients] = useState([]);
+  const [callRecipients, setCallRecipients] = useState([]);
+  const [whatsappRecipients, setWhatsappRecipients] = useState([]);
 
-  const [personSensitivity, setPersonSensitivity] = useState(66)
-  const [weaponSensitivity, setWeaponSensitivity] = useState(88)
-  const [vehicleSensitivity, setVehicleSensitivity] = useState(90)
-  const [fireSensitivity, setFireSensitivity] = useState(18)
-  const [motionThreshold, setMotionThreshold] = useState(66)
-  const [minimumObjectSize, setMinimumObjectSize] = useState(98)
+  const [personSensitivity, setPersonSensitivity] = useState(66);
+  const [weaponSensitivity, setWeaponSensitivity] = useState(88);
+  const [vehicleSensitivity, setVehicleSensitivity] = useState(90);
+  const [fireSensitivity, setFireSensitivity] = useState(18);
+  const [motionThreshold, setMotionThreshold] = useState(66);
+  const [minimumObjectSize, setMinimumObjectSize] = useState(98);
 
   // ROI Settings
-  const [roiName, setRoiName] = useState('')
-  const [roiNameError, setRoiNameError] = useState('')
-  const [detectionType, setDetectionType] = useState('VEHICLE_QUEUE_DETECTION')
-  const [alertPriority, setAlertPriority] = useState('High') // Stores the English value
+  const [roiName, setRoiName] = useState("");
+  const [roiNameError, setRoiNameError] = useState("");
+  const [detectionType, setDetectionType] = useState("VEHICLE_QUEUE_DETECTION");
+  const [alertPriority, setAlertPriority] = useState("High"); // Stores the English value
   const [displayAlertPriority, setDisplayAlertPriority] = useState(
-    t('roi.high')
-  ) // Stores the translated value for display
-  const [currentRoiId, setCurrentRoiId] = useState(currentRoi_Id)
+    t("roi.high"),
+  ); // Stores the translated value for display
+  const [currentRoiId, setCurrentRoiId] = useState(currentRoi_Id);
 
   // New detection config states
-  const [queueCountThreshold, setQueueCountThreshold] = useState(1)
-  const [queueDwellTimeSeconds, setQueueDwellTimeSeconds] = useState(40)
-  const [dwellTimeSeconds, setDwellTimeSeconds] = useState(40)
-  const [attendantAbsenceDwellTime, setAttendantAbsenceDwellTime] = useState(60)
-  const [confidenceThreshold, setConfidenceThreshold] = useState(40) // NEW: Confidence threshold for suspicious loitering
-  const [targetedHourSlots, setTargetedHourSlots] = useState([])
-  const [newTimeSlot, setNewTimeSlot] = useState(['', ''])
+  const [queueCountThreshold, setQueueCountThreshold] = useState(1);
+  const [queueDwellTimeSeconds, setQueueDwellTimeSeconds] = useState(40);
+  const [dwellTimeSeconds, setDwellTimeSeconds] = useState(40);
+  const [attendantAbsenceDwellTime, setAttendantAbsenceDwellTime] =
+    useState(60);
+  const [confidenceThreshold, setConfidenceThreshold] = useState(40); // NEW: Confidence threshold for suspicious loitering
+  const [targetedHourSlots, setTargetedHourSlots] = useState([]);
+  const [newTimeSlot, setNewTimeSlot] = useState(["", ""]);
 
-  const searchParams = new URLSearchParams(location.search)
-  const cameraIdFromUrl = searchParams.get('cameraId')
+  //added new
+  const [crowdSurgeQueueThreshold, setCrowdSurgeQueueThreshold] = useState(10);
+  const [crowdSurgeDwellTime, setCrowdSurgeDwellTime] = useState(30);
+  const [ppeDwellTime, setPpeDwellTime] = useState(5);
+  const [fireSmokeDwellTime, setFireSmokeDwellTime] = useState(1);
+
+  const searchParams = new URLSearchParams(location.search);
+  const cameraIdFromUrl = searchParams.get("cameraId");
 
   // Update image dimensions when image loads
   useEffect(() => {
     if (image) {
       setImageDimensions({
         width: image.width,
-        height: image.height
-      })
+        height: image.height,
+      });
     }
-  }, [image])
+  }, [image]);
 
   useEffect(() => {
-    const effectiveCameraId = cameraId || cameraIdFromUrl
+    const effectiveCameraId = cameraId || cameraIdFromUrl;
 
     if (effectiveCameraId && tenantId) {
-      dispatch(getRois({ tenantId, cameraId: effectiveCameraId }))
+      dispatch(getRois({ tenantId, cameraId: effectiveCameraId }));
     }
 
     if (roiToEdit) {
-      handleEditRoi(roiToEdit)
-      console.log('ROI to edit loaded, currentRoiId:', roiToEdit.id)
+      handleEditRoi(roiToEdit);
+      console.log("ROI to edit loaded, currentRoiId:", roiToEdit.id);
     }
-  }, [dispatch, cameraId, cameraIdFromUrl, tenantId, roiToEdit, addnew])
+  }, [dispatch, cameraId, cameraIdFromUrl, tenantId, roiToEdit, addnew]);
 
   // Handle errors and success messages
   useEffect(() => {
     if (error) {
-      toast.error(error)
+      toast.error(error);
     }
     if (operationSuccess) {
       // The getRois dispatch is now handled directly in handleSaveRoi after creation/update
-      dispatch(clearRoiOperationSuccess())
+      dispatch(clearRoiOperationSuccess());
     }
-  }, [error, operationSuccess, dispatch])
+  }, [error, operationSuccess, dispatch]);
 
   // Get scale factors for coordinate conversion
   const getScaleFactors = () => {
@@ -187,88 +194,88 @@ const ROIConfiguration = () => {
       !imageDimensions.height ||
       !stageRef.current
     ) {
-      return { scaleX: 1, scaleY: 1 }
+      return { scaleX: 1, scaleY: 1 };
     }
 
-    const stageWidth = stageRef.current.width()
-    const stageHeight = stageRef.current.height()
+    const stageWidth = stageRef.current.width();
+    const stageHeight = stageRef.current.height();
 
     return {
       scaleX: imageDimensions.width / stageWidth,
-      scaleY: imageDimensions.height / stageHeight
-    }
-  }
+      scaleY: imageDimensions.height / stageHeight,
+    };
+  };
 
   // Convert stage coordinates to image coordinates
   const getImagePoint = (stageX, stageY) => {
-    const { scaleX, scaleY } = getScaleFactors()
+    const { scaleX, scaleY } = getScaleFactors();
     return {
       x: Math.round(stageX * scaleX),
-      y: Math.round(stageY * scaleY)
-    }
-  }
+      y: Math.round(stageY * scaleY),
+    };
+  };
 
   // Convert image coordinates to stage coordinates
   const getStagePoint = (imageX, imageY) => {
-    const { scaleX, scaleY } = getScaleFactors()
+    const { scaleX, scaleY } = getScaleFactors();
     return {
       x: Math.round(imageX / scaleX),
-      y: Math.round(imageY / scaleY)
-    }
-  }
+      y: Math.round(imageY / scaleY),
+    };
+  };
 
   // Convert polygon points from image to stage coordinates
-  const getStagePolygon = polygon => {
-    if (!polygon || polygon.length === 0) return []
-    return polygon.map(point => getStagePoint(point.x, point.y))
-  }
+  const getStagePolygon = (polygon) => {
+    if (!polygon || polygon.length === 0) return [];
+    return polygon.map((point) => getStagePoint(point.x, point.y));
+  };
 
   // Add this function to transform polygons format
-  const transformPolygonsFormat = polygonsArray => {
+  const transformPolygonsFormat = (polygonsArray) => {
     return polygonsArray.map((polygon, index) => ({
-      polygon_name: `${t('roi.area')} ${index + 1}`,
-      polygon_points: polygon.flatMap(point => [point.x, point.y])
-    }))
-  }
+      polygon_name: `${t("roi.area")} ${index + 1}`,
+      polygon_points: polygon.flatMap((point) => [point.x, point.y]),
+    }));
+  };
 
   // Polygon drawing handlers
-  const handleMouseDown = e => {
-    if (!isDrawing || !image) return
+  const handleMouseDown = (e) => {
+    if (!isDrawing || !image) return;
 
-    const stage = e.target.getStage()
-    const pointerPosition = stage.getPointerPosition()
-    const imagePoint = getImagePoint(pointerPosition.x, pointerPosition.y)
+    const stage = e.target.getStage();
+    const pointerPosition = stage.getPointerPosition();
+    const imagePoint = getImagePoint(pointerPosition.x, pointerPosition.y);
 
-    if (drawingMode === 'polygon') {
+    if (drawingMode === "polygon") {
       setCurrentPolygon([
         ...currentPolygon,
-        { x: imagePoint.x, y: imagePoint.y }
-      ])
-    } else if (drawingMode === 'rectangle') {
-      setIsDrawingRectangle(true)
-      setRectangleStart(pointerPosition)
+        { x: imagePoint.x, y: imagePoint.y },
+      ]);
+    } else if (drawingMode === "rectangle") {
+      setIsDrawingRectangle(true);
+      setRectangleStart(pointerPosition);
       setCurrentRectangle({
         x: pointerPosition.x,
         y: pointerPosition.y,
         width: 0,
-        height: 0
-      })
+        height: 0,
+      });
     }
-  }
+  };
 
-  const handleMouseMove = e => {
-    if (!isDrawingRectangle || !rectangleStart || !image) return
+  const handleMouseMove = (e) => {
+    if (!isDrawingRectangle || !rectangleStart || !image) return;
 
-    const stage = e.target.getStage()
-    const pointerPosition = stage.getPointerPosition()
+    const stage = e.target.getStage();
+    const pointerPosition = stage.getPointerPosition();
 
     setCurrentRectangle({
       x: Math.min(rectangleStart.x, pointerPosition.x),
       y: Math.min(rectangleStart.y, pointerPosition.y),
       width: Math.abs(pointerPosition.x - rectangleStart.x),
-      height: Math.abs(pointerPosition.y - rectangleStart.y)
-    })
-  }
+      height: Math.abs(pointerPosition.y - rectangleStart.y),
+    });
+  };
 
   const handleMouseUp = () => {
     if (
@@ -278,129 +285,129 @@ const ROIConfiguration = () => {
       currentRectangle.height > 10
     ) {
       // Convert rectangle corners to image coordinates
-      const topLeft = getImagePoint(currentRectangle.x, currentRectangle.y)
+      const topLeft = getImagePoint(currentRectangle.x, currentRectangle.y);
       const topRight = getImagePoint(
         currentRectangle.x + currentRectangle.width,
-        currentRectangle.y
-      )
+        currentRectangle.y,
+      );
       const bottomRight = getImagePoint(
         currentRectangle.x + currentRectangle.width,
-        currentRectangle.y + currentRectangle.height
-      )
+        currentRectangle.y + currentRectangle.height,
+      );
       const bottomLeft = getImagePoint(
         currentRectangle.x,
-        currentRectangle.y + currentRectangle.height
-      )
+        currentRectangle.y + currentRectangle.height,
+      );
 
       const rectPoints = [
         { x: topLeft.x, y: topLeft.y },
         { x: topRight.x, y: topRight.y },
         { x: bottomRight.x, y: bottomRight.y },
-        { x: bottomLeft.x, y: bottomLeft.y }
-      ]
+        { x: bottomLeft.x, y: bottomLeft.y },
+      ];
 
-      setPolygons([...polygons, rectPoints])
-      setIsDrawingRectangle(false)
-      setCurrentRectangle(null)
-      setRectangleStart(null)
+      setPolygons([...polygons, rectPoints]);
+      setIsDrawingRectangle(false);
+      setCurrentRectangle(null);
+      setRectangleStart(null);
     }
-  }
+  };
 
   const completeCurrentPolygon = () => {
     if (currentPolygon.length >= 3) {
-      setPolygons([...polygons, currentPolygon])
-      setCurrentPolygon([])
+      setPolygons([...polygons, currentPolygon]);
+      setCurrentPolygon([]);
     } else {
-      toast.error('A polygon needs at least 3 points')
+      toast.error("A polygon needs at least 3 points");
     }
-  }
+  };
 
   // Fixed drag handler with proper coordinate conversion
   const handleDragMove = (e, polygonIndex, pointIndex) => {
-    const newPolygons = [...polygons]
-    const stagePoint = { x: e.target.x(), y: e.target.y() }
-    const imagePoint = getImagePoint(stagePoint.x, stagePoint.y)
+    const newPolygons = [...polygons];
+    const stagePoint = { x: e.target.x(), y: e.target.y() };
+    const imagePoint = getImagePoint(stagePoint.x, stagePoint.y);
 
     newPolygons[polygonIndex][pointIndex] = {
       x: imagePoint.x,
-      y: imagePoint.y
-    }
-    setPolygons(newPolygons)
-  }
+      y: imagePoint.y,
+    };
+    setPolygons(newPolygons);
+  };
 
-  const deletePolygon = index => {
-    const newPolygons = polygons.filter((_, i) => i !== index)
-    setPolygons(newPolygons)
-  }
+  const deletePolygon = (index) => {
+    const newPolygons = polygons.filter((_, i) => i !== index);
+    setPolygons(newPolygons);
+  };
 
   const deleteAllPolygons = () => {
-    setPolygons([])
-    setCurrentPolygon([])
-    setCurrentRectangle(null)
-    setIsDrawingRectangle(false)
-  }
+    setPolygons([]);
+    setCurrentPolygon([]);
+    setCurrentRectangle(null);
+    setIsDrawingRectangle(false);
+  };
 
   const handleTakeSnapshot = () => {
     if (!rtsp_url) {
-      toast.error('RTSP URL is missing. Cannot take a snapshot.')
-      return
+      toast.error("RTSP URL is missing. Cannot take a snapshot.");
+      return;
     }
 
-    console.log(rtsp_url)
+    console.log(rtsp_url);
     const connectionData = {
       rtsp_url,
-      username: '',
-      password: ''
-    }
+      username: "",
+      password: "",
+    };
     dispatch(
       getCameraSnapshot({
         tenantId,
         cameraId: cameraId ? parseInt(cameraId) : null,
         rtsp_url: rtsp_url,
-        username: '',
-        password: ''
-      })
+        username: "",
+        password: "",
+      }),
     )
       .unwrap()
-      .then(result => {
-        console.log(result.frame_url)
+      .then((result) => {
+        console.log(result.frame_url);
 
-        setSnapshotUrl(`${SNAPSHOT_DIR}/${result.frame_url}`)
-        toast.success('Frame retrieved successfully!')
-      })
-  }
+        setSnapshotUrl(`${SNAPSHOT_DIR}/${result.frame_url}`);
+        toast.success("Frame retrieved successfully!");
+      });
+  };
 
   const handleSaveRoi = async () => {
     if (!cameraId) {
-      toast.error('Please save the camera first before configuring ROIs.')
-      return
+      toast.error("Please save the camera first before configuring ROIs.");
+      return;
     }
     if (!roiName.trim()) {
-      toast.error(t('roi.roiNameRequired'))
-      setRoiNameError(t('roi.roiNameRequired'))
-      return
+      toast.error(t("roi.roiNameRequired"));
+      setRoiNameError(t("roi.roiNameRequired"));
+      return;
     }
     if (polygons.length === 0) {
-      toast.error(t('roi.polygonRequired'))
-      return
+      toast.error(t("roi.polygonRequired"));
+      return;
     }
 
     // Transform polygons to the new format
-    const transformedPolygons = transformPolygonsFormat(polygons)
+    const transformedPolygons = transformPolygonsFormat(polygons);
 
     const alertPriorityMap = {
-      [t('roi.high').toLowerCase()]: 'high',
-      [t('roi.medium').toLowerCase()]: 'medium',
-      [t('roi.low').toLowerCase()]: 'low',
-      high: 'high', // Fallback for direct English values
-      medium: 'medium',
-      low: 'low'
-    }
+      [t("roi.high").toLowerCase()]: "high",
+      [t("roi.medium").toLowerCase()]: "medium",
+      [t("roi.low").toLowerCase()]: "low",
+      high: "high", // Fallback for direct English values
+      medium: "medium",
+      low: "low",
+    };
 
     const priorityToSend =
-      alertPriorityMap[displayAlertPriority.toLowerCase()] || 'high' // Default to 'high' if not found
+      alertPriorityMap[displayAlertPriority.toLowerCase()] || "high"; // Default to 'high' if not found
 
-    const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone
+    const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
     const roiData = {
       name: roiName.trim(),
@@ -410,375 +417,406 @@ const ROIConfiguration = () => {
       detection_type: detectionType,
       detection_config: (() => {
         if (
-          detectionType === 'VEHICLE_QUEUE_DETECTION' ||
-          detectionType === 'PERSON_QUEUE_DETECTION'
+          detectionType === "VEHICLE_QUEUE_DETECTION" ||
+          detectionType === "PERSON_QUEUE_DETECTION"
         ) {
           return {
             queue_count_threshold: queueCountThreshold,
-            queue_dwell_time_seconds: queueDwellTimeSeconds
-          }
+            queue_dwell_time_seconds: queueDwellTimeSeconds,
+          };
         }
-        if (detectionType === 'VEHICLE_DWELL_TIME') {
+        if (detectionType === "VEHICLE_DWELL_TIME") {
           return {
-            dwell_time_seconds: dwellTimeSeconds
-          }
+            dwell_time_seconds: dwellTimeSeconds,
+          };
         }
-        if (detectionType === 'ATTENDANT_ABSENCE_ON_PUMP') {
+        if (detectionType === "ATTENDANT_ABSENCE_ON_PUMP") {
           return {
-            dwell_time_seconds: attendantAbsenceDwellTime
-          }
+            dwell_time_seconds: attendantAbsenceDwellTime,
+          };
         }
-        if (detectionType === 'ATTENDANT_CELLPHONE_DETECTION') {
+        if (detectionType === "ATTENDANT_CELLPHONE_DETECTION") {
           return {
-            dwell_time_seconds: dwellTimeSeconds
-          }
+            dwell_time_seconds: dwellTimeSeconds,
+          };
         }
-        if (detectionType === 'RESTRICTED_AREA_BREACH_DETECTION') {
+        if (detectionType === "RESTRICTED_AREA_BREACH_DETECTION") {
           return {
             targeted_hour_slots: convertTimeSlotsLocalToUTC(
               targetedHourSlots,
-              userTimeZone
-            )
-          }
+              userTimeZone,
+            ),
+          };
         }
-        if (detectionType === 'SUSPICIOUS_LOITERING') {
+        if (detectionType === "SUSPICIOUS_LOITERING") {
           return {
             // Commented out dwell time for suspicious loitering
             // dwell_time_seconds: dwellTimeSeconds,
             confidence_threshold: confidenceThreshold, // NEW: Added confidence threshold
             targeted_hour_slots: convertTimeSlotsLocalToUTC(
               targetedHourSlots,
-              userTimeZone
-            )
-          }
+              userTimeZone,
+            ),
+          };
         }
-        return {}
+        if (detectionType === "CROWD_SURGE") {
+          return {
+            queue_count_threshold: crowdSurgeQueueThreshold,
+            dwell_time_seconds: crowdSurgeDwellTime,
+          };
+        }
+        if (detectionType === "PPE_VIOLATION") {
+          return {
+            dwell_time_seconds: ppeDwellTime,
+          };
+        }
+        if (detectionType === "FIRE_SMOKE_DETECTION") {
+          return {
+            dwell_time_seconds: fireSmokeDwellTime,
+          };
+        }
+        return {};
       })(),
       notification_config: {
         whatsapp: {
           enabled: whatsappNotification,
-          recipients: whatsappRecipients.map(r => ({
+          recipients: whatsappRecipients.map((r) => ({
             number: r.number,
-            name: r.name
-          }))
+            name: r.name,
+          })),
         },
         email: {
           enabled: emailNotification,
-          recipients: emailRecipients.map(r => ({
+          recipients: emailRecipients.map((r) => ({
             email: r.email,
-            name: r.name
-          }))
+            name: r.name,
+          })),
         },
         call: {
           enabled: callNotification,
-          recipients: callRecipients.map(r => ({
+          recipients: callRecipients.map((r) => ({
             number: r.number,
-            name: r.name
-          }))
-        }
+            name: r.name,
+          })),
+        },
       },
-      status: roiToEdit ? status : 'active',
+      status: roiToEdit ? status : "active",
       meta: {},
-      camera_id: cameraId
-    }
+      camera_id: cameraId,
+    };
 
-    console.log('handleSaveRoi called. currentRoiId:', currentRoiId)
-    console.log('Transformed polygons data:', transformedPolygons)
+    console.log("handleSaveRoi called. currentRoiId:", currentRoiId);
+    console.log("Transformed polygons data:", transformedPolygons);
 
     if (currentRoiId) {
       const res = await dispatch(
-        updateRoi({ tenantId, cameraId, roiId: currentRoiId, roiData })
-      )
-      console.log('roi edit response', res)
+        updateRoi({ tenantId, cameraId, roiId: currentRoiId, roiData }),
+      );
+      console.log("roi edit response", res);
 
-      if (res.meta.requestStatus === 'fulfilled') {
-        toast.success('ROI updated successfully!')
-        await dispatch(getRois({ tenantId, cameraId })) // Refresh ROIs after update
-        navigate(`/add-camera?id=${cameraId}`)
+      if (res.meta.requestStatus === "fulfilled") {
+        toast.success("ROI updated successfully!");
+        await dispatch(getRois({ tenantId, cameraId })); // Refresh ROIs after update
+        navigate(`/add-camera?id=${cameraId}`);
       } else {
         // toast.error(res.payload || 'Failed to update ROI.')
       }
     } else {
-      const res = await dispatch(createRoi({ tenantId, cameraId, roiData }))
-      if (res.meta.requestStatus === 'fulfilled') {
-        toast.success('ROI created successfully!')
-        resetForm()
-        setCurrentRoiId(null)
-        await dispatch(getRois({ tenantId, cameraId })) // Refresh ROIs after creation
-        navigate(`/add-camera?id=${cameraId}`)
+      const res = await dispatch(createRoi({ tenantId, cameraId, roiData }));
+      if (res.meta.requestStatus === "fulfilled") {
+        toast.success("ROI created successfully!");
+        resetForm();
+        setCurrentRoiId(null);
+        await dispatch(getRois({ tenantId, cameraId })); // Refresh ROIs after creation
+        navigate(`/add-camera?id=${cameraId}`);
       } else {
         // toast.error(res.payload || 'Failed to create ROI.')
       }
     }
-  }
+  };
 
   // UPDATED: Handle ROI editing - parse both old and new formats
-  const handleEditRoi = roi => {
-    console.log('Editing ROI:', roi)
-    setCurrentRoiId(roi.id)
-    setRoiName(roi.name)
-    setDetectionType(roi.detection_type)
+  const handleEditRoi = (roi) => {
+    console.log("Editing ROI:", roi);
+    setCurrentRoiId(roi.id);
+    setRoiName(roi.name);
+    setDetectionType(roi.detection_type);
     // Set the internal alertPriority state to the English value from the backend
-    setAlertPriority(roi.alert_priority)
+    setAlertPriority(roi.alert_priority);
     // Set the displayAlertPriority to the translated value
-    setDisplayAlertPriority(t(`roi.${roi.alert_priority.toLowerCase()}`))
+    setDisplayAlertPriority(t(`roi.${roi.alert_priority.toLowerCase()}`));
 
     // Set the snapshot URL from the ROI being edited
-    setSnapshotUrl(`${roi.frame_url}`)
+    setSnapshotUrl(`${roi.frame_url}`);
 
     // Parse the polygons
     try {
-      const parsedPolygons = roi.polygons
+      const parsedPolygons = roi.polygons;
 
-      console.log('Parsed ROI polygons for editing:', parsedPolygons)
+      console.log("Parsed ROI polygons for editing:", parsedPolygons);
 
       if (parsedPolygons && Array.isArray(parsedPolygons)) {
-        const roiPolygons = []
+        const roiPolygons = [];
 
         if (
           parsedPolygons.length > 0 &&
-          typeof parsedPolygons[0] === 'object' &&
-          'polygon_points' in parsedPolygons[0]
+          typeof parsedPolygons[0] === "object" &&
+          "polygon_points" in parsedPolygons[0]
         ) {
-          parsedPolygons.forEach(polygonObj => {
-            const polygonArray = polygonObj.polygon_points
+          parsedPolygons.forEach((polygonObj) => {
+            const polygonArray = polygonObj.polygon_points;
             if (
               polygonArray &&
               Array.isArray(polygonArray) &&
               polygonArray.length >= 6
             ) {
-              const polygonPoints = []
+              const polygonPoints = [];
               for (let i = 0; i < polygonArray.length; i += 2) {
                 if (i + 1 < polygonArray.length) {
                   polygonPoints.push({
                     x: polygonArray[i],
-                    y: polygonArray[i + 1]
-                  })
+                    y: polygonArray[i + 1],
+                  });
                 }
               }
               if (polygonPoints.length >= 3) {
-                roiPolygons.push(polygonPoints)
+                roiPolygons.push(polygonPoints);
               }
             }
-          })
+          });
         } else {
-          parsedPolygons.forEach(polygonArray => {
+          parsedPolygons.forEach((polygonArray) => {
             if (
               polygonArray &&
               Array.isArray(polygonArray) &&
               polygonArray.length >= 6
             ) {
-              const polygonPoints = []
+              const polygonPoints = [];
               for (let i = 0; i < polygonArray.length; i += 2) {
                 if (i + 1 < polygonArray.length) {
                   polygonPoints.push({
                     x: polygonArray[i],
-                    y: polygonArray[i + 1]
-                  })
+                    y: polygonArray[i + 1],
+                  });
                 }
               }
               if (polygonPoints.length >= 3) {
-                roiPolygons.push(polygonPoints)
+                roiPolygons.push(polygonPoints);
               }
             }
-          })
+          });
         }
 
-        console.log('Converted ROI polygons for editing:', roiPolygons)
-        setPolygons(roiPolygons)
+        console.log("Converted ROI polygons for editing:", roiPolygons);
+        setPolygons(roiPolygons);
       } else {
-        console.log('No valid polygons found, setting empty array')
-        setPolygons([])
+        console.log("No valid polygons found, setting empty array");
+        setPolygons([]);
       }
     } catch (error) {
-      console.error('Error parsing polygons:', error)
-      setPolygons([])
+      console.error("Error parsing polygons:", error);
+      setPolygons([]);
     }
 
     // Populate notification states
-    setEmailNotification(roi.notification_config?.email?.enabled || false)
+    setEmailNotification(roi.notification_config?.email?.enabled || false);
     setEmailRecipients(
-      roi.notification_config?.email?.recipients?.map(r => ({
+      roi.notification_config?.email?.recipients?.map((r) => ({
         email: r.email,
-        name: r.name || ''
-      })) || []
-    )
-    setWhatsappNotification(roi.notification_config?.whatsapp?.enabled || false)
+        name: r.name || "",
+      })) || [],
+    );
+    setWhatsappNotification(
+      roi.notification_config?.whatsapp?.enabled || false,
+    );
     setWhatsappRecipients(
-      roi.notification_config?.whatsapp?.recipients?.map(r => ({
+      roi.notification_config?.whatsapp?.recipients?.map((r) => ({
         number: r.number,
-        name: r.name || ''
-      })) || []
-    )
-    setCallNotification(roi.notification_config?.call?.enabled || false)
+        name: r.name || "",
+      })) || [],
+    );
+    setCallNotification(roi.notification_config?.call?.enabled || false);
     setCallRecipients(
-      roi.notification_config?.call?.recipients?.map(r => ({
+      roi.notification_config?.call?.recipients?.map((r) => ({
         number: r.number,
-        name: r.name || ''
-      })) || []
-    )
+        name: r.name || "",
+      })) || [],
+    );
 
     // Populate detection sensitivity states based on detection type
     if (
-      roi.detection_type === 'VEHICLE_QUEUE_DETECTION' ||
-      roi.detection_type === 'PERSON_QUEUE_DETECTION'
+      roi.detection_type === "VEHICLE_QUEUE_DETECTION" ||
+      roi.detection_type === "PERSON_QUEUE_DETECTION"
     ) {
-      setQueueCountThreshold(roi.detection_config?.queue_count_threshold || 1)
+      setQueueCountThreshold(roi.detection_config?.queue_count_threshold || 1);
       setQueueDwellTimeSeconds(
-        roi.detection_config?.queue_dwell_time_seconds || 8
-      )
-    } else if (roi.detection_type === 'VEHICLE_DWELL_TIME') {
-      setDwellTimeSeconds(roi.detection_config?.dwell_time_seconds || 15)
-    } else if (roi.detection_type === 'ATTENDANT_ABSENCE_ON_PUMP') {
+        roi.detection_config?.queue_dwell_time_seconds || 8,
+      );
+    } else if (roi.detection_type === "VEHICLE_DWELL_TIME") {
+      setDwellTimeSeconds(roi.detection_config?.dwell_time_seconds || 15);
+    } else if (roi.detection_type === "ATTENDANT_ABSENCE_ON_PUMP") {
       setAttendantAbsenceDwellTime(
-        roi.detection_config?.dwell_time_seconds || 6
-      )
-    } else if (roi.detection_type === 'ATTENDANT_CELLPHONE_DETECTION') {
-      setDwellTimeSeconds(roi.detection_config?.dwell_time_seconds || 15)
-    } else if (roi.detection_type === 'RESTRICTED_AREA_BREACH_DETECTION') {
-      const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone
+        roi.detection_config?.dwell_time_seconds || 6,
+      );
+    } else if (roi.detection_type === "ATTENDANT_CELLPHONE_DETECTION") {
+      setDwellTimeSeconds(roi.detection_config?.dwell_time_seconds || 15);
+    } else if (roi.detection_type === "RESTRICTED_AREA_BREACH_DETECTION") {
+      const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
       const localTimeSlots = convertTimeSlotsUTCToLocal(
         roi.detection_config?.targeted_hour_slots,
-        userTimeZone
-      )
-      setTargetedHourSlots(localTimeSlots || [])
-    } else if (roi.detection_type === 'SUSPICIOUS_LOITERING') {
+        userTimeZone,
+      );
+      setTargetedHourSlots(localTimeSlots || []);
+    } else if (roi.detection_type === "SUSPICIOUS_LOITERING") {
       // Set confidence threshold for suspicious loitering (default 40)
-      setConfidenceThreshold(roi.detection_config?.confidence_threshold || 40)
+      setConfidenceThreshold(roi.detection_config?.confidence_threshold || 40);
       // Commented out dwell time for suspicious loitering
       // setDwellTimeSeconds(roi.detection_config?.dwell_time_seconds || 15)
 
-      const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone
+      const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
       const localTimeSlots = convertTimeSlotsUTCToLocal(
         roi.detection_config?.targeted_hour_slots,
-        userTimeZone
-      )
-      setTargetedHourSlots(localTimeSlots || [])
+        userTimeZone,
+      );
+      setTargetedHourSlots(localTimeSlots || []);
+    } else if (roi.detection_type === "CROWD_SURGE") {
+      setCrowdSurgeQueueThreshold(
+        roi.detection_config?.queue_count_threshold || 10,
+      );
+      setCrowdSurgeDwellTime(roi.detection_config?.dwell_time_seconds || 30);
+    } else if (roi.detection_type === "PPE_VIOLATION") {
+      setPpeDwellTime(roi.detection_config?.dwell_time_seconds || 5);
+    } else if (roi.detection_type === "FIRE_SMOKE_DETECTION") {
+      setFireSmokeDwellTime(roi.detection_config?.dwell_time_seconds || 1);
     }
 
     // Enable drawing mode for adding new polygons
-    setIsDrawing(true)
-  }
+    setIsDrawing(true);
+  };
 
-  const handleDeleteRoi = roiId => {
-    dispatch(deleteRoi({ tenantId, cameraId, roiId }))
-    toast.success('ROI deleted successfully!')
-  }
+  const handleDeleteRoi = (roiId) => {
+    dispatch(deleteRoi({ tenantId, cameraId, roiId }));
+    toast.success("ROI deleted successfully!");
+  };
 
   const resetForm = () => {
-    setRoiName('')
-    setDetectionType('ALL_DETECTION')
-    setAlertPriority('High') // Reset to English 'High'
-    setDisplayAlertPriority(t('roi.high')) // Reset display to translated 'High'
+    setRoiName("");
+    setDetectionType("ALL_DETECTION");
+    setAlertPriority("High"); // Reset to English 'High'
+    setDisplayAlertPriority(t("roi.high")); // Reset display to translated 'High'
     if (addnew) {
-      setPolygons([])
+      setPolygons([]);
     }
-    setCurrentPolygon([])
-    setIsDrawing(false)
-    setIsDrawingRectangle(false)
-    setCurrentRectangle(null)
-    setDrawingMode('polygon')
-    setEmailNotification(false)
-    setCallNotification(false)
-    setWhatsappNotification(false)
-    setEmailRecipients([])
-    setCallRecipients([])
-    setWhatsappRecipients([])
-    setWhatsappNumber('')
-    setQueueCountThreshold(1)
-    setQueueDwellTimeSeconds(40)
-    setDwellTimeSeconds(15)
-    setAttendantAbsenceDwellTime(6)
-    setConfidenceThreshold(40) // Reset confidence threshold to default 40
-    setTargetedHourSlots([])
-    setNewTimeSlot(['', ''])
-    setCurrentRoiId(null)
-  }
+    setCurrentPolygon([]);
+    setIsDrawing(false);
+    setIsDrawingRectangle(false);
+    setCurrentRectangle(null);
+    setDrawingMode("polygon");
+    setEmailNotification(false);
+    setCallNotification(false);
+    setWhatsappNotification(false);
+    setEmailRecipients([]);
+    setCallRecipients([]);
+    setWhatsappRecipients([]);
+    setWhatsappNumber("");
+    setQueueCountThreshold(1);
+    setQueueDwellTimeSeconds(40);
+    setDwellTimeSeconds(15);
+    setAttendantAbsenceDwellTime(6);
+    setConfidenceThreshold(40); // Reset confidence threshold to default 40
+    setTargetedHourSlots([]);
+    setNewTimeSlot(["", ""]);
+    setCurrentRoiId(null);
+    setCrowdSurgeQueueThreshold(10);
+    setCrowdSurgeDwellTime(30);
+    setPpeDwellTime(5);
+    setFireSmokeDwellTime(1);
+  };
 
   // Function to handle image error in Konva
   const handleImageError = () => {
-    toast.error('Failed to display Frame image')
-  }
+    toast.error("Failed to display Frame image");
+  };
 
   // Function to parse ROI polygons for display - FIXED VERSION
-  const parseRoiPolygons = roi => {
+  const parseRoiPolygons = (roi) => {
     try {
-      const parsed = roi.polygons
+      const parsed = roi.polygons;
 
-      console.log('parseRoiPolygons - parsed:', parsed)
+      console.log("parseRoiPolygons - parsed:", parsed);
 
       if (Array.isArray(parsed) && parsed.length > 0) {
-        if (typeof parsed[0] === 'object' && 'polygon_points' in parsed[0]) {
-          const allRoiPolygons = []
-          parsed.forEach(polygonObj => {
-            const polygonArray = polygonObj.polygon_points
+        if (typeof parsed[0] === "object" && "polygon_points" in parsed[0]) {
+          const allRoiPolygons = [];
+          parsed.forEach((polygonObj) => {
+            const polygonArray = polygonObj.polygon_points;
             if (
               polygonArray &&
               Array.isArray(polygonArray) &&
               polygonArray.length >= 6
             ) {
-              const polygonPoints = []
+              const polygonPoints = [];
               for (let i = 0; i < polygonArray.length; i += 2) {
                 if (i + 1 < polygonArray.length) {
                   polygonPoints.push({
                     x: polygonArray[i],
-                    y: polygonArray[i + 1]
-                  })
+                    y: polygonArray[i + 1],
+                  });
                 }
               }
               if (polygonPoints.length >= 3) {
-                allRoiPolygons.push(polygonPoints)
+                allRoiPolygons.push(polygonPoints);
               }
             }
-          })
-          return allRoiPolygons
+          });
+          return allRoiPolygons;
         } else {
-          const allRoiPolygons = []
-          parsed.forEach(polygonArray => {
+          const allRoiPolygons = [];
+          parsed.forEach((polygonArray) => {
             if (
               polygonArray &&
               Array.isArray(polygonArray) &&
               polygonArray.length >= 6
             ) {
-              const polygonPoints = []
+              const polygonPoints = [];
               for (let i = 0; i < polygonArray.length; i += 2) {
                 if (i + 1 < polygonArray.length) {
                   polygonPoints.push({
                     x: polygonArray[i],
-                    y: polygonArray[i + 1]
-                  })
+                    y: polygonArray[i + 1],
+                  });
                 }
               }
               if (polygonPoints.length >= 3) {
-                allRoiPolygons.push(polygonPoints)
+                allRoiPolygons.push(polygonPoints);
               }
             }
-          })
-          return allRoiPolygons
+          });
+          return allRoiPolygons;
         }
       }
 
-      return []
+      return [];
     } catch (error) {
-      console.error('Error parsing ROI polygons:', error)
-      return []
+      console.error("Error parsing ROI polygons:", error);
+      return [];
     }
-  }
+  };
 
   // Render polygons with proper coordinate conversion
   const renderPolygons = () => {
     return polygons.map((polygon, polyIndex) => {
-      const stagePolygon = getStagePolygon(polygon)
-      const flatPoints = stagePolygon.flatMap(p => [p.x, p.y])
+      const stagePolygon = getStagePolygon(polygon);
+      const flatPoints = stagePolygon.flatMap((p) => [p.x, p.y]);
 
       return (
         <React.Fragment key={polyIndex}>
           <Line
             points={flatPoints}
-            stroke='#10b981'
+            stroke="#10b981"
             strokeWidth={3}
             closed={true}
-            fill='rgba(16, 185, 129, 0.2)'
+            fill="rgba(16, 185, 129, 0.2)"
           />
           {stagePolygon.map((point, pointIndex) => (
             <Circle
@@ -786,83 +824,85 @@ const ROIConfiguration = () => {
               x={point.x}
               y={point.y}
               radius={6}
-              fill='#10b981'
-              stroke='white'
+              fill="#10b981"
+              stroke="white"
               strokeWidth={2}
               draggable
-              onDragMove={e => handleDragMove(e, polyIndex, pointIndex)}
+              onDragMove={(e) => handleDragMove(e, polyIndex, pointIndex)}
             />
           ))}
         </React.Fragment>
-      )
-    })
-  }
+      );
+    });
+  };
 
   // Render current polygon being drawn
   const renderCurrentPolygon = () => {
-    if (currentPolygon.length === 0) return null
+    if (currentPolygon.length === 0) return null;
 
-    const stagePolygon = getStagePolygon(currentPolygon)
-    const flatPoints = stagePolygon.flatMap(p => [p.x, p.y])
+    const stagePolygon = getStagePolygon(currentPolygon);
+    const flatPoints = stagePolygon.flatMap((p) => [p.x, p.y]);
 
     return (
       <>
-        <Line points={flatPoints} stroke='#3b82f6' strokeWidth={2} />
+        <Line points={flatPoints} stroke="#3b82f6" strokeWidth={2} />
         {stagePolygon.map((point, index) => (
           <Circle
             key={index}
             x={point.x}
             y={point.y}
             radius={6}
-            fill='#3b82f6'
-            stroke='white'
+            fill="#3b82f6"
+            stroke="white"
             strokeWidth={2}
           />
         ))}
       </>
-    )
-  }
+    );
+  };
 
   // Debug function to log coordinates
   const debugCoordinates = () => {
-    console.log('Image dimensions:', imageDimensions)
-    console.log('Stage dimensions:', stageDimensions)
-    console.log('Scale factors:', getScaleFactors())
-    console.log('Polygons (image coordinates):', polygons)
+    console.log("Image dimensions:", imageDimensions);
+    console.log("Stage dimensions:", stageDimensions);
+    console.log("Scale factors:", getScaleFactors());
+    console.log("Polygons (image coordinates):", polygons);
     console.log(
-      'Polygons (stage coordinates):',
-      polygons.map(poly => getStagePolygon(poly))
-    )
-  }
+      "Polygons (stage coordinates):",
+      polygons.map((poly) => getStagePolygon(poly)),
+    );
+  };
 
   return (
     <div className={`p-6 min-h-screen`}>
       {/* Header */}
-      <div className='flex justify-between items-center mb-6'>
+      <div className="flex justify-between items-center mb-6">
         <div>
-          <h1 className='text-2xl font-bold'>
-            {t('roi.cameraConfigurationSettings')}
+          <h1 className="text-2xl font-bold">
+            {t("roi.cameraConfigurationSettings")}
           </h1>
-          <p className='text-sm'>
-            {t('roi.configureCameraConnectionSettings')}
+          <p className="text-sm">
+            {t("roi.configureCameraConnectionSettings")}
           </p>
         </div>
         <button
           onClick={() => navigate(`/add-camera?id=${cameraId}`)}
-          className='bg-[#3885CC] hover:bg-blue-600 text-white font-semibold py-2 px-6 rounded-full flex items-center gap-2 transition-colors'
+          className="bg-[#3885CC] hover:bg-blue-600 text-white font-semibold py-2 px-6 rounded-full flex items-center gap-2 transition-colors"
         >
-          <IoArrowBackCircle size={20} className='inline-block' />
-          <span>{t('roi.back')}</span>
+          <IoArrowBackCircle size={20} className="inline-block" />
+          <span>{t("roi.back")}</span>
         </button>
       </div>
 
       {/* ROI Setting Section */}
-      <div className='bg-[#30313F] rounded-lg p-6 mb-6'>
-        <h2 className='text-xl text-white font-bold mb-4'>{t('roi.roiSetting')}</h2>
+      <div className="bg-[#30313F] rounded-lg p-6 mb-6">
+        <h2 className="text-xl text-white font-bold mb-4">
+          {t("roi.roiSetting")}
+        </h2>
 
-        <div className='relative'>
+        <div className="relative">
           {/* Camera Feed */}
-          <div className='w-full bg-black rounded-lg  relative '>
+          <div className="w-full bg-black rounded-lg  relative ">
             <Stage
               width={stageDimensions.width}
               height={stageDimensions.height}
@@ -870,7 +910,7 @@ const ROIConfiguration = () => {
               onMouseMove={handleMouseMove}
               onMouseUp={handleMouseUp}
               ref={stageRef}
-              className='w-full h-full'
+              className="w-full h-full"
             >
               <Layer>
                 <KonvaImage
@@ -891,63 +931,66 @@ const ROIConfiguration = () => {
                     y={currentRectangle.y}
                     width={currentRectangle.width}
                     height={currentRectangle.height}
-                    stroke='#3b82f6'
+                    stroke="#3b82f6"
                     strokeWidth={2}
                     dash={[5, 5]}
-                    fill='rgba(59, 130, 246, 0.2)'
+                    fill="rgba(59, 130, 246, 0.2)"
                   />
                 )}
 
                 {/* Display existing ROIs from backend - FIXED VERSION */}
-                {rois.map(roi => {
-                  if (roi.id === currentRoiId) return null
+                {rois.map((roi) => {
+                  if (roi.id === currentRoiId) return null;
 
-                  const roiPolygons = parseRoiPolygons(roi)
-                  console.log('ROI polygons for display:', roiPolygons)
+                  const roiPolygons = parseRoiPolygons(roi);
+                  console.log("ROI polygons for display:", roiPolygons);
 
                   if (
                     !roiPolygons ||
                     !Array.isArray(roiPolygons) ||
                     roiPolygons.length === 0
                   ) {
-                    console.log('Skipping ROI due to invalid polygons:', roi.id)
-                    return null
+                    console.log(
+                      "Skipping ROI due to invalid polygons:",
+                      roi.id,
+                    );
+                    return null;
                   }
 
                   return roiPolygons.map((polygon, polyIndex) => {
                     if (polygon.length < 3) {
                       console.log(
-                        `Skipping polygon ${polyIndex} for ROI ${roi.id} due to insufficient points.`
-                      )
-                      return null
+                        `Skipping polygon ${polyIndex} for ROI ${roi.id} due to insufficient points.`,
+                      );
+                      return null;
                     }
                     try {
-                      const stagePoints = getStagePolygon(polygon)
-                      const flatPoints = stagePoints.flatMap(p => [p.x, p.y])
+                      const stagePoints = getStagePolygon(polygon);
+                      const flatPoints = stagePoints.flatMap((p) => [p.x, p.y]);
 
                       return (
                         <Line
                           key={`${roi.id}-${polyIndex}`}
                           points={flatPoints}
-                          stroke={addnew ? 'rgba(255, 255, 0, 0.5)' : 'yellow'}
+                          stroke={addnew ? "rgba(255, 255, 0, 0.5)" : "yellow"}
                           strokeWidth={addnew ? 1 : 3}
                           closed={true}
                           fill={
                             addnew
-                              ? 'rgba(255, 255, 0, 0.1)'
-                              : 'rgba(255, 255, 0, 0.2)'
+                              ? "rgba(255, 255, 0, 0.1)"
+                              : "rgba(255, 255, 0, 0.2)"
                           }
                         />
-                      )
+                      );
                     } catch (error) {
                       console.error(
                         `Error rendering polygon ${polyIndex} for ROI:`,
                         roi.id,
-                        error
-                      )
-                      return null
+                        error,
+                      );
+                      return null;
                     }
-                  })
+                  });
                 })}
               </Layer>
             </Stage>
@@ -983,85 +1026,85 @@ const ROIConfiguration = () => {
             </div> */}
 
             {/* Polygon count display */}
-            <div className='absolute top-4 right-4 bg-gray-800 bg-opacity-80 rounded-lg p-3'>
-              <div className='text-sm text-gray-300'>
-                {t('roi.areas')}: {polygons.length}
+            <div className="absolute top-4 right-4 bg-gray-800 bg-opacity-80 rounded-lg p-3">
+              <div className="text-sm text-gray-300">
+                {t("roi.areas")}: {polygons.length}
               </div>
-              <div className='text-sm text-gray-300'>
-                {t('roi.mode')}: {drawingMode}
+              <div className="text-sm text-gray-300">
+                {t("roi.mode")}: {drawingMode}
               </div>
             </div>
           </div>
         </div>
 
         {/* ROI Configuration Fields */}
-        <div className='flex flex-col mt-3'>
+        <div className="flex flex-col mt-3">
           {/* Control Buttons */}
-          <div className='flex gap-3 w-full justify-between'>
-            <div className='flex gap-3'>
+          <div className="flex gap-3 w-full justify-between">
+            <div className="flex gap-3">
               <button
                 onClick={handleTakeSnapshot}
                 disabled={isSnapshotLoading}
-                className='bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-full flex items-center gap-2 transition-colors disabled:opacity-50'
+                className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-full flex items-center gap-2 transition-colors disabled:opacity-50"
               >
                 <IoCamera size={20} />
                 <span>
-                  {isSnapshotLoading ? t('roi.loading') : t('roi.captureFrame')}
+                  {isSnapshotLoading ? t("roi.loading") : t("roi.captureFrame")}
                 </span>
               </button>
 
-              {drawingMode === 'polygon' && currentPolygon.length > 0 && (
+              {drawingMode === "polygon" && currentPolygon.length > 0 && (
                 <button
                   onClick={completeCurrentPolygon}
-                  className='bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-full flex items-center gap-2 transition-colors'
+                  className="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-full flex items-center gap-2 transition-colors"
                 >
                   <IoScanCircle size={20} />
-                  <span>{t('roi.completePolygon')}</span>
+                  <span>{t("roi.completePolygon")}</span>
                 </button>
               )}
             </div>
 
-            <div className='flex gap-3'>
+            <div className="flex gap-3">
               <button
                 onClick={deleteAllPolygons}
-                className='bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-full flex items-center gap-2 transition-colors'
+                className="bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-full flex items-center gap-2 transition-colors"
               >
                 <IoTrash size={20} />
-                <span>{t('roi.clearAll')}</span>
+                <span>{t("roi.clearAll")}</span>
               </button>
 
               <button
                 onClick={() => {
-                  deleteAllPolygons()
-                  setIsDrawing(true)
+                  deleteAllPolygons();
+                  setIsDrawing(true);
                 }}
-                className='bg-[#3885CC] hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-full flex items-center gap-2 transition-colors'
+                className="bg-[#3885CC] hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-full flex items-center gap-2 transition-colors"
               >
                 <IoScanCircle size={20} />
-                <span>{t('roi.drawNewArea')}</span>
+                <span>{t("roi.drawNewArea")}</span>
               </button>
             </div>
           </div>
 
           {/* Polygon management */}
           {polygons.length > 0 && (
-            <div className='mt-4'>
-              <h3 className='text-lg text-white font-semibold mb-2'>
-                {t('roi.drawnAreas')}
+            <div className="mt-4">
+              <h3 className="text-lg text-white font-semibold mb-2">
+                {t("roi.drawnAreas")}
               </h3>
-              <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2'>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
                 {polygons.map((polygon, index) => (
                   <div
                     key={index}
-                    className='bg-gray-700 rounded p-2 flex justify-between items-center'
+                    className="bg-gray-700 rounded p-2 flex justify-between items-center"
                   >
-                    <span className='text-sm text-white'>
-                      {t('roi.area')} {index + 1} ({polygon.length}{' '}
-                      {t('roi.points')})
+                    <span className="text-sm text-white">
+                      {t("roi.area")} {index + 1} ({polygon.length}{" "}
+                      {t("roi.points")})
                     </span>
                     <button
                       onClick={() => deletePolygon(index)}
-                      className='text-red-400 hover:text-red-600'
+                      className="text-red-400 hover:text-red-600"
                     >
                       <IoTrash size={16} />
                     </button>
@@ -1072,84 +1115,77 @@ const ROIConfiguration = () => {
           )}
 
           {rois.length > 0 && (
-            <div className='mt-6'>
-              <h3 className='text-lg font-bold mb-3'>
-                {t('roi.configuredRois')}
+            <div className="mt-6">
+              <h3 className="text-lg text-white font-bold mb-3">
+                {t("roi.configuredRois")}
               </h3>
             </div>
           )}
 
-          <div className='mt-3 space-y-4'>
+          <div className="mt-3 space-y-4">
             <div>
-              <label className='block text-sm text-gray-400 mb-2'>
-                {t('roi.roiName')}*
+              <label className="block text-sm text-gray-400 mb-2">
+                {t("roi.roiName")}*
               </label>
               <input
-                type='text'
+                type="text"
                 value={roiName}
-                onChange={e => {
-                  setRoiName(e.target.value)
+                onChange={(e) => {
+                  setRoiName(e.target.value);
                   if (e.target.value.trim()) {
-                    setRoiNameError('')
+                    setRoiNameError("");
                   }
                 }}
-                placeholder={t('roi.roiNamePlaceholder')}
+                placeholder={t("roi.roiNamePlaceholder")}
                 className={`w-full bg-gray-700 border rounded-lg py-2 px-4 text-white placeholder-gray-500 focus:outline-none transition-colors ${
                   roiNameError
-                    ? 'border-red-500'
-                    : 'border-gray-600 focus:border-blue-500'
+                    ? "border-red-500"
+                    : "border-gray-600 focus:border-blue-500"
                 }`}
               />
               {roiNameError && (
-                <p className='text-red-500 text-xs mt-1'>{roiNameError}</p>
+                <p className="text-red-500 text-xs mt-1">{roiNameError}</p>
               )}
             </div>
 
-            <div className='grid grid-cols-2 gap-4'>
+            <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className='block text-sm mb-2'>
-                  {t('roi.detectionType')}
+                <label className="block text-gray-400 text-sm mb-2">
+                  {t("roi.detectionType")}
                 </label>
                 <select
                   value={detectionType}
-                  onChange={e => setDetectionType(e.target.value)}
-                  className='w-full bg-gray-700 border border-gray-600 rounded-lg py-2 px-4 text-white focus:outline-none focus:border-blue-500 transition-colors appearance-none'
+                  onChange={(e) => setDetectionType(e.target.value)}
+                  className="w-full bg-gray-700 border border-gray-600 rounded-lg py-2 px-4 text-white focus:outline-none focus:border-blue-500 transition-colors appearance-none"
                 >
-                  <option value='VEHICLE_QUEUE_DETECTION'>
+                  {/* <option value='VEHICLE_QUEUE_DETECTION'>
                     {t('roi.vehicleQueueDetection')}
+                  </option> */}
+                  <option value="PERSON_QUEUE_DETECTION">
+                    {t("roi.personQueueDetection")}
                   </option>
-                  <option value='PERSON_QUEUE_DETECTION'>
-                    {t('roi.personQueueDetection')}
+                  <option value="CROWD_SURGE">{t("roi.crowdSurge")}</option>
+                  <option value="RESTRICTED_AREA_BREACH_DETECTION">
+                    {t("roi.restrictedAreaBreachDetection")}
                   </option>
-                  <option value='VEHICLE_DWELL_TIME'>
-                    {t('roi.vehicleDwellTime')}
-                  </option>
-                  <option value='ATTENDANT_ABSENCE_ON_PUMP'>
-                    {t('roi.attendantAbsenceOnPump')}
-                  </option>
-                  <option value='ATTENDANT_CELLPHONE_DETECTION'>
-                    {t('roi.attendantCellphoneDetection')}
-                  </option>
-                  <option value='RESTRICTED_AREA_BREACH_DETECTION'>
-                    {t('roi.restrictedAreaBreachDetection')}
-                  </option>
-                  <option value='SUSPICIOUS_LOITERING'>
-                    {t('roi.suspiciousLoitering')}
+                  <option value="PPE_VIOLATION">{t("roi.PPEViolation")}</option>
+                  <option value="FIRE_SMOKE_DETECTION">
+                    {t("roi.FireAndSmokeDetection")}
                   </option>
                 </select>
               </div>
               <div>
-                <label className='block text-sm text-gray-400 mb-2'>
-                  {t('roi.alertPriority')}
+                <label className="block text-sm text-gray-400 mb-2">
+                  {t("roi.alertPriority")}
                 </label>
                 <select
                   value={displayAlertPriority}
-                  onChange={e => setDisplayAlertPriority(e.target.value)}
-                  className='w-full bg-gray-700 border border-gray-600 rounded-lg py-2 px-4 text-white focus:outline-none focus:border-blue-500 transition-colors appearance-none'
+                  onChange={(e) => setDisplayAlertPriority(e.target.value)}
+                  className="w-full bg-gray-700 border border-gray-600 rounded-lg py-2 px-4 text-white focus:outline-none focus:border-blue-500 transition-colors appearance-none"
                 >
-                  <option value={t('roi.high')}>{t('roi.high')}</option>
-                  <option value={t('roi.medium')}>{t('roi.medium')}</option>
-                  <option value={t('roi.low')}>{t('roi.low')}</option>
+                  <option value={t("roi.high")}>{t("roi.high")}</option>
+                  <option value={t("roi.medium")}>{t("roi.medium")}</option>
+                  <option value={t("roi.low")}>{t("roi.low")}</option>
                 </select>
               </div>
             </div>
@@ -1158,161 +1194,237 @@ const ROIConfiguration = () => {
       </div>
 
       {/* Detection Configuration Section */}
-      <div className='bg-[#30313F] rounded-lg p-6 mb-6'>
-        <h2 className='text-xl text-white font-bold mb-4'>
-          {t('roi.detectionConfiguration')}
+      <div className="bg-[#30313F] rounded-lg p-6 mb-6">
+        <h2 className="text-xl text-white font-bold mb-4">
+          {t("roi.detectionConfiguration")}
         </h2>
-        <p className='text-sm text-gray-400 mb-6'>
-          {detectionType === 'ATTENDANT_CELLPHONE_DETECTION' &&
-            'Configure settings for cellphone detection.'}
-          {detectionType === 'SUSPICIOUS_LOITERING' &&
-            'Configure settings for suspicious loitering.'}
-          {detectionType !== 'ATTENDANT_CELLPHONE_DETECTION' &&
-            detectionType !== 'SUSPICIOUS_LOITERING' &&
-            t('roi.detectionConfigurationDescription')}
+        <p className="text-sm text-gray-400 mb-6">
+          {detectionType === "ATTENDANT_CELLPHONE_DETECTION" &&
+            "Configure settings for cellphone detection."}
+          {detectionType === "SUSPICIOUS_LOITERING" &&
+            "Configure settings for suspicious loitering."}
+          {detectionType !== "ATTENDANT_CELLPHONE_DETECTION" &&
+            detectionType !== "SUSPICIOUS_LOITERING" &&
+            t("roi.detectionConfigurationDescription")}
         </p>
-        <div className='grid grid-cols-2 gap-x-12 gap-y-6'>
+        <div className="grid grid-cols-2 gap-x-12 gap-y-6">
           {/* Vehicle/Person Queue Detection Fields */}
-          {(detectionType === 'VEHICLE_QUEUE_DETECTION' ||
-            detectionType === 'PERSON_QUEUE_DETECTION') && (
+          {(detectionType === "VEHICLE_QUEUE_DETECTION" ||
+            detectionType === "PERSON_QUEUE_DETECTION") && (
             <>
               <div>
-                <label className='block text-sm text-gray-400 mb-2'>
-                  {t('roi.queueCountThreshold')}
+                <label className="block text-sm text-gray-400 mb-2">
+                  {t("roi.queueCountThreshold")}
                 </label>
-                <p className='text-xs text-gray-500 mb-2'>
-                  {t('roi.queueCountThresholdDescription')}
+                <p className="text-xs text-gray-500 mb-2">
+                  {t("roi.queueCountThresholdDescription")}
                 </p>
                 <input
-                  type='number'
+                  type="number"
                   value={queueCountThreshold}
-                  onChange={e => setQueueCountThreshold(Number(e.target.value))}
-                  className='w-full bg-gray-700 border border-gray-600 rounded-lg py-2 px-4 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 transition-colors'
+                  onChange={(e) =>
+                    setQueueCountThreshold(Number(e.target.value))
+                  }
+                  className="w-full bg-gray-700 border border-gray-600 rounded-lg py-2 px-4 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 transition-colors"
                 />
               </div>
               <div>
-                <label className='block text-sm text-gray-400 mb-2'>
-                  {t('roi.queueDwellTimeSeconds')}
+                <label className="block text-sm text-gray-400 mb-2">
+                  {t("roi.queueDwellTimeSeconds")}
                 </label>
-                <p className='text-xs text-gray-500 mb-2'>
-                  {t('roi.queueDwellTimeSecondsDescription')}
+                <p className="text-xs text-gray-500 mb-2">
+                  {t("roi.queueDwellTimeSecondsDescription")}
                 </p>
                 <input
-                  type='number'
+                  type="number"
                   value={queueDwellTimeSeconds}
-                  onChange={e =>
+                  onChange={(e) =>
                     setQueueDwellTimeSeconds(Number(e.target.value))
                   }
-                  className='w-full bg-gray-700 border border-gray-600 rounded-lg py-2 px-4 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 transition-colors'
+                  className="w-full bg-gray-700 border border-gray-600 rounded-lg py-2 px-4 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 transition-colors"
                 />
               </div>
             </>
           )}
 
+          {/* Crowd Surge Detection */}
+          {detectionType === "CROWD_SURGE" && (
+            <>
+              <div>
+                <label className="block text-sm text-gray-400 mb-2">
+                  {t("roi.crowdSurgeQueueCountThreshold")}
+                </label>
+                <p className="text-xs text-gray-500 mb-2">
+                  {t("roi.crowdSurgeQueueCountThresholdDescription")}
+                </p>
+                <input
+                  type="number"
+                  value={crowdSurgeQueueThreshold}
+                  onChange={(e) =>
+                    setCrowdSurgeQueueThreshold(Number(e.target.value))
+                  }
+                  className="w-full bg-gray-700 border border-gray-600 rounded-lg py-2 px-4 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 transition-colors"
+                />
+              </div>
+              <div>
+                <label className="block text-sm text-gray-400 mb-2">
+                  {t("roi.crowdSurgeDwellTimeSeconds")}
+                </label>
+                <p className="text-xs text-gray-500 mb-2">
+                  {t("roi.crowdSurgeDwellTimeSecondsDescription")}
+                </p>
+                <input
+                  type="number"
+                  value={crowdSurgeDwellTime}
+                  onChange={(e) =>
+                    setCrowdSurgeDwellTime(Number(e.target.value))
+                  }
+                  className="w-full bg-gray-700 border border-gray-600 rounded-lg py-2 px-4 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 transition-colors"
+                />
+              </div>
+            </>
+          )}
+
+          {/* PPE Violation Detection */}
+          {detectionType === "PPE_VIOLATION" && (
+            <div>
+              <label className="block text-sm text-gray-400 mb-2">
+                {t("roi.ppeDwellTimeSeconds")}
+              </label>
+              <p className="text-xs text-gray-500 mb-2">
+                {t("roi.ppeDwellTimeSecondsDescription")}
+              </p>
+              <input
+                type="number"
+                value={ppeDwellTime}
+                onChange={(e) => setPpeDwellTime(Number(e.target.value))}
+                className="w-full bg-gray-700 border border-gray-600 rounded-lg py-2 px-4 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 transition-colors"
+              />
+            </div>
+          )}
+
+          {/* Fire & Smoke Detection */}
+          {detectionType === "FIRE_SMOKE_DETECTION" && (
+            <div>
+              <label className="block text-sm text-gray-400 mb-2">
+                {t("roi.fireSmokeDwellTimeSeconds")}
+              </label>
+              <p className="text-xs text-gray-500 mb-2">
+                {t("roi.fireSmokeDwellTimeSecondsDescription")}
+              </p>
+              <input
+                type="number"
+                value={fireSmokeDwellTime}
+                onChange={(e) => setFireSmokeDwellTime(Number(e.target.value))}
+                className="w-full bg-gray-700 border border-gray-600 rounded-lg py-2 px-4 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 transition-colors"
+              />
+            </div>
+          )}
+
           {/* Vehicle Dwell Time Fields */}
           {/* VEHICLE_DWELL_TIME & ATTENDANT_CELLPHONE_DETECTION */}
-          {(detectionType === 'VEHICLE_DWELL_TIME' ||
-            detectionType === 'ATTENDANT_CELLPHONE_DETECTION') && (
+          {(detectionType === "VEHICLE_DWELL_TIME" ||
+            detectionType === "ATTENDANT_CELLPHONE_DETECTION") && (
             <div>
-              <label className='block text-sm text-gray-400 mb-2'>
-                {t('roi.dwellTimeSeconds')}
+              <label className="block text-sm text-gray-400 mb-2">
+                {t("roi.dwellTimeSeconds")}
               </label>
 
-              <p className='text-xs text-gray-500 mb-2'>
+              <p className="text-xs text-gray-500 mb-2">
                 {dwellDescriptions[detectionType]}
               </p>
 
               <input
-                type='number'
+                type="number"
                 value={dwellTimeSeconds}
-                onChange={e => setDwellTimeSeconds(Number(e.target.value))}
-                className='w-full bg-gray-700 border border-gray-600 rounded-lg py-2 px-4 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 transition-colors'
+                onChange={(e) => setDwellTimeSeconds(Number(e.target.value))}
+                className="w-full bg-gray-700 border border-gray-600 rounded-lg py-2 px-4 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 transition-colors"
               />
             </div>
           )}
 
           {/* SUSPICIOUS_LOITERING – Confidence Threshold only */}
-          {detectionType === 'SUSPICIOUS_LOITERING' && (
+          {detectionType === "SUSPICIOUS_LOITERING" && (
             <div>
-              <label className='block text-sm text-gray-400 mb-2'>
-                {t('roi.confidenceThreshold')}
+              <label className="block text-sm text-gray-400 mb-2">
+                {t("roi.confidenceThreshold")}
               </label>
 
-              <p className='text-xs text-gray-500 mb-2'>
-                {t('roi.confidenceThresholdDescription')}
+              <p className="text-xs text-gray-500 mb-2">
+                {t("roi.confidenceThresholdDescription")}
               </p>
 
               {/* Optional: Number input for precise control */}
-              <div className='mt-2'>
+              <div className="mt-2">
                 <input
-                  type='number'
-                  min='0'
-                  max='200'
+                  type="number"
+                  min="0"
+                  max="200"
                   value={confidenceThreshold}
-                  onChange={e => {
-                    const value = Number(e.target.value)
-                    setConfidenceThreshold(Math.min(Math.max(value, 0), 200))
+                  onChange={(e) => {
+                    const value = Number(e.target.value);
+                    setConfidenceThreshold(Math.min(Math.max(value, 0), 200));
                   }}
-                  className='w-full bg-gray-700 border border-gray-600 rounded-lg py-2 px-4 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 transition-colors'
+                  className="w-full bg-gray-700 border border-gray-600 rounded-lg py-2 px-4 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 transition-colors"
                 />
               </div>
             </div>
           )}
 
           {/* Attendant Absence On Pump Fields */}
-          {detectionType === 'ATTENDANT_ABSENCE_ON_PUMP' && (
+          {detectionType === "ATTENDANT_ABSENCE_ON_PUMP" && (
             <div>
-              <label className='block text-sm text-gray-400 mb-2'>
-                {t('roi.dwellTimeSeconds')}
+              <label className="block text-sm text-gray-400 mb-2">
+                {t("roi.dwellTimeSeconds")}
               </label>
-              <p className='text-xs text-gray-500 mb-2'>
-                {t('roi.attendantAbsenceDwellTimeDescription')}
+              <p className="text-xs text-gray-500 mb-2">
+                {t("roi.attendantAbsenceDwellTimeDescription")}
               </p>
               <input
-                type='number'
+                type="number"
                 value={attendantAbsenceDwellTime}
-                onChange={e =>
+                onChange={(e) =>
                   setAttendantAbsenceDwellTime(Number(e.target.value))
                 }
-                className='w-full bg-gray-700 border border-gray-600 rounded-lg py-2 px-4 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 transition-colors'
+                className="w-full bg-gray-700 border border-gray-600 rounded-lg py-2 px-4 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 transition-colors"
               />
             </div>
           )}
           {/* Targeted Hour Slots */}
-          {detectionType === 'RESTRICTED_AREA_BREACH_DETECTION' && (
+          {detectionType === "RESTRICTED_AREA_BREACH_DETECTION" && (
             <div>
-              <label className='block text-sm text-gray-400 mb-2'>
-                {t('roi.targetedHourSlots')}
+              <label className="block text-sm text-gray-400 mb-2">
+                {t("roi.targetedHourSlots")}
               </label>
-              <p className='text-xs text-gray-500 mb-2'>
-                {t('roi.defineTimeSlots')}
+              <p className="text-xs text-gray-500 mb-2">
+                {t("roi.defineTimeSlots")}
               </p>
-              <div className='flex items-center gap-2 mb-2'>
+              <div className="flex items-center gap-2 mb-2">
                 <input
-                  type='time'
+                  type="time"
                   value={newTimeSlot[0]}
-                  onChange={e =>
+                  onChange={(e) =>
                     setNewTimeSlot([e.target.value, newTimeSlot[1]])
                   }
-                  className='w-full bg-gray-700 border border-gray-600 rounded-lg py-2 px-4 text-white time-input'
+                  className="w-full bg-gray-700 border border-gray-600 rounded-lg py-2 px-4 text-white time-input"
                 />
                 <span>to</span>
                 <input
-                  type='time'
+                  type="time"
                   value={newTimeSlot[1]}
-                  onChange={e =>
+                  onChange={(e) =>
                     setNewTimeSlot([newTimeSlot[0], e.target.value])
                   }
-                  className='w-full bg-gray-700 border border-gray-600 rounded-lg py-2 px-4 text-white time-input'
+                  className="w-full bg-gray-700 border border-gray-600 rounded-lg py-2 px-4 text-white time-input"
                 />
                 <button
                   onClick={() => {
                     if (newTimeSlot[0] && newTimeSlot[1]) {
-                      setTargetedHourSlots([...targetedHourSlots, newTimeSlot])
-                      setNewTimeSlot(['', ''])
+                      setTargetedHourSlots([...targetedHourSlots, newTimeSlot]);
+                      setNewTimeSlot(["", ""]);
                     }
                   }}
-                  className='bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg'
+                  className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg"
                 >
                   Add
                 </button>
@@ -1321,18 +1433,18 @@ const ROIConfiguration = () => {
                 {targetedHourSlots.map((slot, index) => (
                   <div
                     key={index}
-                    className='flex items-center justify-between bg-gray-700 rounded-lg p-2 mt-2'
+                    className="flex items-center justify-between bg-gray-700 rounded-lg p-2 mt-2"
                   >
                     <span>
                       {slot[0]} - {slot[1]}
                     </span>
                     <button
                       onClick={() => {
-                        const newSlots = [...targetedHourSlots]
-                        newSlots.splice(index, 1)
-                        setTargetedHourSlots(newSlots)
+                        const newSlots = [...targetedHourSlots];
+                        newSlots.splice(index, 1);
+                        setTargetedHourSlots(newSlots);
                       }}
-                      className='text-red-500 hover:text-red-700'
+                      className="text-red-500 hover:text-red-700"
                     >
                       Remove
                     </button>
@@ -1345,126 +1457,128 @@ const ROIConfiguration = () => {
       </div>
 
       {/* Notifications Section */}
-      <div className='bg-[#30313F] rounded-lg p-6 mb-6'>
-        <h2 className='text-xl text-white font-bold mb-1'>{t('roi.notifications')}</h2>
-        <p className='text-xs text-gray-500 leading-relaxed mb-2'>
-          {t('roi.notificationsubtext')}
+      <div className="bg-[#30313F] rounded-lg p-6 mb-6">
+        <h2 className="text-xl text-white font-bold mb-1">
+          {t("roi.notifications")}
+        </h2>
+        <p className="text-xs text-gray-500 leading-relaxed mb-2">
+          {t("roi.notificationsubtext")}
         </p>
-        <div className='grid grid-cols-3 gap-6'>
+        <div className="grid grid-cols-3 gap-6">
           {/* WhatsApp Notification */}
-          <div className='bg-gray-900 rounded-lg p-4 border border-gray-700'>
-            <div className='flex items-center justify-between mb-4'>
-              <div className='flex items-center gap-2'>
-                <IoLogoWhatsapp size={20} color='white'/>
-                <span className='font-semibold text-white'>
-                  {t('roi.whatsAppNotification')}
+          <div className="bg-gray-900 rounded-lg p-4 border border-gray-700">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <IoLogoWhatsapp size={20} color="white" />
+                <span className="font-semibold text-white">
+                  {t("roi.whatsAppNotification")}
                 </span>
               </div>
-              <label className='relative inline-flex items-center cursor-pointer'>
+              <label className="relative inline-flex items-center cursor-pointer">
                 <input
-                  type='checkbox'
+                  type="checkbox"
                   checked={whatsappNotification}
                   onChange={() =>
                     setWhatsappNotification(!whatsappNotification)
                   }
-                  className='sr-only peer'
+                  className="sr-only peer"
                 />
                 <div className="w-11 h-6 bg-gray-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-500"></div>
               </label>
             </div>
             <div>
-              <label className='block text-sm text-gray-400 mb-2'>
-                {t('roi.enableWhatsAppAlerts')}
+              <label className="block text-sm text-gray-400 mb-2">
+                {t("roi.enableWhatsAppAlerts")}
               </label>
-              <div className='flex flex-col gap-2'>
+              <div className="flex flex-col gap-2">
                 <input
-                  type='text'
+                  type="text"
                   value={whatsappName}
-                  onChange={e => setWhatsappName(e.target.value)}
-                  placeholder={t('roi.enterName')}
-                  className='flex-1 bg-gray-700 border border-gray-600 rounded-lg py-2 px-3 text-white placeholder-gray-500 text-sm focus:outline-none focus:border-blue-500 transition-colors'
+                  onChange={(e) => setWhatsappName(e.target.value)}
+                  placeholder={t("roi.enterName")}
+                  className="flex-1 bg-gray-700 border border-gray-600 rounded-lg py-2 px-3 text-white placeholder-gray-500 text-sm focus:outline-none focus:border-blue-500 transition-colors"
                 />
-                <div className='flex gap-2'>
+                <div className="flex gap-2">
                   <input
-                    type='tel'
+                    type="tel"
                     value={whatsappNumber}
-                    onChange={e => {
-                      setWhatsappNumber(e.target.value)
+                    onChange={(e) => {
+                      setWhatsappNumber(e.target.value);
                       if (e.target.value.trim()) {
-                        setWhatsappNumberError('')
+                        setWhatsappNumberError("");
                       }
                     }}
-                    placeholder={t('roi.enterWhatsAppNumber')}
+                    placeholder={t("roi.enterWhatsAppNumber")}
                     className={`flex-1 bg-gray-700 border rounded-lg py-2 px-3 text-white placeholder-gray-500 text-sm focus:outline-none transition-colors ${
                       whatsappNumberError
-                        ? 'border-red-500'
-                        : 'border-gray-600 focus:border-blue-500'
+                        ? "border-red-500"
+                        : "border-gray-600 focus:border-blue-500"
                     }`}
                   />
                   <button
                     onClick={() => {
-                      const phoneRegex = /^\+?[1-9]\d{1,14}$/ // E.164 format regex
+                      const phoneRegex = /^\+?[1-9]\d{1,14}$/; // E.164 format regex
                       if (
                         !whatsappNumber.trim() ||
                         !phoneRegex.test(whatsappNumber.trim())
                       ) {
-                        toast.error(t('roi.invalidPhoneNumberFormat'))
+                        toast.error(t("roi.invalidPhoneNumberFormat"));
                         setWhatsappNumberError(
-                          t('roi.invalidPhoneNumberFormat')
-                        )
-                        return
+                          t("roi.invalidPhoneNumberFormat"),
+                        );
+                        return;
                       }
                       if (!whatsappName.trim()) {
-                        toast.error(t('roi.nameRequired'))
-                        return
+                        toast.error(t("roi.nameRequired"));
+                        return;
                       }
                       if (
                         whatsappRecipients.some(
-                          r => r.number === whatsappNumber.trim()
+                          (r) => r.number === whatsappNumber.trim(),
                         )
                       ) {
-                        toast.error(t('roi.phoneNumberAlreadyAdded'))
-                        return
+                        toast.error(t("roi.phoneNumberAlreadyAdded"));
+                        return;
                       }
 
                       setWhatsappRecipients([
                         ...whatsappRecipients,
                         {
                           number: whatsappNumber.trim(),
-                          name: whatsappName.trim()
-                        }
-                      ])
-                      setWhatsappNumber('')
-                      setWhatsappName('')
-                      setWhatsappNumberError('')
+                          name: whatsappName.trim(),
+                        },
+                      ]);
+                      setWhatsappNumber("");
+                      setWhatsappName("");
+                      setWhatsappNumberError("");
                     }}
-                    className='bg-[#3885CC] hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg transition-colors'
+                    className="bg-[#3885CC] hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg transition-colors"
                   >
                     +
                   </button>
                 </div>
                 {whatsappNumberError && (
-                  <p className='text-red-500 text-xs mt-1'>
+                  <p className="text-red-500 text-xs mt-1">
                     {whatsappNumberError}
                   </p>
                 )}
               </div>
-              <div className='mt-2 flex flex-wrap gap-2'>
+              <div className="mt-2 flex flex-wrap gap-2">
                 {whatsappRecipients.map((recipient, idx) => (
                   <span
                     key={idx}
-                    className='bg-gray-600 text-white text-xs px-2 py-1 rounded-full flex items-center gap-1'
+                    className="bg-gray-600 text-white text-xs px-2 py-1 rounded-full flex items-center gap-1"
                   >
                     {recipient.name} ({recipient.number})
                     <button
                       onClick={() =>
                         setWhatsappRecipients(
                           whatsappRecipients.filter(
-                            r => r.number !== recipient.number
-                          )
+                            (r) => r.number !== recipient.number,
+                          ),
                         )
                       }
-                      className='text-red-400 hover:text-red-600'
+                      className="text-red-400 hover:text-red-600"
                     >
                       x
                     </button>
@@ -1474,111 +1588,111 @@ const ROIConfiguration = () => {
             </div>
           </div>
           {/* Email Notification */}
-          <div className='bg-gray-900 rounded-lg p-4 border border-gray-700'>
-            <div className='flex items-center justify-between mb-4'>
-              <div className='flex items-center gap-2'>
-                <IoMailOutline size={20} color='white'/>
-                <span className='font-semibold text-white'>
-                  {t('roi.emailNotification')}
+          <div className="bg-gray-900 rounded-lg p-4 border border-gray-700">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <IoMailOutline size={20} color="white" />
+                <span className="font-semibold text-white">
+                  {t("roi.emailNotification")}
                 </span>
               </div>
-              <label className='relative inline-flex items-center cursor-pointer'>
+              <label className="relative inline-flex items-center cursor-pointer">
                 <input
-                  type='checkbox'
+                  type="checkbox"
                   checked={emailNotification}
                   onChange={() => setEmailNotification(!emailNotification)}
-                  className='sr-only peer'
+                  className="sr-only peer"
                 />
                 <div className="w-11 h-6 bg-gray-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-500"></div>
               </label>
             </div>
             <div>
-              <label className='block text-sm text-gray-400 mb-2'>
-                {t('roi.enableEmailAlerts')}
+              <label className="block text-sm text-gray-400 mb-2">
+                {t("roi.enableEmailAlerts")}
               </label>
-              <div className='flex flex-col gap-2'>
+              <div className="flex flex-col gap-2">
                 <input
-                  type='text'
+                  type="text"
                   value={emailName}
-                  onChange={e => setEmailName(e.target.value)}
-                  placeholder={t('roi.enterName')}
-                  className='flex-1 bg-gray-700 border border-gray-600 rounded-lg py-2 px-3 text-white placeholder-gray-500 text-sm focus:outline-none focus:border-blue-500 transition-colors'
+                  onChange={(e) => setEmailName(e.target.value)}
+                  placeholder={t("roi.enterName")}
+                  className="flex-1 bg-gray-700 border border-gray-600 rounded-lg py-2 px-3 text-white placeholder-gray-500 text-sm focus:outline-none focus:border-blue-500 transition-colors"
                 />
-                <div className='flex gap-2'>
+                <div className="flex gap-2">
                   <input
-                    type='email'
+                    type="email"
                     value={emailAddress}
-                    onChange={e => {
-                      setEmailAddress(e.target.value)
+                    onChange={(e) => {
+                      setEmailAddress(e.target.value);
                       if (e.target.value.trim()) {
-                        setEmailAddressError('')
+                        setEmailAddressError("");
                       }
                     }}
-                    placeholder={t('roi.enterEmailAddress')}
+                    placeholder={t("roi.enterEmailAddress")}
                     className={`flex-1 bg-gray-700 border rounded-lg py-2 px-3 text-white placeholder-gray-500 text-sm focus:outline-none transition-colors ${
                       emailAddressError
-                        ? 'border-red-500'
-                        : 'border-gray-600 focus:border-blue-500'
+                        ? "border-red-500"
+                        : "border-gray-600 focus:border-blue-500"
                     }`}
                   />
                   <button
                     onClick={() => {
-                      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+                      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
                       if (
                         !emailAddress.trim() ||
                         !emailRegex.test(emailAddress.trim())
                       ) {
-                        setEmailAddressError(t('roi.invalidEmailFormat'))
-                        return
+                        setEmailAddressError(t("roi.invalidEmailFormat"));
+                        return;
                       }
                       if (!emailName.trim()) {
-                        toast.error(t('roi.nameRequired'))
-                        return
+                        toast.error(t("roi.nameRequired"));
+                        return;
                       }
                       if (
                         emailRecipients.some(
-                          r => r.email === emailAddress.trim()
+                          (r) => r.email === emailAddress.trim(),
                         )
                       ) {
-                        toast.error(t('roi.emailAlreadyAdded'))
-                        return
+                        toast.error(t("roi.emailAlreadyAdded"));
+                        return;
                       }
 
                       setEmailRecipients([
                         ...emailRecipients,
-                        { email: emailAddress.trim(), name: emailName.trim() }
-                      ])
-                      setEmailAddress('')
-                      setEmailName('')
-                      setEmailAddressError('')
+                        { email: emailAddress.trim(), name: emailName.trim() },
+                      ]);
+                      setEmailAddress("");
+                      setEmailName("");
+                      setEmailAddressError("");
                     }}
-                    className='bg-[#3885CC] hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg transition-colors'
+                    className="bg-[#3885CC] hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg transition-colors"
                   >
                     +
                   </button>
                 </div>
                 {emailAddressError && (
-                  <p className='text-red-500 text-xs mt-1'>
+                  <p className="text-red-500 text-xs mt-1">
                     {emailAddressError}
                   </p>
                 )}
               </div>
-              <div className='mt-2 flex flex-wrap gap-2'>
+              <div className="mt-2 flex flex-wrap gap-2">
                 {emailRecipients.map((recipient, idx) => (
                   <span
                     key={idx}
-                    className='bg-gray-600 text-white text-xs px-2 py-1 rounded-full flex items-center gap-1'
+                    className="bg-gray-600 text-white text-xs px-2 py-1 rounded-full flex items-center gap-1"
                   >
                     {recipient.name} ({recipient.email})
                     <button
                       onClick={() =>
                         setEmailRecipients(
                           emailRecipients.filter(
-                            r => r.email !== recipient.email
-                          )
+                            (r) => r.email !== recipient.email,
+                          ),
                         )
                       }
-                      className='text-red-400 hover:text-red-600'
+                      className="text-red-400 hover:text-red-600"
                     >
                       x
                     </button>
@@ -1589,43 +1703,43 @@ const ROIConfiguration = () => {
           </div>
 
           {/* Call Notification */}
-          <div className='bg-gray-900 rounded-lg p-4 border border-gray-700'>
-            <div className='flex items-center justify-between mb-4'>
-              <div className='flex items-center gap-2'>
-                <IoChatboxEllipsesOutline size={20} color='white' />
-                <span className='font-semibold text-white'>
-                  {t('roi.callNotification')}
+          <div className="bg-gray-900 rounded-lg p-4 border border-gray-700">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <IoChatboxEllipsesOutline size={20} color="white" />
+                <span className="font-semibold text-white">
+                  {t("roi.callNotification")}
                 </span>
               </div>
-              <label className='relative inline-flex items-center cursor-pointer'>
+              <label className="relative inline-flex items-center cursor-pointer">
                 <input
-                  type='checkbox'
+                  type="checkbox"
                   checked={callNotification}
                   onChange={() => setCallNotification(!callNotification)}
-                  className='sr-only peer'
+                  className="sr-only peer"
                 />
                 <div className="w-11 h-6 bg-gray-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-500"></div>
               </label>
             </div>
             <div>
-              <label className='block text-sm text-gray-400 mb-2'>
-                {t('roi.enableCallAlerts')}
+              <label className="block text-sm text-gray-400 mb-2">
+                {t("roi.enableCallAlerts")}
               </label>
-              <div className='flex flex-col gap-2'>
+              <div className="flex flex-col gap-2">
                 <input
-                  type='text'
+                  type="text"
                   value={callName}
-                  onChange={e => setCallName(e.target.value)}
-                  placeholder={t('roi.enterName')}
-                  className='flex-1 bg-gray-700 border border-gray-600 rounded-lg py-2 px-3 text-white placeholder-gray-500 text-sm focus:outline-none focus:border-blue-500 transition-colors'
+                  onChange={(e) => setCallName(e.target.value)}
+                  placeholder={t("roi.enterName")}
+                  className="flex-1 bg-gray-700 border border-gray-600 rounded-lg py-2 px-3 text-white placeholder-gray-500 text-sm focus:outline-none focus:border-blue-500 transition-colors"
                 />
-                <div className='flex gap-2'>
+                <div className="flex gap-2">
                   <input
-                    type='tel'
+                    type="tel"
                     value={phoneNumber}
-                    onChange={e => setPhoneNumber(e.target.value)}
-                    placeholder={t('roi.enterPhoneNumber')}
-                    className='flex-1 bg-gray-700 border border-gray-600 rounded-lg py-2 px-3 text-white placeholder-gray-500 text-sm focus:outline-none focus:border-blue-500 transition-colors'
+                    onChange={(e) => setPhoneNumber(e.target.value)}
+                    placeholder={t("roi.enterPhoneNumber")}
+                    className="flex-1 bg-gray-700 border border-gray-600 rounded-lg py-2 px-3 text-white placeholder-gray-500 text-sm focus:outline-none focus:border-blue-500 transition-colors"
                   />
                   <button
                     onClick={() => {
@@ -1633,39 +1747,39 @@ const ROIConfiguration = () => {
                         phoneNumber.trim() &&
                         callName.trim() &&
                         !callRecipients.some(
-                          r => r.number === phoneNumber.trim()
+                          (r) => r.number === phoneNumber.trim(),
                         )
                       ) {
                         setCallRecipients([
                           ...callRecipients,
-                          { number: phoneNumber.trim(), name: callName.trim() }
-                        ])
-                        setPhoneNumber('')
-                        setCallName('')
+                          { number: phoneNumber.trim(), name: callName.trim() },
+                        ]);
+                        setPhoneNumber("");
+                        setCallName("");
                       }
                     }}
-                    className='bg-[#3885CC] hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg transition-colors'
+                    className="bg-[#3885CC] hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg transition-colors"
                   >
                     +
                   </button>
                 </div>
               </div>
-              <div className='mt-2 flex flex-wrap gap-2'>
+              <div className="mt-2 flex flex-wrap gap-2">
                 {callRecipients.map((recipient, idx) => (
                   <span
                     key={idx}
-                    className='bg-gray-600 text-white text-xs px-2 py-1 rounded-full flex items-center gap-1'
+                    className="bg-gray-600 text-white text-xs px-2 py-1 rounded-full flex items-center gap-1"
                   >
                     {recipient.name} ({recipient.number})
                     <button
                       onClick={() =>
                         setCallRecipients(
                           callRecipients.filter(
-                            r => r.number !== recipient.number
-                          )
+                            (r) => r.number !== recipient.number,
+                          ),
                         )
                       }
-                      className='text-red-400 hover:text-red-600'
+                      className="text-red-400 hover:text-red-600"
                     >
                       x
                     </button>
@@ -1678,26 +1792,26 @@ const ROIConfiguration = () => {
       </div>
 
       {/* Save Camera Button */}
-      <div className='bg-[#30313F] flex justify-between items-center rounded-lg p-4 mb-6'>
-        <p className='text-white font-medium'>{t('roi.saveCamera')}</p>
+      <div className="bg-[#30313F] flex justify-between items-center rounded-lg p-4 mb-6">
+        <p className="text-white font-medium">{t("roi.saveCamera")}</p>
 
-        <div className='flex gap-3'>
+        <div className="flex gap-3">
           <button
             onClick={resetForm}
-            className='bg-[#4D4D4D] text-sm text-white font-semibold py-2 px-6 rounded-full transition-colors hover:bg-gray-600'
+            className="bg-[#4D4D4D] text-sm text-white font-semibold py-2 px-6 rounded-full transition-colors hover:bg-gray-600"
           >
-            {t('roi.clear')}
+            {t("roi.clear")}
           </button>
           <button
             onClick={handleSaveRoi}
-            className='bg-[#3885CC] text-sm text-white font-semibold py-2 px-6 rounded-full transition-colors hover:bg-blue-600'
+            className="bg-[#3885CC] text-sm text-white font-semibold py-2 px-6 rounded-full transition-colors hover:bg-blue-600"
           >
-            {currentRoiId ? t('roi.updateRoi') : t('roi.saveRoi')}
+            {currentRoiId ? t("roi.updateRoi") : t("roi.saveRoi")}
           </button>
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default ROIConfiguration
+export default ROIConfiguration;
