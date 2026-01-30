@@ -195,11 +195,11 @@ const AuthPage = () => {
             >
               <p className='w-full sm:w-[341.99px]'>
                 {t('auth_page.terms')}{' '}
-                <a href='https://sst.vision/terms-of-use' target='_blank' className={`${textcolors.link}`}>
+                <a href='https://360vision.ai/terms-of-use' target='_blank' className={`${textcolors.link}`}>
                   {t('auth_page.terms_of_service')}
                 </a>{' '}
                 {t('auth_page.and')}{' '}
-                <a href='https://sst.vision/privacy-policy' target='_blank' className={`${textcolors.link}`}>
+                <a href='https://360vision.ai/privacy-policy' target='_blank' className={`${textcolors.link}`}>
                   {t('auth_page.privacy_policy')}
                 </a>
               </p>
