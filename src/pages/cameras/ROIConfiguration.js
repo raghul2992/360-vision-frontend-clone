@@ -126,7 +126,7 @@ const ROIConfiguration = () => {
   // ROI Settings
   const [roiName, setRoiName] = useState("");
   const [roiNameError, setRoiNameError] = useState("");
-  const [detectionType, setDetectionType] = useState("VEHICLE_QUEUE_DETECTION");
+  const [detectionType, setDetectionType] = useState("PERSON_QUEUE_DETECTION");
   const [alertPriority, setAlertPriority] = useState("High"); // Stores the English value
   const [displayAlertPriority, setDisplayAlertPriority] = useState(
     t("roi.high"),
@@ -410,7 +410,6 @@ const ROIConfiguration = () => {
       alertPriorityMap[displayAlertPriority.toLowerCase()] || "high"; // Default to 'high' if not found
 
     const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-
     const roiData = {
       name: roiName.trim(),
       frame_url: snapshotUrl,
@@ -707,12 +706,12 @@ const ROIConfiguration = () => {
 
   const resetForm = () => {
     setRoiName('')
-    setDetectionType('ALL_DETECTION')
+    setDetectionType('PERSON_QUEUE_DETECTION')
     setAlertPriority('High') // Reset to English 'High'
     setDisplayAlertPriority(t('roi.high')) // Reset display to translated 'High'
     setTrackingType(false) // Reset tracking type to false
     setRoiName("");
-    setDetectionType("ALL_DETECTION");
+    setDetectionType("PERSON_QUEUE_DETECTION");
     setAlertPriority("High"); // Reset to English 'High'
     setDisplayAlertPriority(t("roi.high"));
     setTrackingType(false)
@@ -1173,6 +1172,9 @@ const ROIConfiguration = () => {
                   {/* <option value='VEHICLE_QUEUE_DETECTION'>
                     {t('roi.vehicleQueueDetection')}
                   </option> */}
+                  <option value="">
+                    {"----"}
+                  </option>
                   <option value="PERSON_QUEUE_DETECTION">
                     {t("roi.personQueueDetection")}
                   </option>

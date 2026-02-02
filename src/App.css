@@ -8,7 +8,8 @@
 }
 
 .body-background {
-  background-image: url("./assets/background.jpg");
+  /* background-image: url("./assets/background.jpg"); */
+  background-color: #E3F2FD;
   background-repeat: no-repeat;
   background-size: cover;
 }

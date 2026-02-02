@@ -827,7 +827,7 @@ const AddCamera = () => {
         {!cameraId ? (
           // No Camera Selected (for new cameras)
           <div className="text-center py-12">
-            <h3 className="text-2xl font-bold mb-2">
+            <h3 className="text-2xl text-white font-bold mb-2">
               {isCameraSaved
                 ? t("addCamera.cameraSavedSuccessfully")
                 : t("addCamera.noCameraSaved")}
