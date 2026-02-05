@@ -409,6 +409,7 @@
     "priority": "Priority",
     "timestamp": "Timestamp",
     "status": "Status",
+    "new_alert_received": "🔔 New alert received!",
     "description": "Description",
     "view_details": "View Details",
     "no_alerts_found": "No alerts found.",

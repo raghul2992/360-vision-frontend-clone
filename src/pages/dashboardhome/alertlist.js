@@ -33,6 +33,7 @@ const AlertItem = ({ alert, tenantId, timezone }) => {
   );
   const [showCallPopup, setShowCallPopup] = useState(false);
   const [callRecipients, setCallRecipients] = useState([]);
+  const [isNew, setIsNew] = useState(false);
 
   const [validationStatus, setValidationStatus] = useState(
     alert.meta?.validation_status || VALIDATION_STATES.UNREVIEWED,
@@ -75,10 +76,10 @@ const AlertItem = ({ alert, tenantId, timezone }) => {
           },
         }),
       ).unwrap();
-       
 
       toast.success(
-        t("alerts.up_status_sucess") || "Validation status updated successfully",
+        t("alerts.up_status_sucess") ||
+          "Validation status updated successfully",
       );
     } catch (error) {
       console.error("Failed to update validation status:", error);
@@ -87,8 +88,7 @@ const AlertItem = ({ alert, tenantId, timezone }) => {
       setValidationStatus(previousStatus);
 
       toast.error(
-        t("alerts.up_status_failed") ||
-          "Failed to update validation status",
+        t("alerts.up_status_failed") || "Failed to update validation status",
       );
     } finally {
       setIsUpdating(false);
@@ -110,6 +110,19 @@ const AlertItem = ({ alert, tenantId, timezone }) => {
       setIsRead(true);
     }
   };
+
+  useEffect(() => {
+    const alertAge = Date.now() - new Date(alert.created_at).getTime();
+
+    // If alert was created in the last 10 seconds, mark as new
+    if (alertAge < 10000) {
+      setIsNew(true);
+
+      // Remove "new" highlight after 5 seconds
+      const timer = setTimeout(() => setIsNew(false), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [alert.created_at]);
 
   const handleOpenCallPopup = async (alert) => {
     try {
@@ -179,9 +192,9 @@ const AlertItem = ({ alert, tenantId, timezone }) => {
   return (
     <>
       <div
-        className={`bg-white rounded-full w-full flex flex-col mb-4 hover:shadow-lg transition-shadow ${
+        className={`bg-white rounded-full w-full flex flex-col mb-4 hover:shadow-lg transition-all duration-300 ${
           !isRead ? "border-l-4 border-blue-500" : ""
-        }`}
+        } ${isNew ? "animate-pulse-new border-2 border-green-400 shadow-green-400/50" : ""}`}
       >
         <div className="flex items-center justify-between px-4 py-3">
           <div className="flex items-center gap-4 flex-1 min-w-0">
@@ -258,8 +271,6 @@ const AlertItem = ({ alert, tenantId, timezone }) => {
       {isExpanded && (
         <div className="bg-white rounded-lg p-6 border border-gray-200 mt-2 mb-4 shadow-sm">
           <div className="flex flex-col lg:flex-row gap-6">
-            
-     
             <div className="lg:w-1/2">
               <div className="relative rounded-lg overflow-hidden bg-gray-100 border border-gray-200">
                 <img
@@ -270,110 +281,146 @@ const AlertItem = ({ alert, tenantId, timezone }) => {
               </div>
             </div>
 
-           
             <div className="lg:w-1/2 flex flex-col justify-between">
-              
-              
               <div className="grid grid-cols-2 gap-x-8 gap-y-4 mb-6">
-                
-               
                 <div className="space-y-3">
                   <div>
-                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">{t("alerts.location")}</p>
-                    <p className="text-sm font-medium text-gray-900">{alert.meta?.location || "Store"}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">{t("alerts.unit")}</p>
-                    <p className="text-sm font-medium text-gray-900">{roi_name}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">{t("alerts.camera")}</p>
-                    <p className="text-sm font-medium text-gray-900">{camera_name}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">{t("alerts.time")}</p>
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                      {t("alerts.location")}
+                    </p>
                     <p className="text-sm font-medium text-gray-900">
-                      {formatDateTime(alert.created_at, t("date_locale"), timezone)}
+                      {alert.meta?.location || "Store"}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                      {t("alerts.unit")}
+                    </p>
+                    <p className="text-sm font-medium text-gray-900">
+                      {roi_name}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                      {t("alerts.camera")}
+                    </p>
+                    <p className="text-sm font-medium text-gray-900">
+                      {camera_name}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                      {t("alerts.time")}
+                    </p>
+                    <p className="text-sm font-medium text-gray-900">
+                      {formatDateTime(
+                        alert.created_at,
+                        t("date_locale"),
+                        timezone,
+                      )}
                     </p>
                   </div>
                 </div>
 
-                
                 <div className="space-y-3">
                   <div>
-                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">{t("alerts.priority")}</p>
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize mt-1
-                      ${alert_priority?.toLowerCase() === 'high' ? 'bg-red-100 text-red-800' : 
-                        alert_priority?.toLowerCase() === 'medium' ? 'bg-yellow-100 text-yellow-800' : 
-                        'bg-green-100 text-green-800'}`}>
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                      {t("alerts.priority")}
+                    </p>
+                    <span
+                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize mt-1
+                      ${
+                        alert_priority?.toLowerCase() === "high"
+                          ? "bg-red-100 text-red-800"
+                          : alert_priority?.toLowerCase() === "medium"
+                            ? "bg-yellow-100 text-yellow-800"
+                            : "bg-green-100 text-green-800"
+                      }`}
+                    >
                       {t(`alerts.priority_${alert_priority?.toLowerCase()}`)}
                     </span>
                   </div>
                   <div>
-                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">{t("alerts.confidence")}</p>
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                      {t("alerts.confidence")}
+                    </p>
                     <p className="text-sm font-bold text-gray-900">
-                      {confidence_score ? (confidence_score * 100).toFixed(0) + "%" : "N/A"}
+                      {confidence_score
+                        ? (confidence_score * 100).toFixed(0) + "%"
+                        : "N/A"}
                     </p>
                   </div>
                 </div>
               </div>
 
-             
               <div className="bg-gray-50 rounded-md p-3 mb-6 border border-gray-100">
-                <p className="text-xs font-semibold text-gray-500 uppercase mb-1">{t("alerts.comments")}:</p>
+                <p className="text-xs font-semibold text-gray-500 uppercase mb-1">
+                  {t("alerts.comments")}:
+                </p>
                 <p className="text-sm text-gray-700 leading-relaxed italic">
-                  "{(enriched_message && enriched_message[i18n.language]) || notes || t("alerts.default_comment")}"
+                  "
+                  {(enriched_message && enriched_message[i18n.language]) ||
+                    notes ||
+                    t("alerts.default_comment")}
+                  "
                 </p>
               </div>
 
-             
               <div className="border-t border-gray-100 pt-5 mt-auto">
                 <div className="flex flex-col gap-3">
-                  
-                 
                   <div className="flex items-center gap-4">
-                     
                     <button
-                      onClick={() => handleValidationStatusChange(
-                        validationStatus === VALIDATION_STATES.GENUINE 
-                          ? VALIDATION_STATES.UNREVIEWED 
-                          : VALIDATION_STATES.GENUINE
-                      )}
+                      onClick={() =>
+                        handleValidationStatusChange(
+                          validationStatus === VALIDATION_STATES.GENUINE
+                            ? VALIDATION_STATES.UNREVIEWED
+                            : VALIDATION_STATES.GENUINE,
+                        )
+                      }
                       disabled={isUpdating}
                       className={`flex items-center justify-center w-10 h-10 rounded-full border transition-all duration-200
-                        ${validationStatus === VALIDATION_STATES.GENUINE
-                          ? 'bg-green-500 text-white shadow-md border-green-600'
-                          : 'bg-gray-100 text-gray-400 border-gray-200 hover:bg-gray-200'
+                        ${
+                          validationStatus === VALIDATION_STATES.GENUINE
+                            ? "bg-green-500 text-white shadow-md border-green-600"
+                            : "bg-gray-100 text-gray-400 border-gray-200 hover:bg-gray-200"
                         }`}
                     >
-                       {validationStatus === VALIDATION_STATES.GENUINE ? <IoThumbsUp className="text-xl"/> : <IoThumbsUpOutline className="text-xl"/>}
+                      {validationStatus === VALIDATION_STATES.GENUINE ? (
+                        <IoThumbsUp className="text-xl" />
+                      ) : (
+                        <IoThumbsUpOutline className="text-xl" />
+                      )}
                     </button>
 
-                    
                     <button
-                      onClick={() => handleValidationStatusChange(
-                        validationStatus === VALIDATION_STATES.FALSE_ALERT 
-                          ? VALIDATION_STATES.UNREVIEWED 
-                          : VALIDATION_STATES.FALSE_ALERT
-                      )}
+                      onClick={() =>
+                        handleValidationStatusChange(
+                          validationStatus === VALIDATION_STATES.FALSE_ALERT
+                            ? VALIDATION_STATES.UNREVIEWED
+                            : VALIDATION_STATES.FALSE_ALERT,
+                        )
+                      }
                       disabled={isUpdating}
                       className={`flex items-center justify-center w-10 h-10 rounded-full border transition-all duration-200
-                        ${validationStatus === VALIDATION_STATES.FALSE_ALERT
-                          ? 'bg-red-500 text-white shadow-md border-red-600'
-                          : 'bg-gray-100 text-gray-400 border-gray-200 hover:bg-gray-200'
+                        ${
+                          validationStatus === VALIDATION_STATES.FALSE_ALERT
+                            ? "bg-red-500 text-white shadow-md border-red-600"
+                            : "bg-gray-100 text-gray-400 border-gray-200 hover:bg-gray-200"
                         }`}
                     >
-                      {validationStatus === VALIDATION_STATES.FALSE_ALERT ? <IoThumbsDown className="text-xl"/> : <IoThumbsDownOutline className="text-xl"/>}
+                      {validationStatus === VALIDATION_STATES.FALSE_ALERT ? (
+                        <IoThumbsDown className="text-xl" />
+                      ) : (
+                        <IoThumbsDownOutline className="text-xl" />
+                      )}
                     </button>
                   </div>
 
                   <p className="text-sm text-gray-500 italic">
                     *{t("alerts.feedback_instruction")}
                   </p>
-
                 </div>
               </div>
-
             </div>
           </div>
         </div>
