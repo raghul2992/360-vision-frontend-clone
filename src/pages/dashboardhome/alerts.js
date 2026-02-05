@@ -172,15 +172,15 @@ const Alerts = () => {
     const handleNewAlert = (wsData) => {
       console.log("New alert notification received, refetching alerts");
 
-      // Show toast notification
-      toast.info(t("alerts.new_alert_received") || "🔔 New alert received!", {
-        position: "top-right",
-        autoClose: 3000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-      });
+      // // Show toast notification
+      // toast.info(t("alerts.new_alert_received") || "🔔 New alert received!", {
+      //   position: "top-right",
+      //   autoClose: 3000,
+      //   hideProgressBar: false,
+      //   closeOnClick: true,
+      //   pauseOnHover: true,
+      //   draggable: true,
+      // });
       
 
       setTimeout(() => {

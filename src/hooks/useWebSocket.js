@@ -4,6 +4,8 @@ import { useDispatch } from "react-redux";
 import { updateCameraStatusFromWebSocket } from "../features/cameras/cameraApiSlice";
 import { addAlert } from "../features/alert/alertSlice";
 import eventEmitter from "../utils/eventEmitter";
+import { showNotification } from "../utils/notificationHelper";
+import { toast } from "react-toastify";
 
 const useWebSocket = (url, tenant_id, reconnectInterval = 2000) => {
   const [isConnected, setIsConnected] = useState(false);
@@ -45,35 +47,77 @@ const useWebSocket = (url, tenant_id, reconnectInterval = 2000) => {
         setMessage(receivedMessage);
         eventEmitter.emit("websocketMessage", receivedMessage);
 
-        // Handle camera_status type
         if (receivedMessage.type === "camera_status") {
-          dispatch(updateCameraStatusFromWebSocket(receivedMessage.data));
-          console.log("dispatch");
-          dispatch(
-            addAlert({
-              id: receivedMessage.data.id || Date.now(),
-              title: receivedMessage.message || "Camera Status Update",
-              message: receivedMessage.message,
-              type: "camera_status",
-              meta: receivedMessage.data,
-              is_read: false,
-              created_at: new Date().toISOString(),
-            }),
+          console.log("camera status received, emitting notification");
+          eventEmitter.emit("newNotification", receivedMessage);
+
+          const alertBody =
+            receivedMessage.data?.message ||
+            receivedMessage.message ||
+            "New security alert detected";
+
+          console.log("🔔 Showing notification for camera_status");
+
+          showNotification(
+            {
+              title: "📹 Camera Status Update",
+              body: receivedMessage.message || "Camera status changed",
+              icon: "/sstlogo.png",
+              tag: `camera-${receivedMessage.data?.camera_id || Date.now()}`,
+              onClick: () => {
+                window.location.href = "/camera";
+              },
+            },
+            () => {
+              toast.info(receivedMessage.message || "Camera status updated", {
+                position: "top-right",
+                autoClose: 3000,
+                toastId: `camera-${receivedMessage.data?.camera_id}`, // ✅ Prevent duplicates
+              });
+            },
           );
-          eventEmitter.emit("newNotification");
         }
 
-        // Handle event_alert type - SIMPLE VERSION
-        if (receivedMessage.type === "event_alert") {
+        // ✅ Handle event_alert type (ONLY ONCE!)
+        else if (receivedMessage.type === "event_alert") {
           console.log("Event alert received, emitting notification");
           eventEmitter.emit("newNotification", receivedMessage);
+
+          const alertBody =
+            receivedMessage.data?.message ||
+            receivedMessage.message ||
+            "New security alert detected";
+
+          console.log("🔔 Showing notification for event_alert");
+
+          showNotification(
+            {
+              title: "⚠️ Alert",
+              body: alertBody,
+              icon: "/sstlogo.png",
+              tag: `alert-${Date.now()}`,
+              onClick: () => {
+                window.location.href = "/dashboard"; // ✅ Navigate to dashboard page
+              },
+            },
+            () => {
+              console.log("📢 Showing toast notification");
+              toast.warning(alertBody, {
+                position: "top-right",
+                autoClose: 5000,
+                hideProgressBar: false,
+                closeOnClick: true,
+                pauseOnHover: true,
+                toastId: `alert-${Date.now()}`, // ✅ Prevent duplicates
+              });
+            },
+          );
         }
       } catch (e) {
         console.error("Failed to parse WebSocket message:", e);
         setMessage(event.data);
       }
     };
-
     ws.current.onclose = (event) => {
       console.log("WebSocket disconnected:", event.code, event.reason);
       setIsConnected(false);

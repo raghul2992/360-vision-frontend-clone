@@ -170,41 +170,41 @@ function MainApp () {
   // ----------------------------------
   // WebSocket Message Handler
   // ----------------------------------
-  useEffect(() => {
-    if (!wsMessage) return
+  // useEffect(() => {
+  //   if (!wsMessage) return
 
-    const tenantId = localStorage.getItem('tenant_id')
+  //   const tenantId = localStorage.getItem('tenant_id')
 
-    // FIX 6: Centralized check for capability
-    const canNotify =
-      'Notification' in window && Notification.permission === 'granted'
+  //   // FIX 6: Centralized check for capability
+  //   const canNotify =
+  //     'Notification' in window && Notification.permission === 'granted'
 
-    if (wsMessage.type === 'camera_status' && tenantId) {
-      dispatch(getCameras({ tenantId }))
+  //   if (wsMessage.type === 'camera_status' && tenantId) {
+  //     dispatch(getCameras({ tenantId }))
 
-      if (canNotify) {
-        try {
-          new Notification('Camera Status Update', {
-            body: `Camera ${wsMessage.data.camera_id} status changed to ${wsMessage.data.status}`,
-            icon: '/favicon.ico'
-          })
-        } catch (e) {
-          console.error('Notification creation failed', e)
-        }
-      }
-    } else if (wsMessage.type === 'event_alert') {
-      if (canNotify) {
-        try {
-          new Notification(wsMessage.data.title || 'New Alert', {
-            body: wsMessage.data.message,
-            icon: '/sstlogo.png'
-          })
-        } catch (e) {
-          console.error('Notification creation failed', e)
-        }
-      }
-    }
-  }, [wsMessage, dispatch])
+  //     if (canNotify) {
+  //       try {
+  //         new Notification('Camera Status Update', {
+  //           body: `Camera ${wsMessage.data.camera_id} status changed to ${wsMessage.data.status}`,
+  //           icon: '/favicon.ico'
+  //         })
+  //       } catch (e) {
+  //         console.error('Notification creation failed', e)
+  //       }
+  //     }
+  //   } else if (wsMessage.type === 'event_alert') {
+  //     if (canNotify) {
+  //       try {
+  //         new Notification(wsMessage.data.title || 'New Alert', {
+  //           body: wsMessage.data.message,
+  //           icon: '/sstlogo.png'
+  //         })
+  //       } catch (e) {
+  //         console.error('Notification creation failed', e)
+  //       }
+  //     }
+  //   }
+  // }, [wsMessage, dispatch])
 
   // Hide Floating Button on dashboard-like screens
   const dashboardPaths = [
