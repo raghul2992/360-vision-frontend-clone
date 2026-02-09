@@ -10,6 +10,8 @@ import DashboardHome from './pages/dashboardhome/DashboardHome'
 import NotFound from './pages/NotFound'
 import ProtectedRoute from './utils/ProtectedRoute'
 import UserManagement from './pages/usesManagement/userManagement'
+import AdminTenants from './pages/superadmin/AdminTenants'
+import AdminProtectedRoute from './utils/adminProtectedRoutes'
 
 export const routes = [
   // --- PUBLIC ROUTES (No Cookie Check) ---
@@ -59,11 +61,36 @@ export const routes = [
           {
             path: 'user-management',
             element: <UserManagement />
-          }
+          },
         ]
       }
     ]
+
+
   },
+  {
+  element: <AdminProtectedRoute />, 
+        children: [
+          {
+            element: <Dashboard />, 
+            children: [
+              {
+                path: '/admin/tenants',
+                element: <AdminTenants />
+              }
+            
+            ]
+          }
+        ]
+      },
+
+
+// create a admin protected route and that is only accessable by superadmin 
+//admin/tenants
+
+// role type
+
+
 
   // --- 404 CATCH-ALL ---
   {

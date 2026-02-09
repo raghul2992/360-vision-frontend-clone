@@ -396,6 +396,23 @@
     "enableActivityTracking": "Enable Activity Tracking",
     "activityTrackingSubtext": "Track and record activity related to this ROI for monitoring and reporting purposes."
   },
+    "admin": {
+    "tenantManagement": "Tenant Management",
+    "selectTenant": "Select a tenant to manage their organization",
+    "searchTenants": "Search tenants...",
+    "filterAll": "All",
+    "filterActive": "Active",
+    "filterInactive": "Inactive",
+    "tenantId": "Tenant ID",
+    "active": "Active",
+    "inactive": "Inactive",
+    "loadingTenants": "Loading tenants...",
+    "noTenantsFound": "No tenants found matching your search",
+    "statusUpdated": "Tenant status updated to",
+    "statusUpdateFailed": "Failed to update status"
+  },
+
+
   "alerts": {
     "title": "Alerts",
     "all_alerts": "All Alerts",

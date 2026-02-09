@@ -77,19 +77,19 @@ const AlertItem = ({ alert, tenantId, timezone }) => {
         }),
       ).unwrap();
 
-      toast.success(
-        t("alerts.up_status_sucess") ||
-          "Validation status updated successfully",
-      );
+      // toast.success(
+      //   t("alerts.up_status_sucess") ||
+      //     "Validation status updated successfully",
+      // );
     } catch (error) {
       console.error("Failed to update validation status:", error);
 
       // Revert on error
       setValidationStatus(previousStatus);
 
-      toast.error(
-        t("alerts.up_status_failed") || "Failed to update validation status",
-      );
+      // toast.error(
+      //   t("alerts.up_status_failed") || "Failed to update validation status",
+      // );
     } finally {
       setIsUpdating(false);
     }

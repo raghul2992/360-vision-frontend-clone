@@ -8,6 +8,7 @@ import notificationReducer from '../features/notification/notificationSlice'
 import alertReducer from '../features/alert/alertSlice'
 import widgetApiReducer from '../features/widgets/widgetApiSlice'
 import userReducer from '../features/userManagement/userApiSlice'
+import adminReducer from '../features/admin/adminSlice'
 
 export const store = configureStore({
   reducer: {
@@ -18,7 +19,8 @@ export const store = configureStore({
     notifications: notificationReducer,
     alerts: alertReducer,
     widgetApi: widgetApiReducer,
-    users: userReducer
+    users: userReducer,
+    admin:adminReducer
   }
 })
 

@@ -1,98 +1,141 @@
-import React, { useEffect } from 'react'
-import company_logo from '../assets/company-icon.png'
+import React, { useEffect, useState } from "react";
+import company_logo from "../assets/company-icon.png";
 import {
   IoHomeOutline,
   IoLocationOutline,
   IoCameraOutline,
   IoSettingsOutline,
   IoLogOutOutline,
-  IoPeopleOutline
-} from 'react-icons/io5'
-import { textcolors, bgcolors } from '../theme'
-import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { useDispatch } from 'react-redux'
-import { logoutUser } from '../features/auth/authSlice'
+  IoPeopleOutline,
+  IoBusinessOutline, // For Tenant Switch
+} from "react-icons/io5";
+import { textcolors, bgcolors } from "../theme";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useDispatch } from "react-redux";
+import { logoutUser } from "../features/auth/authSlice";
 
 const Sidebar = () => {
-  const dispatch = useDispatch()
-  const navigate = useNavigate()
-  const location = useLocation()
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const location = useLocation();
 
-  // 1. Retrieve the role directly
-  const userRole = localStorage.getItem('user_role')
+  // Retrieve user info
+  const userRole = localStorage.getItem("user_role");
+  const tenantId = localStorage.getItem("tenant_id");
+
+  // State to track if tenant is selected
+  const [hasTenantSelected, setHasTenantSelected] = useState(false);
+
+  useEffect(() => {
+    setHasTenantSelected(!!tenantId && userRole === "superadmin");
+  }, [tenantId, userRole]);
 
   const handleLogout = async () => {
     try {
-      const result = await dispatch(logoutUser()).unwrap()
-      console.log('Logout success:', result)
-      navigate('/')
+      await dispatch(logoutUser()).unwrap();
+      localStorage.removeItem("tenant_id");
+      localStorage.removeItem("user_role");
+      localStorage.removeItem("user_id");
+      navigate("/");
     } catch (error) {
-      console.error('Logout failed:', error)
+      console.error("Logout failed:", error);
+      localStorage.clear();
+      navigate("/");
     }
+  };
+
+  // Navigate to tenant selection and clear current tenant selection
+  const handleTenantSwitch = () => {
+    localStorage.removeItem("tenant_id");
+    navigate("/admin/tenants");
+  };
+
+  // Theme-consistent active class helper
+  const isActive = (path) =>
+    location.pathname === path ? "rounded-[16px] active-menu" : "";
+
+  // 1. CONDITIONAL VIEW: Superadmin without a tenant selected
+  if (userRole === "superadmin" && !hasTenantSelected) {
+    return (
+      <div className="sticky border-r-2 border-solid border-[#2a2f454d] w-[100px] h-screen flex flex-col items-center py-3">
+        <div className="flex justify-center items-center mb-4">
+          <img src={company_logo} alt="logo" className="w-[80px] h-[80px] object-contain" />
+        </div>
+
+        <div className="flex-1 flex flex-col items-center justify-center">
+          <Link to="/admin/tenants">
+            <div className={`menu-item w-12 h-12 flex justify-center items-center cursor-pointer hover:rounded-[16px] ${isActive("/admin/tenants")}`}>
+              <IoBusinessOutline className="text-2xl" />
+            </div>
+          </Link>
+        </div>
+
+        <div className="menu-item w-12 h-12 flex justify-center items-center cursor-pointer hover:rounded-[16px]">
+          <IoLogOutOutline className="text-2xl" onClick={handleLogout} />
+        </div>
+      </div>
+    );
   }
 
-  const isActive = path =>
-    location.pathname === path
-      ? 'rounded-[16px] active-menu'
-      : ''
-
-  useEffect(() => {
-    console.log('Current Role:', userRole)
-  }, [userRole])
-
+  // 2. STANDARD VIEW: Regular users or Superadmin with tenant selected
   return (
-    <div className={`sticky border-r-2 border-solid border-[#2a2f454d] w-[100px] h-screen flex flex-col items-center py-3`}>
-      <div className='flex justify-center items-center mb-4'>
-        <img src={company_logo} alt='logo' className='w-[80px] h-[80px] object-contain' />
+    <div className="sticky border-r-2 border-solid border-[#2a2f454d] w-[100px] h-screen flex flex-col items-center py-3">
+      {/* Logo */}
+      <div className="flex justify-center items-center mb-4">
+        <img src={company_logo} alt="logo" className="w-[80px] h-[80px] object-contain" />
       </div>
 
-      <div className='flex flex-col items-center justify-center flex-1 gap-5 text-xl'>
-        {/* Dashboard - Visible to everyone */}
-        <Link to='/dashboard'>
-          <div className={`menu-item w-12 h-12 flex justify-center items-center cursor-pointer hover:rounded-[16px] ${isActive('/dashboard')}`}>
-            <IoHomeOutline className={`text-2xl`} />
+      <div className="flex flex-col items-center justify-center flex-1 gap-5 text-xl">
+        
+        {/* Tenant Switcher - Only Superadmin sees this inside the full menu */}
+        {userRole === "superadmin" && hasTenantSelected && (
+          <div
+            onClick={handleTenantSwitch}
+            className={`menu-item w-12 h-12 flex justify-center items-center cursor-pointer hover:rounded-[16px] ${isActive("/admin/tenants")}`}
+          >
+            <IoBusinessOutline className="text-2xl" />
+          </div>
+        )}
+
+        {/* Dashboard */}
+        <Link to="/dashboard">
+          <div className={`menu-item w-12 h-12 flex justify-center items-center cursor-pointer hover:rounded-[16px] ${isActive("/dashboard")}`}>
+            <IoHomeOutline className="text-2xl" />
           </div>
         </Link>
 
-        {/* Location - Visible to everyone */}
-        <Link to='/location'>
-          <div className={`menu-item w-12 h-12 flex justify-center items-center cursor-pointer hover:rounded-[16px] ${isActive('/location')}`}>
-            <IoLocationOutline
-              className={`text-2xl`}
-            />
+        {/* Location */}
+        <Link to="/location">
+          <div className={`menu-item w-12 h-12 flex justify-center items-center cursor-pointer hover:rounded-[16px] ${isActive("/location")}`}>
+            <IoLocationOutline className="text-2xl" />
           </div>
         </Link>
 
-        {/* Camera - HIDDEN for viewer */}
-        {userRole !== 'viewer' && (
-          <Link to='/camera'>
-            <div className={`menu-item w-12 h-12 flex justify-center items-center cursor-pointer hover:rounded-[16px] ${isActive('/camera')}`}>
-              <IoCameraOutline className={`text-2xl`} />
+        {/* Camera - Restricted */}
+        {userRole !== "viewer" && (
+          <Link to="/camera">
+            <div className={`menu-item w-12 h-12 flex justify-center items-center cursor-pointer hover:rounded-[16px] ${isActive("/camera")}`}>
+              <IoCameraOutline className="text-2xl" />
             </div>
           </Link>
         )}
 
-        {/* People/User Mgmt - HIDDEN for viewer */}
-        {userRole !== 'viewer' && (
-          <Link to='/user-management'>
-            <div className={`menu-item w-12 h-12 flex justify-center items-center cursor-pointer hover:rounded-[16px] ${isActive('/user-management')}`}>
-              <IoPeopleOutline
-                className={`text-2xl`}
-              />
+        {/* User Management - Restricted */}
+        {userRole !== "viewer" && (
+          <Link to="/user-management">
+            <div className={`menu-item w-12 h-12 flex justify-center items-center cursor-pointer hover:rounded-[16px] ${isActive("/user-management")}`}>
+              <IoPeopleOutline className="text-2xl" />
             </div>
           </Link>
         )}
       </div>
 
       {/* Logout */}
-        <div className={`menu-item w-12 h-12 flex justify-center items-center cursor-pointer hover:rounded-[16px]`}>
-        <IoLogOutOutline
-          className={`text-2xl`}
-          onClick={handleLogout}
-        />
+      <div className="menu-item w-12 h-12 flex justify-center items-center cursor-pointer hover:rounded-[16px]">
+        <IoLogOutOutline className="text-2xl" onClick={handleLogout} />
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default Sidebar
+export default Sidebar;

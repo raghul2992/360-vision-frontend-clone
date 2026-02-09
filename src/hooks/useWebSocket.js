@@ -108,7 +108,7 @@ const useWebSocket = (url, tenant_id, reconnectInterval = 2000) => {
                 hideProgressBar: false,
                 closeOnClick: true,
                 pauseOnHover: true,
-                toastId: `alert-${Date.now()}`, // ✅ Prevent duplicates
+                toastId: `alert-${Date.now()}`, 
               });
             },
           );
