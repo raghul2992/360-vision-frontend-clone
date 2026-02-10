@@ -5,7 +5,7 @@ const DashboardHome = () => {
   return (
     <>
       <DashboardOverview />
-      <Alerts />
+      {/* <Alerts /> */}
     </>
   )
 }

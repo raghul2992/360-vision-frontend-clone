@@ -311,7 +311,7 @@ const Alerts = () => {
       <div className="mx-auto max-w-full">
         {/* Header */}
         <div className="flex items-center justify-between mb-4">
-          <h1 className="text-gray-500 text-2xl font-semibold">
+          <h1 className="text-2xl font-semibold">
             {t("alerts.latest_alerts")}
           </h1>
         </div>
@@ -374,7 +374,7 @@ const Alerts = () => {
         </div>
 
         {/* Alerts Section */}
-        <div className={`${bgcolors.white} w-full rounded-lg p-6`}>
+        <div className={`${bgcolors.componentsclr} w-full rounded-lg p-6`}>
          
           <div className="flex flex-col lg:flex-row gap-6">
             <div className="lg:w-[100%] w-full">

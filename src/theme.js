@@ -1,3 +1,5 @@
+
+
 export const textcolors = {
   primary: "text-[#3885CC]",
   secondary: "text-[#F3F3F5]",
@@ -17,7 +19,8 @@ export const bgcolors = {
   primary: "bg-[#3885CC]",
   secondary: "bg-[#3885CC]",
   body: "bg-[#D9F3FD]",
-  inputbg: "bg-[#F3F3F5]"
+  inputbg: "bg-[#F3F3F5]",
+  componentsclr:"bg-[#393A4A]"
 };
 
 export const textSizes = {

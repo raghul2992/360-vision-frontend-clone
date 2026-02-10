@@ -100,10 +100,10 @@ const AdminTenants = () => {
   }
 
   return (
-    <div className={`${bgcolors.white} min-h-screen p-8  text-white`}>
+    <div className={`${bgcolors.white} min-h-screen p-8  `}>
       {/* Page Header */}
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-500 mb-2">
+        <h1 className="text-2xl font-bold  mb-2">
           {t("admin.tenantManagement")}
         </h1>
         <p className="text-gray-500 text-sm">

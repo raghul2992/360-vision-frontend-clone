@@ -12,6 +12,7 @@ import ProtectedRoute from './utils/ProtectedRoute'
 import UserManagement from './pages/usesManagement/userManagement'
 import AdminTenants from './pages/superadmin/AdminTenants'
 import AdminProtectedRoute from './utils/adminProtectedRoutes'
+import Alerts from './pages/dashboardhome/alerts'
 
 export const routes = [
   // --- PUBLIC ROUTES (No Cookie Check) ---
@@ -62,6 +63,10 @@ export const routes = [
             path: 'user-management',
             element: <UserManagement />
           },
+          {
+            path:'/alerts',
+            element:<Alerts/>
+          }
         ]
       }
     ]

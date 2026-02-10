@@ -9,6 +9,7 @@ import {
   IoLogOutOutline,
   IoPeopleOutline,
   IoBusinessOutline, // For Tenant Switch
+  IoFileTrayFullOutline
 } from "react-icons/io5";
 
 import { Link, useLocation, useNavigate } from "react-router-dom";
@@ -121,7 +122,7 @@ const Sidebar = () => {
             </div>
           </Link>
         )}
-
+     
         {/* User Management - Restricted */}
         {userRole !== "viewer" && (
           <Link to="/user-management">
@@ -130,7 +131,19 @@ const Sidebar = () => {
             </div>
           </Link>
         )}
+
+
+         <Link to="/alerts">
+          <div className={`menu-item w-12 h-12 flex justify-center items-center cursor-pointer hover:rounded-[16px] ${isActive("/alerts")}`}>
+            <IoFileTrayFullOutline className="text-2xl" />
+          </div>
+        </Link>
       </div>
+
+     
+
+
+
 
       {/* Logout */}
       <div className="menu-item w-12 h-12 flex justify-center items-center cursor-pointer hover:rounded-[16px]">
