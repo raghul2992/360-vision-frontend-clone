@@ -20,7 +20,7 @@ export const bgcolors = {
   secondary: "bg-[#3885CC]",
   body: "bg-[#D9F3FD]",
   inputbg: "bg-[#F3F3F5]",
-  componentsclr:"bg-[#393A4A]"
+  componentsclr:"bg-[#2a2f45]"
 };
 
 export const textSizes = {

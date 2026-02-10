@@ -1203,7 +1203,8 @@ const ROIConfiguration = () => {
                 </select>
               </div>
             </div>
-
+            
+            {(detectionType === "PERSON_QUEUE_DETECTION" &&
             <div className='mt-6 pt-4 border-t border-gray-700'>
               <div className='flex items-center'>
                 <div className='flex items-center gap-5'>
@@ -1229,6 +1230,8 @@ const ROIConfiguration = () => {
                 </div>
               </div>
             </div>
+            )}
+            
           </div>
         </div>
       </div>

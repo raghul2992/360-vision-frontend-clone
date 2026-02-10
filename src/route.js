@@ -43,10 +43,10 @@ export const routes = [
             path: '/dashboard',
             element: <DashboardHome />
           },
-          {
-            path: '/location',
-            element: <LocationManagementPage />
-          },
+          // {
+          //   path: '/location',
+          //   element: <LocationManagementPage />
+          // },
           {
             path: '/camera',
             element: <CameraPage />

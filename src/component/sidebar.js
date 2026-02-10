@@ -108,11 +108,11 @@ const Sidebar = () => {
         </Link>
 
         {/* Location */}
-        <Link to="/location">
+        {/* <Link to="/location">
           <div className={`menu-item w-12 h-12 flex justify-center items-center cursor-pointer hover:rounded-[16px] ${isActive("/location")}`}>
             <IoLocationOutline className="text-2xl" />
           </div>
-        </Link>
+        </Link> */}
 
         {/* Camera - Restricted */}
         {userRole !== "viewer" && (
