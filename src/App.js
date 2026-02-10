@@ -225,7 +225,7 @@ function MainApp () {
 
       <AlertPopup />
 
-      {!hideFloatingButton && <FloatingLanguageButton />}
+      {/* {!hideFloatingButton && <FloatingLanguageButton />} */}
     </>
   )
 }

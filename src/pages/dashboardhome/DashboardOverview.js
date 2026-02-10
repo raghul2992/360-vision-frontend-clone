@@ -131,6 +131,8 @@ const selectStyles = {
   })
 }
 
+
+
 export default function DashboardOverview () {
   const {
     // Data & State
@@ -242,7 +244,7 @@ export default function DashboardOverview () {
   }
 
   return (
-    <div className={`min-h-screen p-6 w-full`}>
+    <div className={` ${bgcolors.white} min-h-screen p-6 w-full`}>
       <div className='mx-auto'>
         {/* === GLOBAL FILTER SECTION === */}
         <div className='flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4'>

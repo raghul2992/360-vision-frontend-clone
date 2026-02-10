@@ -33,7 +33,7 @@ const CameraPage = () => {
   }, [dispatch, tenantId])
 
   return (
-    <div className={`p-8 min-h-screen`}>
+    <div className={`${bgcolors.white}  p-8 min-h-screen`}>
       <div className='flex justify-between items-center mb-6'>
         <div>
           <h1 className='text-3xl font-bold'>{t('cameraGrid.title')}</h1>

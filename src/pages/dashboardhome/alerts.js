@@ -7,6 +7,7 @@ import React, {
 } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import AlertItem from "./alertlist";
+import { textcolors,bgcolors } from "../../theme";
 import {
   fetchAlerts,
   resetAlerts,
@@ -306,11 +307,11 @@ const Alerts = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#1a1d29] p-6 w-full">
+    <div className={`min-h-screen ${bgcolors.white} p-6 w-full`}>
       <div className="mx-auto max-w-full">
         {/* Header */}
         <div className="flex items-center justify-between mb-4">
-          <h1 className="text-white text-2xl font-semibold">
+          <h1 className="text-gray-500 text-2xl font-semibold">
             {t("alerts.latest_alerts")}
           </h1>
         </div>
@@ -373,7 +374,7 @@ const Alerts = () => {
         </div>
 
         {/* Alerts Section */}
-        <div className="bg-[#2a2f45] w-full rounded-lg p-6">
+        <div className={`${bgcolors.white} w-full rounded-lg p-6`}>
          
           <div className="flex flex-col lg:flex-row gap-6">
             <div className="lg:w-[100%] w-full">

@@ -27,6 +27,7 @@ import {
 } from '../../features/userManagement/userApiSlice'
 
 import { getLocations } from '../../features/locations/locationApiSlice'
+import { bgcolors } from '../../theme'
 
 const UserManagement = () => {
   const { t } = useTranslation()
@@ -169,7 +170,7 @@ const UserManagement = () => {
       : 'bg-gray-600/20 text-gray-400 border border-gray-500/30'
 
   return (
-    <div className='min-h-screen p-8 relative font-sans'>
+    <div className={` ${bgcolors.white}  min-h-screen p-8 relative font-sans` }>
       {/* MODALS */}
       {isAddModalOpen && (
         <AddUserModal

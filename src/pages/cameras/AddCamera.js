@@ -518,9 +518,9 @@ const AddCamera = () => {
   };
 
   return (
-    <div className={`p-8 min-h-screen`}>
+    <div className={`${bgcolors.white}  p-8 min-h-screen`}>
       {showConfirm && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black/60 z-50">
+        <div className={`${bgcolors.white}  fixed inset-0 flex items-center justify-center bg-black/60 z-50`}>
           <div className="bg-[#2A2B36] rounded-xl p-6 w-[90%] max-w-sm border border-gray-700 shadow-lg text-center">
             <h3 className="text-lg font-semibold text-white mb-3">
               {t("addCamera.confirmDeletionTitle")}

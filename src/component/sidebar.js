@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import company_logo from "../assets/company-icon.png";
+import { textcolors,bgcolors } from "../theme";
 import {
   IoHomeOutline,
   IoLocationOutline,
@@ -9,7 +10,7 @@ import {
   IoPeopleOutline,
   IoBusinessOutline, // For Tenant Switch
 } from "react-icons/io5";
-import { textcolors, bgcolors } from "../theme";
+
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { logoutUser } from "../features/auth/authSlice";
@@ -50,6 +51,7 @@ const Sidebar = () => {
     navigate("/admin/tenants");
   };
 
+  const standardClass = `sticky ${bgcolors.white} border-r border-solid border-[#DDDDDD] w-[100px] h-screen flex flex-col items-center py-3`;
   // Theme-consistent active class helper
   const isActive = (path) =>
     location.pathname === path ? "rounded-[16px] active-menu" : "";
@@ -57,7 +59,7 @@ const Sidebar = () => {
   // 1. CONDITIONAL VIEW: Superadmin without a tenant selected
   if (userRole === "superadmin" && !hasTenantSelected) {
     return (
-      <div className="sticky border-r-2 border-solid border-[#2a2f454d] w-[100px] h-screen flex flex-col items-center py-3">
+      <div className={standardClass}>
         <div className="flex justify-center items-center mb-4">
           <img src={company_logo} alt="logo" className="w-[80px] h-[80px] object-contain" />
         </div>
@@ -79,7 +81,7 @@ const Sidebar = () => {
 
   // 2. STANDARD VIEW: Regular users or Superadmin with tenant selected
   return (
-    <div className="sticky border-r-2 border-solid border-[#2a2f454d] w-[100px] h-screen flex flex-col items-center py-3">
+    <div className={`sticky ${bgcolors.white} border-r border-solid border-[#DDDDDD] w-[100px] h-screen flex flex-col items-center py-3`}>
       {/* Logo */}
       <div className="flex justify-center items-center mb-4">
         <img src={company_logo} alt="logo" className="w-[80px] h-[80px] object-contain" />

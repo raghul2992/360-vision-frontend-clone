@@ -1,3 +1,5 @@
+
+
 // components/Navbar.js
 import React, { useState, useEffect } from 'react'
 import { IoGlobeOutline } from 'react-icons/io5'
@@ -51,7 +53,7 @@ const Navbar = () => {
 
   return (
     <div
-      className={`text-white h-16 flex items-center justify-end px-4`}
+      className={` ${bgcolors.white} text-white h-16 flex items-center justify-end px-4`}
     >
       <div className='flex items-center gap-6'>
         {/* WebSocket Connection Indicator */}

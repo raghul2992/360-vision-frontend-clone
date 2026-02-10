@@ -13,6 +13,7 @@ import {
   IoBusinessOutline,
   IoChevronForwardOutline,
 } from "react-icons/io5";
+import { bgcolors } from "../../theme.js";
 
 const AdminTenants = () => {
   const { t } = useTranslation(); // Add this
@@ -27,7 +28,8 @@ const AdminTenants = () => {
   const [statusFilter, setStatusFilter] = useState("all");
 
   useEffect(() => {
-   
+   localStorage.removeItem("tenant_id");
+   localStorage.removeItem("tenant_name");
    
     dispatch(fetchTenants({ skip: 0, limit: 100 }));
   }, [dispatch, navigate]);
@@ -40,6 +42,7 @@ const AdminTenants = () => {
 
   const handleTenantClick = (tenant) => {
   localStorage.setItem("tenant_id", tenant.id);
+  localStorage.setItem("tenant_name", tenant.name);
   navigate("/dashboard");
 };
 
@@ -90,14 +93,14 @@ const AdminTenants = () => {
 
   if (tenantsLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-[#0f1116]">
+      <div className= {`flex items-center justify-center min-h-screen ${bgcolors.white}`}>
         <p className="text-gray-400 animate-pulse">{t("admin.loadingTenants")}</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen p-8 bg-[#0f1116] text-white">
+    <div className={`${bgcolors.white} min-h-screen p-8  text-white`}>
       {/* Page Header */}
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-gray-500 mb-2">
