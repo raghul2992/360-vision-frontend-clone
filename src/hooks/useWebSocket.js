@@ -6,7 +6,7 @@ import { addAlert } from "../features/alert/alertSlice";
 import eventEmitter from "../utils/eventEmitter";
 import { showNotification } from "../utils/notificationHelper";
 import { toast } from "react-toastify";
-
+import company_logo from "../assets/company-icon.png";
 const useWebSocket = (url, tenant_id, reconnectInterval = 2000) => {
   const [isConnected, setIsConnected] = useState(false);
   const [message, setMessage] = useState(null);
@@ -62,7 +62,7 @@ const useWebSocket = (url, tenant_id, reconnectInterval = 2000) => {
             {
               title: "📹 Camera Status Update",
               body: receivedMessage.message || "Camera status changed",
-              icon: "/sstlogo.png",
+              icon: company_logo,
               tag: `camera-${receivedMessage.data?.camera_id || Date.now()}`,
               onClick: () => {
                 window.location.href = "/camera";
@@ -94,7 +94,7 @@ const useWebSocket = (url, tenant_id, reconnectInterval = 2000) => {
             {
               title: "⚠️ Alert",
               body: alertBody,
-              icon: "/sstlogo.png",
+              icon: company_logo,
               tag: `alert-${Date.now()}`,
               onClick: () => {
                 window.location.href = "/dashboard"; // ✅ Navigate to dashboard page

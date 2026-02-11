@@ -49,7 +49,7 @@ const Sidebar = () => {
   // Navigate to tenant selection and clear current tenant selection
   const handleTenantSwitch = () => {
     localStorage.removeItem("tenant_id");
-    navigate("/admin/tenants");
+    navigate("/tenants");
   };
 
   const standardClass = `sticky ${bgcolors.white} border-r border-solid border-[#DDDDDD] w-[100px] h-screen flex flex-col items-center py-3`;
@@ -66,8 +66,8 @@ const Sidebar = () => {
         </div>
 
         <div className="flex-1 flex flex-col items-center justify-center">
-          <Link to="/admin/tenants">
-            <div className={`menu-item w-12 h-12 flex justify-center items-center cursor-pointer hover:rounded-[16px] ${isActive("/admin/tenants")}`}>
+          <Link to="/tenants">
+            <div className={`menu-item w-12 h-12 flex justify-center items-center cursor-pointer hover:rounded-[16px] ${isActive("/tenants")}`}>
               <IoBusinessOutline className="text-2xl" />
             </div>
           </Link>
@@ -94,7 +94,7 @@ const Sidebar = () => {
         {userRole === "superadmin" && hasTenantSelected && (
           <div
             onClick={handleTenantSwitch}
-            className={`menu-item w-12 h-12 flex justify-center items-center cursor-pointer hover:rounded-[16px] ${isActive("/admin/tenants")}`}
+            className={`menu-item w-12 h-12 flex justify-center items-center cursor-pointer hover:rounded-[16px] ${isActive("/tenants")}`}
           >
             <IoBusinessOutline className="text-2xl" />
           </div>

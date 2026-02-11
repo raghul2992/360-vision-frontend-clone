@@ -56,7 +56,7 @@ const LoginPage = ({ callbackScreen }) => {
           // Clear any existing tenant_id for superadmin
           localStorage.removeItem("tenant_id");
           
-          navigate("/admin/tenants");
+          navigate("/tenants");
         } else {
           // Store tenant_id for regular users (admin, operator, viewer)
           if (result.data.tenant_id) {

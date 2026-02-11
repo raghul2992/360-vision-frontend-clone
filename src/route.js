@@ -80,7 +80,7 @@ export const routes = [
             element: <Dashboard />, 
             children: [
               {
-                path: '/admin/tenants',
+                path: '/tenants',
                 element: <AdminTenants />
               }
             

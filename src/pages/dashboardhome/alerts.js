@@ -342,7 +342,7 @@ const Alerts = () => {
               styles={customStyles}
             />
           </div>
-          <div className="w-72">
+          <div className="w-50">
             <Select
               options={detectionTypeOptions}
               onChange={(opt) => setDetectionType(opt ? opt.value : null)}

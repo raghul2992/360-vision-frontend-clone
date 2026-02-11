@@ -3,6 +3,9 @@
 /**
  * Request permission for browser notifications
  */
+import company_logo from "../assets/company-icon.png";
+
+
 export const requestNotificationPermission = async () => {
   if (!("Notification" in window)) {
     console.log("This browser does not support desktop notifications");
@@ -63,9 +66,9 @@ export const showNotification = async (options, toastCallback) => {
       
       const notification = new Notification(title, {
         body,
-        icon: icon || "/sstlogo.png",
+        icon: icon || company_logo,
         tag: tag || `notification-${Date.now()}`,
-        badge: "/sstlogo.png",
+        badge: company_logo,
         requireInteraction: false,
         silent: false,
       });
