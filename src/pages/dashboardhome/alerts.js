@@ -7,7 +7,7 @@ import React, {
 } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import AlertItem from "./alertlist";
-import { textcolors,bgcolors } from "../../theme";
+import { textcolors, bgcolors } from "../../theme";
 import {
   fetchAlerts,
   resetAlerts,
@@ -45,7 +45,7 @@ const Alerts = () => {
   const [readStatus, setReadStatus] = useState(null);
   const [dateRange, setDateRange] = useState([null, null]);
   const [startDate, endDate] = dateRange;
-  
+  const [detectionType, setDetectionType] = useState(null);
 
   // Pagination
   const [limit] = useState(10);
@@ -108,17 +108,24 @@ const Alerts = () => {
 
       const currentSkip = reset ? 0 : skip;
       const currentLimit = limit;
-
+      const metaFilters = {};
+      if (priorityFilter) metaFilters.alert_priority = priorityFilter;
+      if (detectionType) metaFilters.detection_type = detectionType;
       const queryParams = {
         type: "event_alert",
         limit: currentLimit,
         skip: currentSkip,
         ...(readStatus !== null && { is_read: readStatus === "read" }),
-        ...(priorityFilter && {
-          meta_filters: JSON.stringify({
-            alert_priority: priorityFilter,
-          }),
+
+        // 2. Only send meta_filters if strictly needed
+        ...(Object.keys(metaFilters).length > 0 && {
+          meta_filters: JSON.stringify(metaFilters),
         }),
+        // ...(priorityFilter && {
+        //   meta_filters: JSON.stringify({
+        //     alert_priority: priorityFilter,
+        //   }),
+        // }),
         ...(selectedLocation && { location_id: selectedLocation.value }),
         ...(selectedCamera && { camera_id: selectedCamera.value }),
         ...(startDate && {
@@ -166,6 +173,7 @@ const Alerts = () => {
       limit,
       priorityFilter,
       readStatus,
+      detectionType,
     ],
   );
   // Listen for real-time WebSocket alerts - SIMPLE VERSION
@@ -182,7 +190,6 @@ const Alerts = () => {
       //   pauseOnHover: true,
       //   draggable: true,
       // });
-      
 
       setTimeout(() => {
         fetchAlertsData(true);
@@ -220,6 +227,7 @@ const Alerts = () => {
     endDate,
     priorityFilter,
     readStatus,
+    detectionType,
   ]);
 
   // Set up intersection observer for infinite scroll
@@ -255,6 +263,13 @@ const Alerts = () => {
       fetchAlertsData(false, true);
     }
   }, [skip]);
+  const detectionTypeOptions = [
+    { value: "PERSON_QUEUE_DETECTION", label: "Person Queue" },
+    { value: "RESTRICTED_AREA_BREACH_DETECTION", label: "Area Breach" },
+    { value: "FIRE_SMOKE_DETECTION", label: "Fire & Smoke" },
+    { value: "PPE_VIOLATION", label: "PPE Violation" },
+    { value: "CROWD_SURGE", label: "Crowd Surge" },
+  ];
 
   // Select options
   const priorityOptions = [
@@ -327,6 +342,18 @@ const Alerts = () => {
               styles={customStyles}
             />
           </div>
+          <div className="w-72">
+            <Select
+              options={detectionTypeOptions}
+              onChange={(opt) => setDetectionType(opt ? opt.value : null)}
+              value={detectionTypeOptions.find(
+                (opt) => opt.value === detectionType,
+              )}
+              placeholder={"Detection Type"}
+              isClearable
+              styles={customStyles}
+            />
+          </div>
 
           <div className="w-48">
             <Select
@@ -375,7 +402,6 @@ const Alerts = () => {
 
         {/* Alerts Section */}
         <div className={`${bgcolors.componentsclr} w-full rounded-lg p-6`}>
-         
           <div className="flex flex-col lg:flex-row gap-6">
             <div className="lg:w-[100%] w-full">
               {alerts.length === 0 && !isLoading && !error && (

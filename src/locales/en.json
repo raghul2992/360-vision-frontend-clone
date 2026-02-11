@@ -396,7 +396,7 @@
     "enableActivityTracking": "Enable Activity Tracking",
     "activityTrackingSubtext": "Track and record activity related to this ROI for monitoring and reporting purposes."
   },
-    "admin": {
+  "admin": {
     "tenantManagement": "Tenant Management",
     "selectTenant": "Select a tenant to manage their organization",
     "searchTenants": "Search tenants...",
@@ -411,7 +411,6 @@
     "statusUpdated": "Tenant status updated to",
     "statusUpdateFailed": "Failed to update status"
   },
-
 
   "alerts": {
     "title": "Alerts",
@@ -460,8 +459,8 @@
     "unit": "Unit",
     "time": "Time",
     "comments": "COMMENTS",
-    "up_status_sucess":"Status updated ", 
-    "up_status_failed":"Failed to update status",
+    "up_status_sucess": "Status updated ",
+    "up_status_failed": "Failed to update status",
     "alert_description": "The alert was generated autonomously and in real-time, allowing a quick response from the monitoring team. The captured image shows that the system was able to clearly distinguish the suspicious object, even in challenging visual conditions, such as night lighting and movement on site.",
     "alert_detection_image_alt": "Alert detection",
     "date": "Date",
@@ -488,7 +487,10 @@
       "attendant_absence_on_pump": "Attendant absence detected by Camera {{camera}}.",
       "restricted_area_breach_detection": "Restricted area breach detected by Camera {{camera}}.",
       "attendant_cellphone_detection": "Cellphone usage detected by Camera {{camera}}.",
-      "suspicious_loitering": "Suspicious loitering detected by Camera {{camera}}."
+      "suspicious_loitering": "Suspicious loitering detected by Camera {{camera}}.",
+      "crowd_surge": "Crowd Surge detected by Camera {{camera}}.",
+      "ppe_detection": "PPE Detection detected by Camera {{camera}}.",
+      "fire_and_smoke_detection": "Fire & Smoke Detection detected by Camera {{camera}}."
     },
     "detection_titles": {
       "vehicle_queue_detection": "Vehicle Queue Detection",
@@ -497,7 +499,12 @@
       "attendant_absence_on_pump": "Attendant Absence On Pump",
       "restricted_area_breach_detection": "Restricted Area Breach Detection",
       "attendant_cellphone_detection": "Attendant Cellphone Detection",
-      "suspicious_loitering": "Suspicious Loitering"
+      "suspicious_loitering": "Suspicious Loitering",
+       "crowd_surge": "Crowd Surge ",
+      "ppe_detection": "PPE Detection ",
+      "fire_and_smoke_detection": "Fire & Smoke Detection "
+
+
     }
   },
   "statistics": {
