@@ -232,7 +232,8 @@ const KpiSection = ({
         cols={{ lg: 5, md: 2, xxs: 1 }}
         rowHeight={140}
         margin={[16, 16]}
-        isDraggable={true}
+        compactType="horizontal"
+        isDraggable={window.innerWidth > 768}
         isResizable={false}
         draggableHandle='.drag-handle'
         onLayoutChange={l => onLayoutChange && onLayoutChange(l)}

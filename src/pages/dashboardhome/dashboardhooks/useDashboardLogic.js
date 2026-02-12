@@ -256,33 +256,100 @@ export const useDashboardLogic = () => {
   }, [tenant, layoutLoading, hasInitialized, ALL_AVAILABLE_WIDGETS])
 
   // --- Unified Add/Remove Widget ---
-  const addWidget = useCallback(
-    widgetName => {
-      const newWidget = ALL_AVAILABLE_WIDGETS.find(
-        w => w.widget_name === widgetName
+   const KPI_COLS = 5
+const CHART_COLS = 12
+
+const addWidget = useCallback(
+  widgetName => {
+    const newWidget = ALL_AVAILABLE_WIDGETS.find(
+      w => w.widget_name === widgetName
+    )
+    if (!newWidget || activeWidgets.some(w => w.widget_name === widgetName)) {
+      setIsModalOpen(false)
+      return
+    }
+
+    const isKpi = newWidget.isKpi
+
+    if (isKpi) {
+      // KPI placement (same as we discussed earlier)
+      const w = 1
+      const h = 1
+
+      const kpiItems = layout.filter(item =>
+        KPI_WIDGETS_CONFIG.some(k => k.id === item.i)
       )
-      if (!newWidget || activeWidgets.some(w => w.widget_name === widgetName)) {
-        setIsModalOpen(false)
-        return
+      const last = kpiItems[kpiItems.length - 1]
+
+      let x = 0
+      let y = 0
+
+      if (last) {
+        const spaceOnRow = KPI_COLS - (last.x + last.w)
+        if (spaceOnRow >= w) {
+          x = last.x + last.w
+          y = last.y
+        } else {
+          x = 0
+          y = last.y + last.h
+        }
       }
-      const isKpi = newWidget.isKpi
-      const newLayoutItem = {
-        i: newWidget.widget_name,
-        x: 0,
-        y: Infinity,
-        w: isKpi ? 1 : 6,
-        h: isKpi ? 1 : 12,
-        minW: isKpi ? 1 : 3,
-        minH: isKpi ? 1 : 8
-      }
+
+      const newLayoutItem = { i: newWidget.widget_name, x, y, w, h, minW: 1, minH: 1 }
       const newLayout = [...layout, newLayoutItem]
       setLayout(newLayout)
       setActiveWidgets(prev => [...prev, newWidget])
       saveLayoutToApi(newLayout)
       setIsModalOpen(false)
-    },
-    [activeWidgets, layout, saveLayoutToApi, ALL_AVAILABLE_WIDGETS]
-  )
+      return
+    }
+
+    // === Chart widgets placement ===
+    const w = 6   // or read from config if you store per-widget width
+    const h = 12
+
+    // Only look at chart items (non‑KPI)
+    const chartItems = layout.filter(
+      item => !KPI_WIDGETS_CONFIG.some(k => k.id === item.i)
+    )
+    const last = chartItems[chartItems.length - 1]
+
+    let x = 0
+    let y = 0
+
+    if (last) {
+      const spaceOnRow = CHART_COLS - (last.x + last.w)
+      if (spaceOnRow >= w) {
+        // put new chart to the right on the same row
+        x = last.x + last.w
+        y = last.y
+      } else {
+        // start new row
+        x = 0
+        y = last.y + last.h
+      }
+    }
+
+    const newLayoutItem = {
+      i: newWidget.widget_name,
+      x,
+      y,
+      w,
+      h,
+      minW: 3,
+      minH: 8
+    }
+
+    const newLayout = [...layout, newLayoutItem]
+    setLayout(newLayout)
+    setActiveWidgets(prev => [...prev, newWidget])
+    saveLayoutToApi(newLayout)
+    setIsModalOpen(false)
+  },
+  [activeWidgets, layout, saveLayoutToApi, ALL_AVAILABLE_WIDGETS]
+)
+
+
 
   const removeWidget = useCallback(
     widgetName => {

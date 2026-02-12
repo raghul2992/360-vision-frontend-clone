@@ -1,5 +1,5 @@
 import React from 'react'
-import { FiX, FiMaximize2 } from 'react-icons/fi'
+import { FiX, FiMaximize2 ,FiMove} from 'react-icons/fi'
 import FilterDropdown from '../../../component/FilterDropdown' // Adjust path if needed
 
 const KpiWidget = ({
@@ -25,7 +25,7 @@ const KpiWidget = ({
             className='hover:text-white transition-colors cursor-pointer'
             title='Expand'
           >
-            <FiMaximize2 size={14} />
+            <FiMove size={14} />
           </button>
           <span className='text-[11px] font-semibold uppercase tracking-wider text-gray-300'>
             {title}
