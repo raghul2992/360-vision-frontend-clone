@@ -134,7 +134,7 @@ const ROIConfiguration = () => {
   const [currentRoiId, setCurrentRoiId] = useState(currentRoi_Id);
 
   // NEW: Activity Tracking state
-  const [trackingType, setTrackingType] = useState(false)
+  const [trackingType, setTrackingType] = useState(false);
 
   // New detection config states
   const [queueCountThreshold, setQueueCountThreshold] = useState(1);
@@ -142,7 +142,10 @@ const ROIConfiguration = () => {
   const [dwellTimeSeconds, setDwellTimeSeconds] = useState(40);
   const [attendantAbsenceDwellTime, setAttendantAbsenceDwellTime] =
     useState(60);
-  const [confidenceThreshold, setConfidenceThreshold] = useState(40); // NEW: Confidence threshold for suspicious loitering
+  const [confidenceThreshold, setConfidenceThreshold] = useState(50); // Updated default to 50
+  const [alertCooldown, setAlertCooldown] = useState(30);
+  const [suspiciousConfidenceThreshold, setSuspiciousConfidenceThreshold] =
+    useState(40); // NEW: Confidence threshold for suspicious loitering
   const [targetedHourSlots, setTargetedHourSlots] = useState([]);
   const [newTimeSlot, setNewTimeSlot] = useState(["", ""]);
 
@@ -417,57 +420,62 @@ const ROIConfiguration = () => {
       alert_priority: priorityToSend,
       tracking_activity: trackingType,
       detection_type: detectionType,
-      detection_config: (() => {
-        if (
-          detectionType === "VEHICLE_QUEUE_DETECTION" ||
-          detectionType === "PERSON_QUEUE_DETECTION"
-        ) {
-          return {
-            queue_count_threshold: queueCountThreshold,
-            queue_dwell_time_seconds: queueDwellTimeSeconds,
-          };
-        }
-        if (detectionType === "VEHICLE_DWELL_TIME") {
-          return {
-            dwell_time_seconds: dwellTimeSeconds,
-          };
-        }
-        if (detectionType === "ATTENDANT_ABSENCE_ON_PUMP") {
-          return {
-            dwell_time_seconds: attendantAbsenceDwellTime,
-          };
-        }
-        if (detectionType === "ATTENDANT_CELLPHONE_DETECTION") {
-          return {
-            dwell_time_seconds: dwellTimeSeconds,
-          };
-        }
-        if (detectionType === "RESTRICTED_AREA_BREACH_DETECTION") {
-          return {
-            targeted_hour_slots: convertTimeSlotsLocalToUTC(
-              targetedHourSlots,
-              userTimeZone,
-            ),
-          };
-        }
-        if (detectionType === "CROWD_SURGE") {
-          return {
-            queue_count_threshold: crowdSurgeQueueThreshold,
-            dwell_time_seconds: crowdSurgeDwellTime,
-          };
-        }
-        if (detectionType === "PPE_VIOLATION") {
-          return {
-            dwell_time_seconds: ppeDwellTime,
-          };
-        }
-        if (detectionType === "FIRE_SMOKE_DETECTION") {
-          return {
-            dwell_time_seconds: fireSmokeDwellTime,
-          };
-        }
-        return {};
-      })(),
+      detection_config: {
+        alert_cooldown_seconds: alertCooldown,
+        confidence_threshold: confidenceThreshold,
+        ...(() => {
+          if (
+            detectionType === "VEHICLE_QUEUE_DETECTION" ||
+            detectionType === "PERSON_QUEUE_DETECTION"
+          ) {
+            return {
+              queue_count_threshold: queueCountThreshold,
+              queue_dwell_time_seconds: queueDwellTimeSeconds,
+            };
+          }
+          if (detectionType === "VEHICLE_DWELL_TIME") {
+            return {
+              dwell_time_seconds: dwellTimeSeconds,
+            };
+          }
+          if (detectionType === "ATTENDANT_ABSENCE_ON_PUMP") {
+            return {
+              dwell_time_seconds: attendantAbsenceDwellTime,
+            };
+          }
+          if (detectionType === "ATTENDANT_CELLPHONE_DETECTION") {
+            return {
+              dwell_time_seconds: dwellTimeSeconds,
+            };
+          }
+          if (detectionType === "RESTRICTED_AREA_BREACH_DETECTION") {
+            return {
+              targeted_hour_slots: convertTimeSlotsLocalToUTC(
+                targetedHourSlots,
+                userTimeZone,
+              ),
+            };
+          }
+          if (detectionType === "CROWD_SURGE") {
+            return {
+              queue_count_threshold: crowdSurgeQueueThreshold,
+              dwell_time_seconds: crowdSurgeDwellTime,
+            };
+          }
+          if (detectionType === "PPE_VIOLATION") {
+            return {
+              dwell_time_seconds: ppeDwellTime,
+            };
+          }
+          if (detectionType === "FIRE_SMOKE_DETECTION") {
+            return {
+              dwell_time_seconds: fireSmokeDwellTime,
+            };
+          }
+          return {};
+        })(),
+      },
+
       notification_config: {
         whatsapp: {
           enabled: whatsappNotification,
@@ -499,12 +507,12 @@ const ROIConfiguration = () => {
     console.log("handleSaveRoi called. currentRoiId:", currentRoiId);
     console.log("Transformed polygons data:", transformedPolygons);
     console.log(
-      'Tracking type to send:',
+      "Tracking type to send:",
       trackingType,
-      'Type:',
-      typeof trackingType
-    )
-    console.log('Full ROI data to send:', roiData)
+      "Type:",
+      typeof trackingType,
+    );
+    console.log("Full ROI data to send:", roiData);
 
     if (currentRoiId) {
       const res = await dispatch(
@@ -546,21 +554,23 @@ const ROIConfiguration = () => {
     setDisplayAlertPriority(t(`roi.${roi.alert_priority.toLowerCase()}`));
 
     // DEBUG: Log the ROI object to see its structure
-    console.log('ROI object for editing:', roi)
-    console.log('Tracking type from ROI:', roi.tracking_activity)
+    console.log("ROI object for editing:", roi);
+    console.log("Tracking type from ROI:", roi.tracking_activity);
 
+    setAlertCooldown(roi.detection_config?.alert_cooldown_seconds || 30);
+    setConfidenceThreshold(roi.detection_config?.confidence_threshold || 50);
     // FIX: Set tracking type from the ROI being edited - handle both boolean and string values
     if (roi.tracking_activity !== undefined && roi.tracking_activity !== null) {
       // Convert to boolean if it's a string
       const trackingValue =
-        typeof roi.tracking_activity === 'string'
-          ? roi.tracking_activity.toLowerCase() === 'true'
-          : Boolean(roi.tracking_activity)
-      console.log('Converted tracking value:', trackingValue)
-      setTrackingType(trackingValue)
+        typeof roi.tracking_activity === "string"
+          ? roi.tracking_activity.toLowerCase() === "true"
+          : Boolean(roi.tracking_activity);
+      console.log("Converted tracking value:", trackingValue);
+      setTrackingType(trackingValue);
     } else {
-      console.log('No tracking_activity found, defaulting to false')
-      setTrackingType(false)
+      console.log("No tracking_activity found, defaulting to false");
+      setTrackingType(false);
     }
 
     // Set the snapshot URL from the ROI being edited
@@ -705,16 +715,16 @@ const ROIConfiguration = () => {
   };
 
   const resetForm = () => {
-    setRoiName('')
-    setDetectionType('PERSON_QUEUE_DETECTION')
-    setAlertPriority('High') // Reset to English 'High'
-    setDisplayAlertPriority(t('roi.high')) // Reset display to translated 'High'
-    setTrackingType(false) // Reset tracking type to false
+    setRoiName("");
+    setDetectionType("PERSON_QUEUE_DETECTION");
+    setAlertPriority("High"); // Reset to English 'High'
+    setDisplayAlertPriority(t("roi.high")); // Reset display to translated 'High'
+    setTrackingType(false); // Reset tracking type to false
     setRoiName("");
     setDetectionType("PERSON_QUEUE_DETECTION");
     setAlertPriority("High"); // Reset to English 'High'
     setDisplayAlertPriority(t("roi.high"));
-    setTrackingType(false)
+    setTrackingType(false);
     if (addnew) {
       setPolygons([]);
     }
@@ -734,7 +744,9 @@ const ROIConfiguration = () => {
     setQueueDwellTimeSeconds(40);
     setDwellTimeSeconds(15);
     setAttendantAbsenceDwellTime(6);
-    setConfidenceThreshold(40); // Reset confidence threshold to default 40
+    setConfidenceThreshold(50); 
+    setAlertCooldown(30);
+    setSuspiciousConfidenceThreshold(40);
     setTargetedHourSlots([]);
     setNewTimeSlot(["", ""]);
     setCurrentRoiId(null);
@@ -1172,9 +1184,7 @@ const ROIConfiguration = () => {
                   {/* <option value='VEHICLE_QUEUE_DETECTION'>
                     {t('roi.vehicleQueueDetection')}
                   </option> */}
-                  <option value="">
-                    {"----"}
-                  </option>
+                  <option value="">{"----"}</option>
                   <option value="PERSON_QUEUE_DETECTION">
                     {t("roi.personQueueDetection")}
                   </option>
@@ -1203,35 +1213,34 @@ const ROIConfiguration = () => {
                 </select>
               </div>
             </div>
-            
-            {(detectionType === "PERSON_QUEUE_DETECTION" &&
-            <div className='mt-6 pt-4 border-t border-gray-700'>
-              <div className='flex items-center'>
-                <div className='flex items-center gap-5'>
-                  <label className='relative inline-flex items-center cursor-pointer'>
-                    <input
-                      type='checkbox'
-                      checked={trackingType}
-                      onChange={() => setTrackingType(!trackingType)}
-                      className='sr-only peer'
-                    />
-                    <div className="w-11 h-6 bg-gray-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-500"></div>
-                  </label>
-                  <div>
-                    <h3 className='text-sm font-medium text-gray-300'>
-                      {t('roi.enableActivityTracking') ||
-                        'Enable Activity Tracking'}
-                    </h3>
-                    <p className='text-xs text-gray-500 mt-1'>
-                      {t('roi.activityTrackingSubtext') ||
-                        'Track and record activity related to this ROI for monitoring and reporting purposes.'}
-                    </p>
+
+            {detectionType === "PERSON_QUEUE_DETECTION" && (
+              <div className="mt-6 pt-4 border-t border-gray-700">
+                <div className="flex items-center">
+                  <div className="flex items-center gap-5">
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={trackingType}
+                        onChange={() => setTrackingType(!trackingType)}
+                        className="sr-only peer"
+                      />
+                      <div className="w-11 h-6 bg-gray-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-500"></div>
+                    </label>
+                    <div>
+                      <h3 className="text-sm font-medium text-gray-300">
+                        {t("roi.enableActivityTracking") ||
+                          "Enable Activity Tracking"}
+                      </h3>
+                      <p className="text-xs text-gray-500 mt-1">
+                        {t("roi.activityTrackingSubtext") ||
+                          "Track and record activity related to this ROI for monitoring and reporting purposes."}
+                      </p>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
             )}
-            
           </div>
         </div>
       </div>
@@ -1248,6 +1257,10 @@ const ROIConfiguration = () => {
             t("roi.detectionConfigurationDescription")}
         </p>
         <div className="grid grid-cols-2 gap-x-12 gap-y-6">
+
+
+
+         
           {/* Vehicle/Person Queue Detection Fields */}
           {(detectionType === "VEHICLE_QUEUE_DETECTION" ||
             detectionType === "PERSON_QUEUE_DETECTION") && (
@@ -1465,6 +1478,43 @@ const ROIConfiguration = () => {
               </div>
             </div>
           )}
+           <div>
+            <label className="block text-sm text-gray-400 mb-2">
+              {t("roi.alertcooldownperiod")}
+            </label>
+            <p className="text-xs text-gray-500 mb-2">
+              {t("roi.alertcooldownperioddes")}
+            </p>
+            <input
+              type="number"
+              value={alertCooldown}
+              onChange={(e) => setAlertCooldown(Number(e.target.value))}
+              className="w-full bg-gray-700 border border-gray-600 rounded-lg py-2 px-4 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 transition-colors"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm text-gray-400 mb-2">
+              {t("roi.newconfidenceThreshold")}
+            </label>
+            <p className="text-xs text-gray-500 mb-2">
+               {t("roi.newconfidenceThresholdDescription")}
+            </p>
+            <input
+              type="number"
+              min="0"
+              max="100"
+              value={confidenceThreshold}
+              onChange={(e) => {
+                const val = Number(e.target.value);
+                // Ensure value stays between 0 and 100
+                if (val >= 0 && val <= 100) {
+                  setConfidenceThreshold(val);
+                }
+              }}
+              className="w-full bg-gray-700 border border-gray-600 rounded-lg py-2 px-4 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 transition-colors"
+            />
+          </div>
         </div>
       </div>
 

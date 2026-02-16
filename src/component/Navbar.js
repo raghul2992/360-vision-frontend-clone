@@ -21,7 +21,7 @@ const Navbar = () => {
   const selectedTenantName = localStorage.getItem("tenant_name");
    const location = useLocation();
 
-  const isAdminPage = location.pathname.startsWith("/admin");
+  const isAdminPage = location.pathname.startsWith("/tenants");
 
   const dispatch = useDispatch();
   const { unreadCount } = useSelector((state) => state.notifications);
