@@ -304,6 +304,7 @@ export default function DashboardOverview () {
           layout={kpiLayout}
           onLayoutChange={handleKpiLayoutChange}
           onRemoveWidget={removeWidget}
+          selectedGlobalLocation={selectedGlobalLocation}
         />
 
         {/* === CHART SECTION === */}

@@ -562,7 +562,6 @@
       "most_frequent": "Most Frequent Alert",
       "most_frequent_desc": "Shows the detection type that has occurred most frequently.",
       "occurrences": "occurrences",
-      "busiest_hour": "Busiest Hour",
       "busiest_hour_desc": "Identifies the hour of the day with the highest alert activity.",
       "alerts": "Alerts",
       "avg_dwell": "Average Dwell Time",
@@ -570,7 +569,25 @@
       "avg_duration": "Avg duration",
       "camera_status": "Camera Status",
       "camera_status_desc": "Monitors the number of active cameras versus total cameras.",
-      "live": "Live"
+      "live": "Live",
+      "badge": "KPI",
+"total_alerts_info_desc": "Shows the total number of alerts triggered by all selected cameras in the chosen time range, so you can quickly see how many potential incidents or rule violations the system has detected overall.",
+"most_frequent_info_desc": "Highlights the alert type that occurred most often in the selected period, helping you immediately see which kind of issue is happening repeatedly and should be prioritized for investigation or process changes.",
+"busiest_hour": "Alert Peak Time",
+"busiest_hour_info_desc": "Identifies the hour of the day when alerts are most concentrated, giving you a clear view of peak operational stress times so you can adjust staffing, scheduling, or procedures around that window.",
+"avg_dwell_info_desc": "Calculates how long objects (such as vehicles or people) typically stay inside the monitored region, indicating whether things move smoothly or remain stationary for too long, which can signal congestion, loitering, or slow service.",
+"camera_status_info_desc": "Shows how many cameras are currently online compared to the total configured cameras, giving you a quick health check of your monitoring system and whether analytics coverage is complete or partially missing.",
+"avg_customer_queue_time": "Avg Customer Queue Time",
+"avg_customer_queue_time_desc": "Calculates the average time customers spend in queue.",
+"avg_customer_queue_time_info_desc": "Calculates the average time a customer spends standing in a line (for example at the cashier or service counter), showing how efficiently customers are being served inside the store.",
+"customer_peak_time": "Customer Peak Time",
+"customer_peak_time_desc": "Identifies the time of day when person queue detections are most frequent.",
+"customer_peak_time_info_desc": "Shows the hour of the day when person visited most often in the selected period, revealing when customer lines inside the store are at their longest or most common.",
+"visitor_traffic": "Visitor Traffic",
+"visitor_traffic_desc": "Tracks the number of people detected in the forecourt area over time.",
+"visitor_traffic_info_desc": "Tracks the average number of people visited per day in a store, acting as a footfall indicator that helps you understand how busy the site is independently of sales data.",
+"tracking_feature": "Enable Activity Tracking on the <highlight>vehicle queue detection</highlight> to collect data",
+"tracking_feature_customer": "Enable Activity Tracking on the <highlight>person queue detection</highlight> to collect data"
     }
   },
   "date_locale": "en-US",
@@ -605,7 +622,9 @@
     "disable": "Disable",
     "edit": "Edit",
     "unknown": "Unknown",
-    "saving": "Saving..."
+    "saving": "Saving...",
+    "today": "Today"
+
   },
   "location": {
     "management": {
