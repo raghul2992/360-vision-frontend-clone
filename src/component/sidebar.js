@@ -73,7 +73,7 @@ const Sidebar = () => {
           </Link>
         </div>
 
-        <div className="menu-item w-12 h-12 flex justify-center items-center cursor-pointer hover:rounded-[16px]">
+        <div className="menu-item w-12 h-12  rotate-180 flex justify-center items-center cursor-pointer hover:rounded-[16px]">
           <IoLogOutOutline className="text-2xl" onClick={handleLogout} />
         </div>
       </div>
@@ -146,7 +146,7 @@ const Sidebar = () => {
 
 
       {/* Logout */}
-      <div className="menu-item w-12 h-12 flex justify-center items-center cursor-pointer hover:rounded-[16px]">
+      <div className="menu-item w-12 h-12  rotate-180 flex justify-center items-center cursor-pointer hover:rounded-[16px]">
         <IoLogOutOutline className="text-2xl" onClick={handleLogout} />
       </div>
     </div>
