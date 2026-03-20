@@ -6,6 +6,7 @@ import {
   IoWarning,
   IoPencil,
   IoTrashOutline,
+IoEyeOutline,
   IoChevronDown,
   IoSearchOutline,
   IoLocationOutline,
@@ -331,8 +332,10 @@ const CameraList = () => {
             <div className='flex items-center gap-4'>
               <Link to={`/add-camera?id=${camera.id}`}>
                 <button className='flex items-center gap-2 px-4 py-2 rounded-lg border border-[#0088FF] text-gray-300 hover:text-white hover:border-gray-600 transition-all text-sm'>
-                  <IoPencil size={16} />
-                  {t('cameraList.editButton') || 'Edit'}
+                  <IoEyeOutline size={16}/>
+                   {t('cameraList.viewButton') || 'View'}  
+                  {/* <IoPencil size={16} />
+                  {t('cameraList.editButton') || 'Edit'} */}
                 </button>
               </Link>
               <button

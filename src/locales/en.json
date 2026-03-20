@@ -208,6 +208,7 @@
     "totalCameras": "Total Cameras - {{count}}",
     "cameraLocation": "{{location}} | {{streamUrl}}",
     "editButton": "Edit",
+    "viewButton":"View",
     "deleteButton": "Delete",
     "noCameras": "No Camera Found",
     "loading": "Loading cameras...",
