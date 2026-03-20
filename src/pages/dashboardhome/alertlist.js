@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useDispatch } from "react-redux";
+import { useSelector } from "react-redux";
 import { updateAlertAPI } from "../../features/alert/alertSlice";
 import { getRois } from "../../features/cameras/roilistslice";
 import {
@@ -38,6 +39,7 @@ const AlertItem = ({ alert, tenantId, timezone }) => {
   const [validationStatus, setValidationStatus] = useState(
     alert.meta?.validation_status || VALIDATION_STATES.UNREVIEWED,
   );
+  const { locations = [] } = useSelector((state) => state.locationApi || {});
   const [isUpdating, setIsUpdating] = useState(false);
 
   const getPriorityBorderColor = (priority) => {
@@ -189,6 +191,10 @@ const AlertItem = ({ alert, tenantId, timezone }) => {
   const FRAME_DIR = `${process.env.REACT_APP_BASE_URL}/api/v1/tenants/${tenantId}/cameras/alert/image`;
   const FRAME_URL = `${FRAME_DIR}/${frame_clip}`;
 
+    const locationName =
+  locations.find((loc) => String(loc.id) === String(alert.location_id))?.name ||
+  "Unknown Location";
+
   return (
     <>
       <div
@@ -289,7 +295,7 @@ const AlertItem = ({ alert, tenantId, timezone }) => {
                       {t("alerts.location")}
                     </p>
                     <p className="text-sm font-medium text-gray-900">
-                      {alert.meta?.location || "Store"}
+                       {locationName}
                     </p>
                   </div>
                   <div>
