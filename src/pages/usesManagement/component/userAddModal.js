@@ -46,6 +46,9 @@ const AddUserModal = ({ isOpen, onClose, tenantId }) => {
 
   const getAvailableRoles = role => {
     switch (role) {
+      case "superadmin":
+        
+        return [ "admin", "operator", "viewer"];
       case 'admin':
         return ['admin', 'operator', 'viewer']
       case 'operator':
