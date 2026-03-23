@@ -115,6 +115,8 @@ const ROIConfiguration = () => {
   const [emailRecipients, setEmailRecipients] = useState([]);
   const [callRecipients, setCallRecipients] = useState([]);
   const [whatsappRecipients, setWhatsappRecipients] = useState([]);
+  const [whatsappNameError, setWhatsappNameError] = useState("");
+  const [emailNameError, setEmailNameError] = useState("");
 
   const [personSensitivity, setPersonSensitivity] = useState(66);
   const [weaponSensitivity, setWeaponSensitivity] = useState(88);
@@ -744,7 +746,7 @@ const ROIConfiguration = () => {
     setQueueDwellTimeSeconds(40);
     setDwellTimeSeconds(15);
     setAttendantAbsenceDwellTime(6);
-    setConfidenceThreshold(50); 
+    setConfidenceThreshold(50);
     setAlertCooldown(30);
     setSuspiciousConfidenceThreshold(40);
     setTargetedHourSlots([]);
@@ -1257,10 +1259,6 @@ const ROIConfiguration = () => {
             t("roi.detectionConfigurationDescription")}
         </p>
         <div className="grid grid-cols-2 gap-x-12 gap-y-6">
-
-
-
-         
           {/* Vehicle/Person Queue Detection Fields */}
           {(detectionType === "VEHICLE_QUEUE_DETECTION" ||
             detectionType === "PERSON_QUEUE_DETECTION") && (
@@ -1478,7 +1476,7 @@ const ROIConfiguration = () => {
               </div>
             </div>
           )}
-           <div>
+          <div>
             <label className="block text-sm text-gray-400 mb-2">
               {t("roi.alertcooldownperiod")}
             </label>
@@ -1498,7 +1496,7 @@ const ROIConfiguration = () => {
               {t("roi.newconfidenceThreshold")}
             </label>
             <p className="text-xs text-gray-500 mb-2">
-               {t("roi.newconfidenceThresholdDescription")}
+              {t("roi.newconfidenceThresholdDescription")}
             </p>
             <input
               type="number"
@@ -1526,7 +1524,7 @@ const ROIConfiguration = () => {
         <p className="text-xs text-gray-500 leading-relaxed mb-2">
           {t("roi.notificationsubtext")}
         </p>
-        <div className="grid grid-cols-3 gap-6">
+        <div className="grid grid-cols-2 gap-6">
           {/* WhatsApp Notification */}
           <div className="bg-gray-900 rounded-lg p-4 border border-gray-700">
             <div className="flex items-center justify-between mb-4">
@@ -1565,8 +1563,19 @@ const ROIConfiguration = () => {
                     type="tel"
                     value={whatsappNumber}
                     onChange={(e) => {
-                      setWhatsappNumber(e.target.value);
-                      if (e.target.value.trim()) {
+                      let value = e.target.value;
+
+                      // Remove everything except digits
+                      value = value.replace(/\D/g, "");
+
+                      // Limit to 10 digits max
+                      if (value.length > 10) {
+                        value = value.slice(0, 10);
+                      }
+
+                      setWhatsappNumber(value);
+
+                      if (value.trim()) {
                         setWhatsappNumberError("");
                       }
                     }}
@@ -1579,29 +1588,32 @@ const ROIConfiguration = () => {
                   />
                   <button
                     onClick={() => {
-                      const phoneRegex = /^\+?[1-9]\d{1,14}$/; // E.164 format regex
-                      if (
-                        !whatsappNumber.trim() ||
-                        !phoneRegex.test(whatsappNumber.trim())
-                      ) {
-                        toast.error(t("roi.invalidPhoneNumberFormat"));
-                        setWhatsappNumberError(
-                          t("roi.invalidPhoneNumberFormat"),
-                        );
-                        return;
-                      }
+                      const phoneRegex = /^\+91[6-9]\d{9}$/;
+                      let hasError = false;
+
                       if (!whatsappName.trim()) {
-                        toast.error(t("roi.nameRequired"));
-                        return;
+                        setWhatsappNameError(t("roi.nameRequired"));
+                        hasError = true;
                       }
-                      if (
+
+                      if (!whatsappNumber.trim()) {
+                        setWhatsappNumberError(t("roi.phoneRequired"));
+                        hasError = true;
+                      } else if (!/^[6-9]\d{9}$/.test(whatsappNumber.trim())) {
+                        setWhatsappNumberError(
+                          "Enter a valid 10-digit Indian mobile number",
+                        );
+                        hasError = true;
+                      } else if (
                         whatsappRecipients.some(
                           (r) => r.number === whatsappNumber.trim(),
                         )
                       ) {
-                        toast.error(t("roi.phoneNumberAlreadyAdded"));
-                        return;
+                        setWhatsappNumberError(t("roi.phoneNumberAlreadyAdded"));
+                        hasError = true;
                       }
+
+                      if (hasError) return;
 
                       setWhatsappRecipients([
                         ...whatsappRecipients,
@@ -1613,6 +1625,7 @@ const ROIConfiguration = () => {
                       setWhatsappNumber("");
                       setWhatsappName("");
                       setWhatsappNumberError("");
+                      setWhatsappNameError("");
                     }}
                     className="bg-[#3885CC] hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg transition-colors"
                   >
@@ -1700,25 +1713,29 @@ const ROIConfiguration = () => {
                   <button
                     onClick={() => {
                       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-                      if (
-                        !emailAddress.trim() ||
-                        !emailRegex.test(emailAddress.trim())
-                      ) {
-                        setEmailAddressError(t("roi.invalidEmailFormat"));
-                        return;
-                      }
+                      let hasError = false;
+
                       if (!emailName.trim()) {
-                        toast.error(t("roi.nameRequired"));
-                        return;
+                        setEmailNameError(t("roi.nameRequired"));
+                        hasError = true;
                       }
-                      if (
+
+                      if (!emailAddress.trim()) {
+                        setEmailAddressError(t("roi.emailRequired"));
+                        hasError = true;
+                      } else if (!emailRegex.test(emailAddress.trim())) {
+                        setEmailAddressError(t("roi.invalidEmailFormat"));
+                        hasError = true;
+                      } else if (
                         emailRecipients.some(
                           (r) => r.email === emailAddress.trim(),
                         )
                       ) {
-                        toast.error(t("roi.emailAlreadyAdded"));
-                        return;
+                        setEmailAddressError(t("roi.emailAlreadyAdded"));
+                        hasError = true;
                       }
+
+                      if (hasError) return;
 
                       setEmailRecipients([
                         ...emailRecipients,
@@ -1727,6 +1744,7 @@ const ROIConfiguration = () => {
                       setEmailAddress("");
                       setEmailName("");
                       setEmailAddressError("");
+                      setEmailNameError("");
                     }}
                     className="bg-[#3885CC] hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg transition-colors"
                   >
@@ -1751,93 +1769,6 @@ const ROIConfiguration = () => {
                         setEmailRecipients(
                           emailRecipients.filter(
                             (r) => r.email !== recipient.email,
-                          ),
-                        )
-                      }
-                      className="text-red-400 hover:text-red-600"
-                    >
-                      x
-                    </button>
-                  </span>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Call Notification */}
-          <div className="bg-gray-900 rounded-lg p-4 border border-gray-700">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2">
-                <IoChatboxEllipsesOutline size={20} color="white" />
-                <span className="font-semibold text-white">
-                  {t("roi.callNotification")}
-                </span>
-              </div>
-              <label className="relative inline-flex items-center cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={callNotification}
-                  onChange={() => setCallNotification(!callNotification)}
-                  className="sr-only peer"
-                />
-                <div className="w-11 h-6 bg-gray-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-500"></div>
-              </label>
-            </div>
-            <div>
-              <label className="block text-sm text-gray-400 mb-2">
-                {t("roi.enableCallAlerts")}
-              </label>
-              <div className="flex flex-col gap-2">
-                <input
-                  type="text"
-                  value={callName}
-                  onChange={(e) => setCallName(e.target.value)}
-                  placeholder={t("roi.enterName")}
-                  className="flex-1 bg-gray-700 border border-gray-600 rounded-lg py-2 px-3 text-white placeholder-gray-500 text-sm focus:outline-none focus:border-blue-500 transition-colors"
-                />
-                <div className="flex gap-2">
-                  <input
-                    type="tel"
-                    value={phoneNumber}
-                    onChange={(e) => setPhoneNumber(e.target.value)}
-                    placeholder={t("roi.enterPhoneNumber")}
-                    className="flex-1 bg-gray-700 border border-gray-600 rounded-lg py-2 px-3 text-white placeholder-gray-500 text-sm focus:outline-none focus:border-blue-500 transition-colors"
-                  />
-                  <button
-                    onClick={() => {
-                      if (
-                        phoneNumber.trim() &&
-                        callName.trim() &&
-                        !callRecipients.some(
-                          (r) => r.number === phoneNumber.trim(),
-                        )
-                      ) {
-                        setCallRecipients([
-                          ...callRecipients,
-                          { number: phoneNumber.trim(), name: callName.trim() },
-                        ]);
-                        setPhoneNumber("");
-                        setCallName("");
-                      }
-                    }}
-                    className="bg-[#3885CC] hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg transition-colors"
-                  >
-                    +
-                  </button>
-                </div>
-              </div>
-              <div className="mt-2 flex flex-wrap gap-2">
-                {callRecipients.map((recipient, idx) => (
-                  <span
-                    key={idx}
-                    className="bg-gray-600 text-white text-xs px-2 py-1 rounded-full flex items-center gap-1"
-                  >
-                    {recipient.name} ({recipient.number})
-                    <button
-                      onClick={() =>
-                        setCallRecipients(
-                          callRecipients.filter(
-                            (r) => r.number !== recipient.number,
                           ),
                         )
                       }
