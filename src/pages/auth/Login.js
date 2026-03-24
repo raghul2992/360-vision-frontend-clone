@@ -4,7 +4,7 @@ import TextInput from "../../component/TextInput";
 import { IoLockClosed, IoMailOutline } from "react-icons/io5";
 import PasswordInput from "../../component/PasswordInput";
 import ButtonComponent from "../../component/Button";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate ,useLocation} from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
@@ -17,12 +17,13 @@ const LoginPage = ({ callbackScreen }) => {
   const { t, i18n } = useTranslation();
   const dispatch = useDispatch();
   const navigate = useNavigate();
-
+ const location = useLocation();
   const { isLoading, error, success } = useSelector((state) => state.auth);
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-
+ const params = new URLSearchParams(location.search);
+const redirect = params.get("redirect");
   const changeLanguage = (lng) => {
     i18n.changeLanguage(lng);
   };
@@ -62,7 +63,7 @@ const LoginPage = ({ callbackScreen }) => {
           if (result.data.tenant_id) {
             localStorage.setItem("tenant_id", result.data.tenant_id);
           }
-          navigate("/dashboard");
+         navigate(redirect || "/dashboard", { replace: true });
         }
       }
     } catch (error) {

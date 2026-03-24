@@ -1,11 +1,18 @@
 import React from 'react'
-import { Navigate, Outlet } from 'react-router-dom'
+import { Navigate, Outlet, useLocation } from 'react-router-dom'
 
 const ProtectedRoute = () => {
-  // 1. Get the tenant_id directly from localStorage
+  const location = useLocation()
   const tenantId = localStorage.getItem('tenant_id')
 
-  return tenantId ? <Outlet /> : <Navigate to='/' replace />
+  return tenantId ? (
+    <Outlet />
+  ) : (
+    <Navigate
+      to={`/?redirect=${encodeURIComponent(location.pathname + location.search)}`}
+      replace
+    />
+  )
 }
 
 export default ProtectedRoute

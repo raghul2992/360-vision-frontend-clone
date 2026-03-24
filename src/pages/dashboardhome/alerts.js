@@ -25,9 +25,14 @@ import { useTranslation } from "react-i18next";
 import eventEmitter from "../../utils/eventEmitter";
 import { toast } from "react-toastify";
 
+import { useLocation, useNavigate } from "react-router-dom";
+import { updateAlertAPI } from "../../features/alert/alertSlice";
+
 const Alerts = () => {
   const { t } = useTranslation();
   const dispatch = useDispatch();
+   const location = useLocation();
+  const navigate = useNavigate();
 
   // 1. Get User Info from LocalStorage
   const tenant_id = localStorage.getItem("tenant_id");
@@ -46,12 +51,16 @@ const Alerts = () => {
   const [dateRange, setDateRange] = useState([null, null]);
   const [startDate, endDate] = dateRange;
   const [detectionType, setDetectionType] = useState(null);
+  
 
   // Pagination
   const [limit] = useState(10);
   const [skip, setSkip] = useState(0);
   const [hasMore, setHasMore] = useState(true);
   const [isFetchingMore, setIsFetchingMore] = useState(false);
+
+  const [showPopup, setShowPopup] = useState(false);
+  const [popupAlert, setPopupAlert] = useState(null);
 
   // Refs
   const observerRef = useRef(null);
@@ -321,6 +330,44 @@ const Alerts = () => {
     }),
   };
 
+
+  useEffect(() => {
+  if (!tenant_id) return; // wait until tenant_id is available
+  const params = new URLSearchParams(location.search);
+  const encodedEvent = params.get("event_alert");
+  if (!encodedEvent) return;
+  try {
+    const decodedId = atob(encodedEvent);
+    openAlertFromUrl(decodedId);
+  } catch (err) {
+    console.error("Invalid Base64 event_alert:", err);
+  }
+}, [location.search, tenant_id]);
+
+  const openAlertFromUrl = async (alertId) => {
+    const queryParams = { type: "event_alert", id: alertId, limit: 1, skip: 0 };
+    const result = await dispatch(fetchAlerts({ tenantId: tenant_id, queryParams }));
+    if (result.payload && result.payload.length > 0) {
+      const alert = result.payload[0];
+      setPopupAlert(alert);
+      setShowPopup(true);
+      const alreadyRead = alert.is_read === true || alert.is_read === "true";
+      if (!alreadyRead) {
+        dispatch(updateAlertAPI({ tenantId: tenant_id, alertId: alert.id, data: { is_read: "true" } }));
+      }
+    }
+  };
+
+  const handleClosePopup = () => {
+    setShowPopup(false);
+    setPopupAlert(null);
+    const params = new URLSearchParams(location.search);
+    params.delete("event_alert");
+    navigate(
+      { pathname: location.pathname, search: params.toString() ? `?${params.toString()}` : "" },
+      { replace: true },
+    );
+  };
   return (
     <div className={`min-h-screen ${bgcolors.white} p-6 w-full`}>
       <div className="mx-auto max-w-full">
@@ -470,6 +517,18 @@ const Alerts = () => {
           </div>
         </div>
       </div>
+      {showPopup && popupAlert && (
+        <AlertItem
+          alert={popupAlert}
+          tenantId={tenant_id}
+          timezone={
+            locations.find((loc) => String(loc.id) === String(popupAlert.location_id))
+              ?.meta?.timezone || "Etc/UTC"
+          }
+          isPopup
+          onClose={handleClosePopup}
+        />
+      )}
     </div>
   );
 };
