@@ -120,7 +120,9 @@ export const testCameraConnection = createAsyncThunk(
       return response.data
     } catch (error) {
       console.log(error.response.data)
-      return rejectWithValue(error.response.data || 'Connection test failed')
+      return rejectWithValue(
+    error.response?.data?.message || 'Connection test failed'      //← always returns a string, never an object    (never change this)      
+  )
     }
   }
 )

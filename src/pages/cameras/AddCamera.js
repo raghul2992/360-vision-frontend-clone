@@ -274,7 +274,7 @@ const AddCamera = () => {
         console.log(err);
         setIsTestingConnection(false);
         setIsConnectionTested(false);
-        toast.error(err.message);
+        // toast.error(err.message);
         // The error is now handled by the useEffect, but we still need to return false for the async flow
         return false;
       });
