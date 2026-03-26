@@ -501,7 +501,7 @@
     },
     "detection_titles": {
       "vehicle_queue_detection": "Vehicle Queue Detection",
-      "person_queue_detection": "Person Queue Detection",
+      "person_queue_detection": "Person Queue Congestion",
       "vehicle_dwell_time": "Vehicle Dwell Time",
       "attendant_absence_on_pump": "Attendant Absence On Pump",
       "restricted_area_breach_detection": "Restricted Area Breach Detection",
@@ -590,7 +590,7 @@
 "visitor_traffic_desc": "Tracks the number of people detected in the forecourt area over time.",
 "visitor_traffic_info_desc": "Tracks the average number of people visited per day in a store, acting as a footfall indicator that helps you understand how busy the site is independently of sales data.",
 "tracking_feature": "Enable Activity Tracking on the <highlight>vehicle queue detection</highlight> to collect data",
-"tracking_feature_customer": "Enable Activity Tracking on the <highlight>person queue detection</highlight> to collect data"
+"tracking_feature_customer": "Enable Activity Tracking on the <highlight>person queue Congestion</highlight> to collect data"
     }
   },
   "date_locale": "en-US",
