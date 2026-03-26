@@ -496,8 +496,9 @@
       "attendant_cellphone_detection": "Cellphone usage detected by Camera {{camera}}.",
       "suspicious_loitering": "Suspicious loitering detected by Camera {{camera}}.",
       "crowd_surge": "Crowd Surge detected by Camera {{camera}}.",
-      "ppe_detection": "PPE Detection detected by Camera {{camera}}.",
-      "fire_and_smoke_detection": "Fire & Smoke Detection detected by Camera {{camera}}."
+      "ppe_violation": "PPE Detection detected by Camera {{camera}}.",
+      "fire_smoke_detection": "Fire & Smoke Detection detected by Camera {{camera}}."
+
     },
     "detection_titles": {
       "vehicle_queue_detection": "Vehicle Queue Detection",
