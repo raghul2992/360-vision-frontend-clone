@@ -464,7 +464,13 @@ const ROIConfiguration = () => {
               dwell_time_seconds: crowdSurgeDwellTime,
             };
           }
-          if (detectionType === "PPE_VIOLATION") {
+          if (
+            detectionType === "PPE_VIOLATION" ||
+            detectionType === "PPE_HELMET_VIOLATION" ||
+            detectionType === "PPE_GLOVE_VIOLATION" ||
+            detectionType === "PPE_SAFETY_SHOES_VIOLATION" ||
+            detectionType === "PPE_GOGGLES_VIOLATION"
+          ) {
             return {
               dwell_time_seconds: ppeDwellTime,
             };
@@ -701,7 +707,13 @@ const ROIConfiguration = () => {
         roi.detection_config?.queue_count_threshold || 10,
       );
       setCrowdSurgeDwellTime(roi.detection_config?.dwell_time_seconds || 30);
-    } else if (roi.detection_type === "PPE_VIOLATION") {
+    } else if (
+      roi.detection_type === "PPE_VIOLATION" ||
+      roi.detection_type === "PPE_HELMET_VIOLATION" ||
+      roi.detection_type === "PPE_GLOVE_VIOLATION" ||
+      roi.detection_type === "PPE_SAFETY_SHOES_VIOLATION" ||
+      roi.detection_type === "PPE_GOGGLES_VIOLATION"
+    ) {
       setPpeDwellTime(roi.detection_config?.dwell_time_seconds || 5);
     } else if (roi.detection_type === "FIRE_SMOKE_DETECTION") {
       setFireSmokeDwellTime(roi.detection_config?.dwell_time_seconds || 1);
@@ -1195,6 +1207,19 @@ const ROIConfiguration = () => {
                     {t("roi.restrictedAreaBreachDetection")}
                   </option>
                   <option value="PPE_VIOLATION">{t("roi.PPEViolation")}</option>
+                  <option value="PPE_HELMET_VIOLATION">
+                    {t("roi.PPEHelmetViolation")}
+                  </option>
+                  <option value="PPE_GLOVE_VIOLATION">
+                    {t("roi.PPEGloveViolation")}
+                  </option>
+                  <option value="PPE_SAFETY_SHOES_VIOLATION">
+                    {t("roi.PPESafetyShoesViolation")}
+                  </option>
+                  <option value="PPE_GOGGLES_VIOLATION">
+                    {t("roi.PPEGogglesViolation")}
+                  </option>
+
                   <option value="FIRE_SMOKE_DETECTION">
                     {t("roi.FireAndSmokeDetection")}
                   </option>
@@ -1337,7 +1362,11 @@ const ROIConfiguration = () => {
           )}
 
           {/* PPE Violation Detection */}
-          {detectionType === "PPE_VIOLATION" && (
+          {(detectionType === "PPE_VIOLATION" ||
+            detectionType === "PPE_HELMET_VIOLATION" ||
+            detectionType === "PPE_GLOVE_VIOLATION" ||
+            detectionType === "PPE_SAFETY_SHOES_VIOLATION" ||
+            detectionType === "PPE_GOGGLES_VIOLATION") && (
             <div>
               <label className="block text-sm text-gray-400 mb-2">
                 {t("roi.ppeDwellTimeSeconds")}
@@ -1609,7 +1638,9 @@ const ROIConfiguration = () => {
                           (r) => r.number === whatsappNumber.trim(),
                         )
                       ) {
-                        setWhatsappNumberError(t("roi.phoneNumberAlreadyAdded"));
+                        setWhatsappNumberError(
+                          t("roi.phoneNumberAlreadyAdded"),
+                        );
                         hasError = true;
                       }
 

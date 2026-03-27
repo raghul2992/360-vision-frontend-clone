@@ -156,6 +156,7 @@
     "roiSettingTitle": "ROI Setting",
     "roiListTitle": "ROI List",
     "addRoiButton": "+ Add ROI",
+    
     "noRoiFound": "No ROI found",
     "noRoiMessage": "You do not have any ROI for this camera",
     "roiNameLabel": "ROI Name",
@@ -330,10 +331,15 @@
     "roiName": "ROI Name",
     "roiNamePlaceholder": "e.g., Camera 01 | Petrobras Gas Station - South Zone",
     "detectionType": "Detection Type",
-
+    
+    
     "personQueueDetection": "Person Queue Congestion",
     "restrictedAreaBreachDetection": "Restricted Area Breach Detection",
     "PPEViolation": "PPE Detection",
+    "PPEHelmetViolation":"PPE Helmet Violation",
+    "PPEGloveViolation":"PPE Glove Violation",  
+    "PPESafetyShoesViolation":"PPE Safety Shoes Violation",
+    "PPEGogglesViolation":"PPE Goggles Violation",
     "FireAndSmokeDetection": "Fire & Smoke Detection",
     "crowdSurge": " Crowd Surge & Stampede Risk Detection",
 
@@ -369,7 +375,7 @@
 
     "fireSmokeDwellTimeSeconds": "Detection Confirmation Time (seconds)",
     "fireSmokeDwellTimeSecondsDescription": "The duration required to confirm fire or smoke presence before triggering an alert. (e.g., 1 second)",
-
+    
     "notifications": "Notifications",
     "emailNotification": "Email Notification",
     "enableEmailAlerts": "Enable Email Alerts",

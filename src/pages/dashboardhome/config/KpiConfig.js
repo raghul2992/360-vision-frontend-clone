@@ -27,10 +27,13 @@ export const KPI_WIDGETS_CONFIG = [
     id: "busiest_hour",
     titleKey: "dashboard.kpi.busiest_hour",
     descriptionKey: "dashboard.kpi.busiest_hour_desc",
-    getValue: (data) =>
-      data?.busiestHour?.time_start_utc
-        ? data.busiestHour.time_start_utc.slice(11, 16)
-        : "--:--",
+    getValue: (data) => {
+    const busiest = data?.busiestHour;
+    if (!busiest || !busiest.time_start_utc || busiest.alert_count === 0) {
+      return "00:00";
+    }
+    return busiest.time_start_utc.slice(11, 16);
+  },
     getSubText: (data, t) => t("dashboard.kpi.last_7_days"),
     subClass: "text-gray-400",
     badge: "dashboard.kpi.badge",
