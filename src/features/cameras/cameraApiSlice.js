@@ -121,8 +121,8 @@ export const testCameraConnection = createAsyncThunk(
     } catch (error) {
       console.log(error.response.data)
       return rejectWithValue(
-    error.response?.data?.message || 'Connection test failed'      //← always returns a string, never an object    (never change this)      
-  )
+        error.response?.data?.message || 'Connection test failed'      //← always returns a string, never an object    (never change this)      
+      )
     }
   }
 )
@@ -190,6 +190,27 @@ export const toggleCameraStatus = createAsyncThunk(
     }
   }
 )
+export const getCameraHealthTimeline = createAsyncThunk(
+  'cameras/getCameraHealthTimeline',
+  async ({ tenantId, cameraId, dateFrom, dateTo }, { rejectWithValue }) => {
+    try {
+      const params = new URLSearchParams({
+        date_from: dateFrom,
+        date_to: dateTo,
+      })
+      const response = await api.get(
+        `/api/v1/tenants/${tenantId}/cameras/${cameraId}/health-timeline?${params}`
+      )
+      return response.data
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data?.message || 'Failed to fetch camera health timeline'
+      )
+    }
+  }
+)
+
+
 
 const cameraApiSlice = createSlice({
   name: 'cameraApi',
@@ -200,7 +221,10 @@ const cameraApiSlice = createSlice({
     error: null,
     testConnectionResult: null,
     snapshotResult: null,
-    operationSuccess: false
+    operationSuccess: false,
+    healthTimeline: null,
+    healthTimelineLoading: false,
+    healthTimelineError: null,
   },
   reducers: {
     clearCameraError: state => {
@@ -217,6 +241,10 @@ const cameraApiSlice = createSlice({
     },
     clearCurrentCamera: state => {
       state.currentCamera = null
+    },
+    clearHealthTimeline: state => {
+      state.healthTimeline = null
+      state.healthTimelineError = null
     },
     resetCameraState: state => {
       state.cameras = []
@@ -371,6 +399,22 @@ const cameraApiSlice = createSlice({
         state.snapshotResult = null
       })
 
+      // health timeline
+      .addCase(getCameraHealthTimeline.pending, state => {
+        state.healthTimelineLoading = true
+        state.healthTimelineError = null
+        state.healthTimeline = null
+      })
+      .addCase(getCameraHealthTimeline.fulfilled, (state, action) => {
+        state.healthTimelineLoading = false
+        state.healthTimeline = action.payload
+        state.healthTimelineError = null
+      })
+      .addCase(getCameraHealthTimeline.rejected, (state, action) => {
+        state.healthTimelineLoading = false
+        state.healthTimelineError = action.payload
+        state.healthTimeline = null
+      })
       // Toggle Camera Status
       .addCase(toggleCameraStatus.pending, state => {
         state.isLoading = true
@@ -407,6 +451,7 @@ export const {
   clearOperationSuccess,
   clearCurrentCamera,
   resetCameraState,
+  clearHealthTimeline,
   updateCameraStatusFromWebSocket
 } = cameraApiSlice.actions
 

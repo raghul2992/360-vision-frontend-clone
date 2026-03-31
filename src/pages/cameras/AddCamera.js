@@ -46,6 +46,8 @@ import { toast } from "react-toastify";
 import CreatableSelect from "../../component/CreatableSelect";
 import "react-toastify/dist/ReactToastify.css";
 import CreateTableSelect from "../../component/CreatableSelect";
+import CameraHealthModal from "./Camerahealthmodal";
+import { IoHeartOutline } from "react-icons/io5";
 
 const libraries = ["places"];
 const AddCamera = () => {
@@ -94,6 +96,7 @@ const AddCamera = () => {
   const [cameraStatus, setCameraStatus] = useState("inactive"); // Camera enable/disable state
   const [cameraErrorMessage, setCameraErrorMessage] = useState(null);
   const [isLocationModalOpen, setIsLocationModalOpen] = useState(false);
+  const [showHealthModal, setShowHealthModal] = useState(false);
 
   // Fetch locations on component mount
   useEffect(() => {
@@ -548,7 +551,7 @@ const AddCamera = () => {
       <div className="flex justify-between items-center mb-8">
         <div>
           <h1 className='text-3xl font-bold flex items-center gap-3'>
-            <IoVideocamOutline size={35}/>
+            <IoVideocamOutline size={35} />
             {cameraId ? t('addCamera.editTitle') : t('addCamera.addTitle')}
           </h1>
           <p className='mt-1'>
@@ -748,6 +751,15 @@ const AddCamera = () => {
                   errorMessage={cameraErrorMessage}
                 />
               </div>
+              {cameraId && (
+                <button
+                  onClick={() => setShowHealthModal(true)}
+                  className="flex items-center gap-2 text-sm text-[#3885CC] hover:text-blue-400 transition-colors w-fit mt-1"
+                >
+                  <IoHeartOutline size={15} />
+                  <span>Camera Health</span>
+                </button>
+              )}
               {testConnectionResult && (
                 <></>
                 // <p
@@ -845,11 +857,10 @@ const AddCamera = () => {
             <button
               onClick={handleAddRoi}
               disabled={!isCameraSaved || !cameraId}
-              className={`flex items-center gap-2 text-white font-semibold py-2.5 px-5 rounded-full transition-colors mx-auto ${
-                isCameraSaved && cameraId
-                  ? "bg-[#3885CC] hover:bg-blue-600"
-                  : "bg-gray-600 cursor-not-allowed"
-              }`}
+              className={`flex items-center gap-2 text-white font-semibold py-2.5 px-5 rounded-full transition-colors mx-auto ${isCameraSaved && cameraId
+                ? "bg-[#3885CC] hover:bg-blue-600"
+                : "bg-gray-600 cursor-not-allowed"
+                }`}
             >
               <span className="text-lg">+</span>
               <span className="text-sm">{t("addCamera.addRoiButton")}</span>
@@ -938,24 +949,22 @@ const AddCamera = () => {
                       </td>
                       <td className="py-4 px-4 text-sm">
                         <span
-                          className={`px-3 py-1 rounded-full text-xs font-medium ${
-                            roi.alert_priority === "high"
-                              ? "bg-red-500/20 text-red-400"
-                              : roi.alert_priority === "medium"
-                                ? "bg-yellow-500/20 text-yellow-400"
-                                : "bg-green-500/20 text-green-400"
-                          }`}
+                          className={`px-3 py-1 rounded-full text-xs font-medium ${roi.alert_priority === "high"
+                            ? "bg-red-500/20 text-red-400"
+                            : roi.alert_priority === "medium"
+                              ? "bg-yellow-500/20 text-yellow-400"
+                              : "bg-green-500/20 text-green-400"
+                            }`}
                         >
                           {formatAlertPriority(roi.alert_priority)}
                         </span>
                       </td>
                       <td className="py-4 px-4 text-sm">
                         <span
-                          className={`px-3 py-1 rounded-full text-xs font-medium ${
-                            roi.status === "active"
-                              ? "bg-green-500/20 text-green-400"
-                              : "bg-red-500/20 text-red-400"
-                          }`}
+                          className={`px-3 py-1 rounded-full text-xs font-medium ${roi.status === "active"
+                            ? "bg-green-500/20 text-green-400"
+                            : "bg-red-500/20 text-red-400"
+                            }`}
                         >
                           {roi.status === "active"
                             ? t("common.active")
@@ -1037,6 +1046,15 @@ const AddCamera = () => {
           </div>
         )}
       </div>
+      {cameraId && (
+        <CameraHealthModal
+          isOpen={showHealthModal}
+          onClose={() => setShowHealthModal(false)}
+          cameraId={parseInt(cameraId)}
+          cameraName={cameraName}
+          tenantId={tenantId}
+        />
+      )}
       <LocationFormModal
         isOpen={isLocationModalOpen}
         onClose={() => setIsLocationModalOpen(false)}
