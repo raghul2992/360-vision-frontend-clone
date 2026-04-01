@@ -465,7 +465,7 @@ const ROIConfiguration = () => {
             };
           }
           if (
-            detectionType === "PPE_VIOLATION" ||
+            detectionType === "PPE_VEST_VIOLATION" ||
             detectionType === "PPE_HELMET_VIOLATION" ||
             detectionType === "PPE_GLOVE_VIOLATION" ||
             detectionType === "PPE_SAFETY_SHOES_VIOLATION" ||
@@ -708,7 +708,7 @@ const ROIConfiguration = () => {
       );
       setCrowdSurgeDwellTime(roi.detection_config?.dwell_time_seconds || 30);
     } else if (
-      roi.detection_type === "PPE_VIOLATION" ||
+      roi.detection_type === "PPE_VEST_VIOLATION" ||
       roi.detection_type === "PPE_HELMET_VIOLATION" ||
       roi.detection_type === "PPE_GLOVE_VIOLATION" ||
       roi.detection_type === "PPE_SAFETY_SHOES_VIOLATION" ||
@@ -1206,7 +1206,7 @@ const ROIConfiguration = () => {
                   <option value="RESTRICTED_AREA_BREACH_DETECTION">
                     {t("roi.restrictedAreaBreachDetection")}
                   </option>
-                  <option value="PPE_VIOLATION">{t("roi.PPEViolation")}</option>
+                  <option value="PPE_VEST_VIOLATION">{t("roi.PPEViolation")}</option>
                   <option value="PPE_HELMET_VIOLATION">
                     {t("roi.PPEHelmetViolation")}
                   </option>
@@ -1362,7 +1362,7 @@ const ROIConfiguration = () => {
           )}
 
           {/* PPE Violation Detection */}
-          {(detectionType === "PPE_VIOLATION" ||
+          {(detectionType === "PPE_VEST_VIOLATION" ||
             detectionType === "PPE_HELMET_VIOLATION" ||
             detectionType === "PPE_GLOVE_VIOLATION" ||
             detectionType === "PPE_SAFETY_SHOES_VIOLATION" ||

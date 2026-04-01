@@ -31,7 +31,7 @@ import { updateAlertAPI } from "../../features/alert/alertSlice";
 const Alerts = () => {
   const { t } = useTranslation();
   const dispatch = useDispatch();
-   const location = useLocation();
+  const location = useLocation();
   const navigate = useNavigate();
 
   // 1. Get User Info from LocalStorage
@@ -51,7 +51,7 @@ const Alerts = () => {
   const [dateRange, setDateRange] = useState([null, null]);
   const [startDate, endDate] = dateRange;
   const [detectionType, setDetectionType] = useState(null);
-  
+
 
   // Pagination
   const [limit] = useState(10);
@@ -276,7 +276,11 @@ const Alerts = () => {
     { value: "PERSON_QUEUE_DETECTION", label: "Person Queue" },
     { value: "RESTRICTED_AREA_BREACH_DETECTION", label: "Area Breach" },
     { value: "FIRE_SMOKE_DETECTION", label: "Fire & Smoke" },
-    { value: "PPE_VIOLATION", label: "PPE Violation" },
+    { value: "PPE_VEST_VIOLATION", label: "PPE Vest Violation" },
+    { value: "PPE_HELMET_VIOLATION", label: "PPE Helmet Violation" },
+    { value: "PPE_GLOVE_VIOLATION", label: "PPE Glove Violation" },
+    { value: "PPE_SAFETY_SHOES_VIOLATION", label: "PPE Safety Shoes Violation" },
+    { value: "PPE_GOGGLES_VIOLATION", label: "PPE Goggles Violation" },
     { value: "CROWD_SURGE", label: "Crowd Surge" },
   ];
 
@@ -332,17 +336,17 @@ const Alerts = () => {
 
 
   useEffect(() => {
-  if (!tenant_id) return; // wait until tenant_id is available
-  const params = new URLSearchParams(location.search);
-  const encodedEvent = params.get("event_alert");
-  if (!encodedEvent) return;
-  try {
-    const decodedId = atob(encodedEvent);
-    openAlertFromUrl(decodedId);
-  } catch (err) {
-    console.error("Invalid Base64 event_alert:", err);
-  }
-}, [location.search, tenant_id]);
+    if (!tenant_id) return; // wait until tenant_id is available
+    const params = new URLSearchParams(location.search);
+    const encodedEvent = params.get("event_alert");
+    if (!encodedEvent) return;
+    try {
+      const decodedId = atob(encodedEvent);
+      openAlertFromUrl(decodedId);
+    } catch (err) {
+      console.error("Invalid Base64 event_alert:", err);
+    }
+  }, [location.search, tenant_id]);
 
   const openAlertFromUrl = async (alertId) => {
     const queryParams = { type: "event_alert", id: alertId, limit: 1, skip: 0 };

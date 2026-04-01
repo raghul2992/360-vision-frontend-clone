@@ -754,7 +754,7 @@ const AddCamera = () => {
               {cameraId && (
                 <button
                   onClick={() => setShowHealthModal(true)}
-                  className="flex items-center gap-2 text-sm text-[#3885CC] hover:text-blue-400 transition-colors w-fit mt-1"
+                  className="flex items-center gap-2 text-sm text-[#3885CC] hover:text-blue-400 transition-colors w-fit mt-3"
                 >
                   <IoHeartOutline size={15} />
                   <span>Camera Health</span>
