@@ -340,6 +340,7 @@
     "PPEGloveViolation":"PPE Glove Violation",  
     "PPESafetyShoesViolation":"PPE Safety Shoes Violation",
     "PPEGogglesViolation":"PPE Goggles Violation",
+    "personFallDetection": "Person Fall Detection",
     "FireAndSmokeDetection": "Fire & Smoke Detection",
     "crowdSurge": " Crowd Surge & Stampede Risk Detection",
 
@@ -507,6 +508,7 @@
       "ppe_glove_violation": "PPE Glove Violation detected by Camera {{camera}}.",
       "ppe_safety_shoes_violation": "PPE Safety Shoes Violation detected by Camera {{camera}}.",
       "ppe_goggles_violation": "PPE Goggles Violation detected by Camera {{camera}}.",
+      "person_fall_detection": "Person Fall Detection detected by Camera {{camera}}.",
       "fire_smoke_detection": "Fire & Smoke Detection detected by Camera {{camera}}."
 
     },
@@ -524,6 +526,7 @@
       "ppe_glove_violation": "PPE Glove Violation",
       "ppe_safety_shoes_violation": "PPE Safety Shoes Violation",
       "ppe_goggles_violation": "PPE Goggles Violation",
+      "person_fall_detection": "Person Fall Detection",
       "fire_and_smoke_detection": "Fire & Smoke Detection "
 
 

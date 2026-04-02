@@ -469,7 +469,8 @@ const ROIConfiguration = () => {
             detectionType === "PPE_HELMET_VIOLATION" ||
             detectionType === "PPE_GLOVES_VIOLATION" ||
             detectionType === "PPE_SAFETY_SHOE_VIOLATION" ||
-            detectionType === "PPE_GOGGLES_VIOLATION"
+            detectionType === "PPE_GOGGLES_VIOLATION" ||
+            detectionType === "PERSON_FALL_DETECTION"
           ) {
             return {
               dwell_time_seconds: ppeDwellTime,
@@ -712,7 +713,8 @@ const ROIConfiguration = () => {
       roi.detection_type === "PPE_HELMET_VIOLATION" ||
       roi.detection_type === "PPE_GLOVES_VIOLATION" ||
       roi.detection_type === "PPE_SAFETY_SHOE_VIOLATION" ||
-      roi.detection_type === "PPE_GOGGLES_VIOLATION"
+      roi.detection_type === "PPE_GOGGLES_VIOLATION" ||
+      roi.detection_type === "PERSON_FALL_DETECTION"
     ) {
       setPpeDwellTime(roi.detection_config?.dwell_time_seconds || 5);
     } else if (roi.detection_type === "FIRE_SMOKE_DETECTION") {
@@ -1218,6 +1220,9 @@ const ROIConfiguration = () => {
                   <option value="PPE_GOGGLES_VIOLATION">
                     {t("roi.PPEGogglesViolation")}
                   </option>
+                  <option value="PERSON_FALL_DETECTION">
+                    {t("roi.personFallDetection")}
+                  </option>
 
                   <option value="FIRE_SMOKE_DETECTION">
                     {t("roi.FireAndSmokeDetection")}
@@ -1365,7 +1370,8 @@ const ROIConfiguration = () => {
             detectionType === "PPE_HELMET_VIOLATION" ||
             detectionType === "PPE_GLOVES_VIOLATION" ||
             detectionType === "PPE_SAFETY_SHOE_VIOLATION" ||
-            detectionType === "PPE_GOGGLES_VIOLATION") && (
+            detectionType === "PPE_GOGGLES_VIOLATION" ||
+            detectionType === "PERSON_FALL_DETECTION") && (
               <div>
                 <label className="block text-sm text-gray-400 mb-2">
                   {t("roi.ppeDwellTimeSeconds")}

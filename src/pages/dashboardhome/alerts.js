@@ -281,6 +281,7 @@ const Alerts = () => {
     { value: "PPE_GLOVES_VIOLATION", label: "PPE Gloves Violation" },
     { value: "PPE_SAFETY_SHOE_VIOLATION", label: "PPE Safety Shoes Violation" },
     { value: "PPE_GOGGLES_VIOLATION", label: "PPE Goggles Violation" },
+    { value: "PERSON_FALL_DETECTION", label: "Person Fall Detection" },
     { value: "CROWD_SURGE", label: "Crowd Surge" },
   ];
 
