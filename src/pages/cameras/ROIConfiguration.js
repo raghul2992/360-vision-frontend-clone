@@ -467,8 +467,8 @@ const ROIConfiguration = () => {
           if (
             detectionType === "PPE_VEST_VIOLATION" ||
             detectionType === "PPE_HELMET_VIOLATION" ||
-            detectionType === "PPE_GLOVE_VIOLATION" ||
-            detectionType === "PPE_SAFETY_SHOES_VIOLATION" ||
+            detectionType === "PPE_GLOVES_VIOLATION" ||
+            detectionType === "PPE_SAFETY_SHOE_VIOLATION" ||
             detectionType === "PPE_GOGGLES_VIOLATION"
           ) {
             return {
@@ -710,8 +710,8 @@ const ROIConfiguration = () => {
     } else if (
       roi.detection_type === "PPE_VEST_VIOLATION" ||
       roi.detection_type === "PPE_HELMET_VIOLATION" ||
-      roi.detection_type === "PPE_GLOVE_VIOLATION" ||
-      roi.detection_type === "PPE_SAFETY_SHOES_VIOLATION" ||
+      roi.detection_type === "PPE_GLOVES_VIOLATION" ||
+      roi.detection_type === "PPE_SAFETY_SHOE_VIOLATION" ||
       roi.detection_type === "PPE_GOGGLES_VIOLATION"
     ) {
       setPpeDwellTime(roi.detection_config?.dwell_time_seconds || 5);
@@ -1174,11 +1174,10 @@ const ROIConfiguration = () => {
                   }
                 }}
                 placeholder={t("roi.roiNamePlaceholder")}
-                className={`w-full bg-gray-700 border rounded-lg py-2 px-4 text-white placeholder-gray-500 focus:outline-none transition-colors ${
-                  roiNameError
+                className={`w-full bg-gray-700 border rounded-lg py-2 px-4 text-white placeholder-gray-500 focus:outline-none transition-colors ${roiNameError
                     ? "border-red-500"
                     : "border-gray-600 focus:border-blue-500"
-                }`}
+                  }`}
               />
               {roiNameError && (
                 <p className="text-red-500 text-xs mt-1">{roiNameError}</p>
@@ -1210,10 +1209,10 @@ const ROIConfiguration = () => {
                   <option value="PPE_HELMET_VIOLATION">
                     {t("roi.PPEHelmetViolation")}
                   </option>
-                  <option value="PPE_GLOVE_VIOLATION">
+                  <option value="PPE_GLOVES_VIOLATION">
                     {t("roi.PPEGloveViolation")}
                   </option>
-                  <option value="PPE_SAFETY_SHOES_VIOLATION">
+                  <option value="PPE_SAFETY_SHOE_VIOLATION">
                     {t("roi.PPESafetyShoesViolation")}
                   </option>
                   <option value="PPE_GOGGLES_VIOLATION">
@@ -1287,41 +1286,41 @@ const ROIConfiguration = () => {
           {/* Vehicle/Person Queue Detection Fields */}
           {(detectionType === "VEHICLE_QUEUE_DETECTION" ||
             detectionType === "PERSON_QUEUE_DETECTION") && (
-            <>
-              <div>
-                <label className="block text-sm text-gray-400 mb-2">
-                  {t("roi.queueCountThreshold")}
-                </label>
-                <p className="text-xs text-gray-500 mb-2">
-                  {t("roi.queueCountThresholdDescription")}
-                </p>
-                <input
-                  type="number"
-                  value={queueCountThreshold}
-                  onChange={(e) =>
-                    setQueueCountThreshold(Number(e.target.value))
-                  }
-                  className="w-full bg-gray-700 border border-gray-600 rounded-lg py-2 px-4 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 transition-colors"
-                />
-              </div>
-              <div>
-                <label className="block text-sm text-gray-400 mb-2">
-                  {t("roi.queueDwellTimeSeconds")}
-                </label>
-                <p className="text-xs text-gray-500 mb-2">
-                  {t("roi.queueDwellTimeSecondsDescription")}
-                </p>
-                <input
-                  type="number"
-                  value={queueDwellTimeSeconds}
-                  onChange={(e) =>
-                    setQueueDwellTimeSeconds(Number(e.target.value))
-                  }
-                  className="w-full bg-gray-700 border border-gray-600 rounded-lg py-2 px-4 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 transition-colors"
-                />
-              </div>
-            </>
-          )}
+              <>
+                <div>
+                  <label className="block text-sm text-gray-400 mb-2">
+                    {t("roi.queueCountThreshold")}
+                  </label>
+                  <p className="text-xs text-gray-500 mb-2">
+                    {t("roi.queueCountThresholdDescription")}
+                  </p>
+                  <input
+                    type="number"
+                    value={queueCountThreshold}
+                    onChange={(e) =>
+                      setQueueCountThreshold(Number(e.target.value))
+                    }
+                    className="w-full bg-gray-700 border border-gray-600 rounded-lg py-2 px-4 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 transition-colors"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm text-gray-400 mb-2">
+                    {t("roi.queueDwellTimeSeconds")}
+                  </label>
+                  <p className="text-xs text-gray-500 mb-2">
+                    {t("roi.queueDwellTimeSecondsDescription")}
+                  </p>
+                  <input
+                    type="number"
+                    value={queueDwellTimeSeconds}
+                    onChange={(e) =>
+                      setQueueDwellTimeSeconds(Number(e.target.value))
+                    }
+                    className="w-full bg-gray-700 border border-gray-600 rounded-lg py-2 px-4 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 transition-colors"
+                  />
+                </div>
+              </>
+            )}
 
           {/* Crowd Surge Detection */}
           {detectionType === "CROWD_SURGE" && (
@@ -1364,24 +1363,24 @@ const ROIConfiguration = () => {
           {/* PPE Violation Detection */}
           {(detectionType === "PPE_VEST_VIOLATION" ||
             detectionType === "PPE_HELMET_VIOLATION" ||
-            detectionType === "PPE_GLOVE_VIOLATION" ||
-            detectionType === "PPE_SAFETY_SHOES_VIOLATION" ||
+            detectionType === "PPE_GLOVES_VIOLATION" ||
+            detectionType === "PPE_SAFETY_SHOE_VIOLATION" ||
             detectionType === "PPE_GOGGLES_VIOLATION") && (
-            <div>
-              <label className="block text-sm text-gray-400 mb-2">
-                {t("roi.ppeDwellTimeSeconds")}
-              </label>
-              <p className="text-xs text-gray-500 mb-2">
-                {t("roi.ppeDwellTimeSecondsDescription")}
-              </p>
-              <input
-                type="number"
-                value={ppeDwellTime}
-                onChange={(e) => setPpeDwellTime(Number(e.target.value))}
-                className="w-full bg-gray-700 border border-gray-600 rounded-lg py-2 px-4 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 transition-colors"
-              />
-            </div>
-          )}
+              <div>
+                <label className="block text-sm text-gray-400 mb-2">
+                  {t("roi.ppeDwellTimeSeconds")}
+                </label>
+                <p className="text-xs text-gray-500 mb-2">
+                  {t("roi.ppeDwellTimeSecondsDescription")}
+                </p>
+                <input
+                  type="number"
+                  value={ppeDwellTime}
+                  onChange={(e) => setPpeDwellTime(Number(e.target.value))}
+                  className="w-full bg-gray-700 border border-gray-600 rounded-lg py-2 px-4 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 transition-colors"
+                />
+              </div>
+            )}
 
           {/* Fire & Smoke Detection */}
           {detectionType === "FIRE_SMOKE_DETECTION" && (
@@ -1405,23 +1404,23 @@ const ROIConfiguration = () => {
           {/* VEHICLE_DWELL_TIME & ATTENDANT_CELLPHONE_DETECTION */}
           {(detectionType === "VEHICLE_DWELL_TIME" ||
             detectionType === "ATTENDANT_CELLPHONE_DETECTION") && (
-            <div>
-              <label className="block text-sm text-gray-400 mb-2">
-                {t("roi.dwellTimeSeconds")}
-              </label>
+              <div>
+                <label className="block text-sm text-gray-400 mb-2">
+                  {t("roi.dwellTimeSeconds")}
+                </label>
 
-              <p className="text-xs text-gray-500 mb-2">
-                {dwellDescriptions[detectionType]}
-              </p>
+                <p className="text-xs text-gray-500 mb-2">
+                  {dwellDescriptions[detectionType]}
+                </p>
 
-              <input
-                type="number"
-                value={dwellTimeSeconds}
-                onChange={(e) => setDwellTimeSeconds(Number(e.target.value))}
-                className="w-full bg-gray-700 border border-gray-600 rounded-lg py-2 px-4 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 transition-colors"
-              />
-            </div>
-          )}
+                <input
+                  type="number"
+                  value={dwellTimeSeconds}
+                  onChange={(e) => setDwellTimeSeconds(Number(e.target.value))}
+                  className="w-full bg-gray-700 border border-gray-600 rounded-lg py-2 px-4 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 transition-colors"
+                />
+              </div>
+            )}
 
           {/* Attendant Absence On Pump Fields */}
           {detectionType === "ATTENDANT_ABSENCE_ON_PUMP" && (
@@ -1609,11 +1608,10 @@ const ROIConfiguration = () => {
                       }
                     }}
                     placeholder={t("roi.enterWhatsAppNumber")}
-                    className={`flex-1 bg-gray-700 border rounded-lg py-2 px-3 text-white placeholder-gray-500 text-sm focus:outline-none transition-colors ${
-                      whatsappNumberError
+                    className={`flex-1 bg-gray-700 border rounded-lg py-2 px-3 text-white placeholder-gray-500 text-sm focus:outline-none transition-colors ${whatsappNumberError
                         ? "border-red-500"
                         : "border-gray-600 focus:border-blue-500"
-                    }`}
+                      }`}
                   />
                   <button
                     onClick={() => {
@@ -1735,11 +1733,10 @@ const ROIConfiguration = () => {
                       }
                     }}
                     placeholder={t("roi.enterEmailAddress")}
-                    className={`flex-1 bg-gray-700 border rounded-lg py-2 px-3 text-white placeholder-gray-500 text-sm focus:outline-none transition-colors ${
-                      emailAddressError
+                    className={`flex-1 bg-gray-700 border rounded-lg py-2 px-3 text-white placeholder-gray-500 text-sm focus:outline-none transition-colors ${emailAddressError
                         ? "border-red-500"
                         : "border-gray-600 focus:border-blue-500"
-                    }`}
+                      }`}
                   />
                   <button
                     onClick={() => {

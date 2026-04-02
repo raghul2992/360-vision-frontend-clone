@@ -278,8 +278,8 @@ const Alerts = () => {
     { value: "FIRE_SMOKE_DETECTION", label: "Fire & Smoke" },
     { value: "PPE_VEST_VIOLATION", label: "PPE Vest Violation" },
     { value: "PPE_HELMET_VIOLATION", label: "PPE Helmet Violation" },
-    { value: "PPE_GLOVE_VIOLATION", label: "PPE Glove Violation" },
-    { value: "PPE_SAFETY_SHOES_VIOLATION", label: "PPE Safety Shoes Violation" },
+    { value: "PPE_GLOVES_VIOLATION", label: "PPE Gloves Violation" },
+    { value: "PPE_SAFETY_SHOE_VIOLATION", label: "PPE Safety Shoes Violation" },
     { value: "PPE_GOGGLES_VIOLATION", label: "PPE Goggles Violation" },
     { value: "CROWD_SURGE", label: "Crowd Surge" },
   ];
@@ -346,6 +346,7 @@ const Alerts = () => {
     } catch (err) {
       console.error("Invalid Base64 event_alert:", err);
     }
+
   }, [location.search, tenant_id]);
 
   const openAlertFromUrl = async (alertId) => {
