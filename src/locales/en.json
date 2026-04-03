@@ -505,8 +505,8 @@
       "crowd_surge": "Crowd Surge detected by Camera {{camera}}.",
       "ppe_vest_violation": "PPE Vest Violation detected by Camera {{camera}}.",
       "ppe_helmet_violation": "PPE Helmet Violation detected by Camera {{camera}}.",
-      "ppe_glove_violation": "PPE Glove Violation detected by Camera {{camera}}.",
-      "ppe_safety_shoes_violation": "PPE Safety Shoes Violation detected by Camera {{camera}}.",
+      "ppe_gloves_violation": "PPE Glove Violation detected by Camera {{camera}}.",
+      "ppe_safety_shoe_violation": "PPE Safety Shoes Violation detected by Camera {{camera}}.",
       "ppe_goggles_violation": "PPE Goggles Violation detected by Camera {{camera}}.",
       "person_fall_detection": "Person Fall Detection detected by Camera {{camera}}.",
       "fire_smoke_detection": "Fire & Smoke Detection detected by Camera {{camera}}."

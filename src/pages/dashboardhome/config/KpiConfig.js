@@ -86,8 +86,10 @@ export const KPI_WIDGETS_CONFIG = [
   id: "customer_peak_time",
   titleKey: "dashboard.kpi.customer_peak_time",
   descriptionKey: "dashboard.kpi.customer_peak_time_desc",
-  getValue: (data) =>
-    data?.customerPeakTime ? `${data.customerPeakTime.peak_hour}:00` : "00:00",
+   getValue: (data) => {
+    const hour = data?.customerPeakTime?.peak_hour;
+    return hour != null ? `${String(hour).padStart(2, '0')}:00` : "00:00";
+  },
   getSubText: (data, t) => t("dashboard.kpi.last_7_days"),
   subClass: "text-gray-400",
   badge: "dashboard.kpi.badge",
