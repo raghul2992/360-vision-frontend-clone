@@ -550,7 +550,7 @@ const ROIConfiguration = () => {
     }
   };
 
-  // UPDATED: Handle ROI editing - parse both old and new formats
+
   // UPDATED: Handle ROI editing - parse both old and new formats
   const handleEditRoi = (roi) => {
     console.log("Editing ROI:", roi);
@@ -567,7 +567,13 @@ const ROIConfiguration = () => {
     console.log("Tracking type from ROI:", roi.tracking_activity);
 
     setAlertCooldown(roi.detection_config?.alert_cooldown_seconds || 30);
-    setConfidenceThreshold(roi.detection_config?.confidence_threshold || 50);
+    const isPPE =
+      roi.detection_type === "PPE_VEST_VIOLATION" ||
+      roi.detection_type === "PPE_HELMET_VIOLATION" ||
+      roi.detection_type === "PPE_GLOVES_VIOLATION" ||
+      roi.detection_type === "PPE_SAFETY_SHOE_VIOLATION" ||
+      roi.detection_type === "PPE_GOGGLES_VIOLATION";
+    setConfidenceThreshold(roi.detection_config?.confidence_threshold || (isPPE ? 80 : 50));
     // FIX: Set tracking type from the ROI being edited - handle both boolean and string values
     if (roi.tracking_activity !== undefined && roi.tracking_activity !== null) {
       // Convert to boolean if it's a string
@@ -1193,7 +1199,17 @@ const ROIConfiguration = () => {
                 </label>
                 <select
                   value={detectionType}
-                  onChange={(e) => setDetectionType(e.target.value)}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setDetectionType(val);
+                    const isPPE =
+                      val === "PPE_VEST_VIOLATION" ||
+                      val === "PPE_HELMET_VIOLATION" ||
+                      val === "PPE_GLOVES_VIOLATION" ||
+                      val === "PPE_SAFETY_SHOE_VIOLATION" ||
+                      val === "PPE_GOGGLES_VIOLATION";
+                    setConfidenceThreshold(isPPE ? 80 : 50);
+                  }}
                   className="w-full bg-gray-700 border border-gray-600 rounded-lg py-2 px-4 text-white focus:outline-none focus:border-blue-500 transition-colors appearance-none"
                 >
                   {/* <option value='VEHICLE_QUEUE_DETECTION'>
