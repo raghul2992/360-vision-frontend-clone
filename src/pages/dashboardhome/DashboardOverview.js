@@ -329,6 +329,7 @@ export default function DashboardOverview () {
                   widgetName={widget.widget_name}
                   onRemove={removeWidget}
                   filterProps={getWidgetProps(widget.widget_name)}
+                  infoText={widget.infoKey ? t(widget.infoKey) : undefined}
                 >
                   <widget.component
                     data={

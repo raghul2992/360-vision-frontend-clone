@@ -1,6 +1,7 @@
-import React from 'react'
-import { FiMove, FiX } from 'react-icons/fi'
+import React, { useState, useRef, useEffect } from 'react'
+import { FiMove, FiX, FiInfo } from 'react-icons/fi'
 import FilterDropdown from '../../../component/FilterDropdown'
+import ReactDOM from 'react-dom'
 
 const DashboardWidget = ({
   title,
@@ -8,6 +9,7 @@ const DashboardWidget = ({
   onRemove,
   filterProps,
   footerText,
+  infoText,
   children,
   className = '',
   // Pass through props for Grid Layout to function correctly
@@ -17,6 +19,33 @@ const DashboardWidget = ({
   onTouchEnd,
   ...props
 }) => {
+  const [showInfo, setShowInfo] = useState(false)
+  const [tooltipPos, setTooltipPos] = useState({ top: 0, left: 0 })
+  const infoBtnRef = useRef(null)
+
+  const updateTooltipPosition = () => {
+    if (!infoBtnRef.current) return
+    const rect = infoBtnRef.current.getBoundingClientRect()
+    const tooltipWidth = 280
+    let top = rect.top + window.scrollY
+    let left = rect.right + window.scrollX + 8
+    if (left + tooltipWidth > window.scrollX + window.innerWidth - 8) {
+      left = rect.left + window.scrollX - tooltipWidth - 8
+    }
+    setTooltipPos({ top, left })
+  }
+
+  useEffect(() => {
+    if (!showInfo) return
+    updateTooltipPosition()
+    window.addEventListener('scroll', updateTooltipPosition, true)
+    window.addEventListener('resize', updateTooltipPosition)
+    return () => {
+      window.removeEventListener('scroll', updateTooltipPosition, true)
+      window.removeEventListener('resize', updateTooltipPosition)
+    }
+  }, [showInfo])
+
   return (
     <div
       style={style}
@@ -39,6 +68,35 @@ const DashboardWidget = ({
           </div>
         </div>
         <div className='relative z-50 no-drag flex items-center flex-shrink-0 space-x-2'>
+          {infoText && (
+            <>
+              <button
+                ref={infoBtnRef}
+                onMouseEnter={() => setShowInfo(true)}
+                onMouseLeave={() => setShowInfo(false)}
+                className='text-gray-400 hover:text-white flex items-center'
+              >
+                <FiInfo size={16} />
+              </button>
+              {showInfo &&
+                ReactDOM.createPortal(
+                  <div
+                    style={{
+                      position: 'absolute',
+                      top: tooltipPos.top,
+                      left: tooltipPos.left,
+                      zIndex: 9999
+                    }}
+                    className='w-72 bg-[#111827] text-xs text-gray-100 p-3 rounded-md shadow-xl border border-[#374151]'
+                    onMouseEnter={() => setShowInfo(true)}
+                    onMouseLeave={() => setShowInfo(false)}
+                  >
+                    {infoText}
+                  </div>,
+                  document.body
+                )}
+            </>
+          )}
           {filterProps && <FilterDropdown {...filterProps} />}
           <button
             onClick={() => onRemove(widgetName)}

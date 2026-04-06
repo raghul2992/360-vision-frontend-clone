@@ -91,7 +91,7 @@ const TopProblematicRoisWidget = ({ isLoading: propIsLoading }) => {
                 <ResponsiveContainer width='100%' height='100%'>
                   <BarChart
                     data={chartData}
-                    margin={{ top: 20, right: 10, left: -20, bottom: 5 }}
+                    margin={{ top: 20, right: 10, left: -20, bottom: 55 }}
                     className='w-full'
                   >
                     <CartesianGrid strokeDasharray='3 3' stroke='#3f4664' />
@@ -100,9 +100,9 @@ const TopProblematicRoisWidget = ({ isLoading: propIsLoading }) => {
                       dataKey='name'
                       tick={whiteTextStyle}
                       stroke='white'
-                      height={30}
+                      height={60}
                       interval={0}
-                      angle={-15}
+                      angle={-30}
                       textAnchor='end'
                     />
 

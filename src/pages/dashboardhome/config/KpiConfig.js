@@ -9,7 +9,7 @@ export const KPI_WIDGETS_CONFIG = [
     // Function to extract data
     getValue: (data) => data?.alertsCount ?? 0,
     getSubText: (data, t) => t("dashboard.kpi.last_7_days"),
-    subClass: "text-gray-500",
+    subClass: "text-gray-400",
     badge: "dashboard.kpi.badge",
     infoKey: "dashboard.kpi.total_alerts_info_desc",
   },

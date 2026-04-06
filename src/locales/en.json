@@ -596,6 +596,7 @@
       "camera_status_desc": "Monitors the number of active cameras versus total cameras.",
       "live": "Live",
       "badge": "KPI",
+      "report_badge": "Report",
 "total_alerts_info_desc": "Shows the total number of alerts triggered by all selected cameras in the chosen time range, so you can quickly see how many potential incidents or rule violations the system has detected overall.",
 "most_frequent_info_desc": "Highlights the alert type that occurred most often in the selected period, helping you immediately see which kind of issue is happening repeatedly and should be prioritized for investigation or process changes.",
 "busiest_hour": "Alert Peak Time",
@@ -612,7 +613,11 @@
 "visitor_traffic_desc": "Tracks the number of people detected in the forecourt area over time.",
 "visitor_traffic_info_desc": "Tracks the average number of people visited per day in a store, acting as a footfall indicator that helps you understand how busy the site is independently of sales data.",
 "tracking_feature": "Enable Activity Tracking on the <highlight>vehicle queue detection</highlight> to collect data",
-"tracking_feature_customer": "Enable Activity Tracking on the <highlight>person queue Congestion</highlight> to collect data"
+"tracking_feature_customer": "Enable Activity Tracking on the <highlight>person queue Congestion</highlight> to collect data",
+"alert_timeline_info_desc": "This visualization presents alerts distributed over time, grouped by hourly intervals. It helps identify peak activity periods, unusual spikes, and temporal patterns in alert generation, enabling better operational monitoring and incident response planning.",
+"alert_type_breakdown_info_desc": "This chart provides a categorical breakdown of alerts based on detection types. It enables quick comparison of alert distribution across categories, helping users understand dominant alert sources and prioritize system improvements.",
+"priority_info_desc": "This metric tracks alerts based on their assigned priority levels, such as low, medium, and critical. It allows teams to focus on high-impact incidents first, ensuring efficient allocation of resources and faster resolution of critical events.",
+"top_problematic_rois_info_desc": "This section highlights the top N regions of interest (ROIs) generating the highest number of alerts. It helps identify problematic zones, recurring issues, and areas that may require increased monitoring, maintenance, or operational intervention."
     }
   },
   "date_locale": "en-US",
