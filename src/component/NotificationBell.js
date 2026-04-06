@@ -272,7 +272,7 @@ const NotificationBell = ({ unreadCount }) => {
             {/* Loading */}
             {isLoading && (
               <div className='text-center py-4 text-gray-400 text-sm'>
-                {t('notificationBell.loadingMessage')}
+                {t('notificationBell.loading_notifications')}
               </div>
             )}
 

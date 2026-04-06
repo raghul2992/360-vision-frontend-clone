@@ -192,6 +192,10 @@
     "loading_notifications": "Loading notifications...",
     "error_loading_notifications": "Error: {{error}}",
     "no_notifications": "No notifications.",
+    "emptyState": "No notifications.",
+    "errorMessage": "Error: {{error}}",
+    "noMoreNotifications": "No more notifications.",
+    "loadMoreButton": "Load More",
     "status": {
       "unread": "Unread",
       "read": "Read"

@@ -1604,10 +1604,18 @@ const ROIConfiguration = () => {
                 <input
                   type="text"
                   value={whatsappName}
-                  onChange={(e) => setWhatsappName(e.target.value)}
-                  placeholder={t("roi.enterName")}
-                  className="flex-1 bg-gray-700 border border-gray-600 rounded-lg py-2 px-3 text-white placeholder-gray-500 text-sm focus:outline-none focus:border-blue-500 transition-colors"
+                  onChange={(e) => {
+                    setWhatsappName(e.target.value);
+                    if (e.target.value.trim()) setWhatsappNameError("");
+                  }}
+                  placeholder={`${t("roi.enterName")} *`}
+                  className={`flex-1 bg-gray-700 border rounded-lg py-2 px-3 text-white placeholder-gray-500 text-sm focus:outline-none transition-colors ${whatsappNameError ? "border-red-500" : "border-gray-600 focus:border-blue-500"}`}
                 />
+                {whatsappNameError && (
+                  <p className="text-red-500 text-xs mt-1">
+                    {whatsappNameError}
+                  </p>
+                )}
                 <div className="flex gap-2">
                   <input
                     type="tel"
@@ -1740,10 +1748,18 @@ const ROIConfiguration = () => {
                 <input
                   type="text"
                   value={emailName}
-                  onChange={(e) => setEmailName(e.target.value)}
-                  placeholder={t("roi.enterName")}
-                  className="flex-1 bg-gray-700 border border-gray-600 rounded-lg py-2 px-3 text-white placeholder-gray-500 text-sm focus:outline-none focus:border-blue-500 transition-colors"
+                  onChange={(e) => {
+                    setEmailName(e.target.value);
+                    if (e.target.value.trim()) setEmailNameError("");
+                  }}
+                  placeholder={`${t("roi.enterName")} *`}
+                  className={`flex-1 bg-gray-700 border rounded-lg py-2 px-3 text-white placeholder-gray-500 text-sm focus:outline-none transition-colors ${emailNameError ? "border-red-500" : "border-gray-600 focus:border-blue-500"}`}
                 />
+                {emailNameError && (
+                  <p className="text-red-500 text-xs mt-1">
+                    {emailNameError}
+                  </p>
+                )}
                 <div className="flex gap-2">
                   <input
                     type="email"
