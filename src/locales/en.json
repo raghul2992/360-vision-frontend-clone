@@ -793,6 +793,7 @@
       "role": "Role*",
       "status": "Status*",
       "active": "Active",
+      "invited": "Invited",
       "inactive": "Inactive",
       "locationVisibility": "Location Visibility",
       "selectLocation": "Select Location*",

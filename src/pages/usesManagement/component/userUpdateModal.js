@@ -209,12 +209,25 @@ const UpdateUserModal = ({ isOpen, onClose, tenantId, userData }) => {
                     onChange={handleChange}
                     className='w-full bg-[#1c1c24] appearance-none border border-gray-700 rounded-lg py-3 px-4 text-white outline-none cursor-pointer focus:border-blue-500'
                   >
-                    <option value='active'>
-                      {t('userManagement.updateModal.active')}
-                    </option>
-                    <option value='inactive'>
-                      {t('userManagement.updateModal.inactive')}
-                    </option>
+                    {userData?.status === 'invite' ? (
+                      <>
+                        <option value='invite'>
+                          {t('userManagement.updateModal.invited') || 'Invited (Pending)'}
+                        </option>
+                        <option value='inactive'>
+                          {t('userManagement.updateModal.inactive')}
+                        </option>
+                      </>
+                    ) : (
+                      <>
+                        <option value='active'>
+                          {t('userManagement.updateModal.active')}
+                        </option>
+                        <option value='inactive'>
+                          {t('userManagement.updateModal.inactive')}
+                        </option>
+                      </>
+                    )}
                   </select>
                   <IoChevronDown className='absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none' />
                 </div>
