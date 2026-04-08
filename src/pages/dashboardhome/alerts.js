@@ -457,14 +457,6 @@ const Alerts = () => {
         <div className={`${bgcolors.componentsclr} w-full rounded-lg p-6`}>
           <div className="flex flex-col lg:flex-row gap-6">
             <div className="lg:w-[100%] w-full">
-              {alerts.length === 0 && !isLoading && !error && (
-                <div className="text-center py-16">
-                  <p className="text-gray-400 text-sm">
-                    {t("alerts.no_alerts_at_this_time")}
-                  </p>
-                </div>
-              )}
-
               {error && (
                 <div className="bg-red-900 bg-opacity-20 border border-red-500 rounded-lg p-4">
                   <p className="text-red-400 text-sm">
@@ -477,6 +469,12 @@ const Alerts = () => {
                 ref={containerRef}
                 className="space-y-4 w-full max-h-[650px] overflow-y-auto scrollbar-thin scrollbar-thumb-[#3b405e] scrollbar-track-[#1f2333] hover:scrollbar-thumb-[#4a5070] rounded-lg pr-2"
               >
+                {alerts.length === 0 && !isLoading && !error && (
+                  <div className="text-center py-4 text-gray-400 text-sm">
+                    {t("alerts.no_alerts_at_this_time")}
+                  </div>
+                )}
+
                 {alerts.map((alert) => {
                   var location = filteredLocations?.find(
                     (loc) => loc?.id == alert?.location_id,
