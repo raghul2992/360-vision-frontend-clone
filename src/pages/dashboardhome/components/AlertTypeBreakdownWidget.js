@@ -15,7 +15,7 @@ const AlertTypeBreakdownWidget = () => {
     alertTypeBreakdown?.map((item, index) => ({
       id: index,
       value: item.percentage,
-      label: item.label,
+      label: item.label?.replace(/\bPpe\b/g, 'PPE'),
       color: colors[index % colors.length]
     })) || []
 
