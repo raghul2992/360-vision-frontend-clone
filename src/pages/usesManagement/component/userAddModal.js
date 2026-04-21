@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 import { useTranslation } from 'react-i18next'
-import { GoogleMap, useJsApiLoader, Marker } from '@react-google-maps/api'
+// import { GoogleMap, useJsApiLoader, Marker } from '@react-google-maps/api'
 import { toast } from 'react-toastify'
 import {
   IoClose,
@@ -15,17 +15,6 @@ import {
   inviteUser
 } from '../../../features/userManagement/userApiSlice'
 import generateRandomPassword from '../../../utils/generatePassword'
-
-const containerStyle = { width: '100%', height: '100%' }
-const defaultCenter = { lat: -14.235, lng: -51.9253 }
-
-const mapOptions = {
-  disableDefaultUI: true,
-  styles: [
-    { elementType: 'geometry', stylers: [{ color: '#242f3e' }] },
-    { elementType: 'labels.text.fill', stylers: [{ color: '#746855' }] }
-  ]
-}
 
 const AddUserModal = ({ isOpen, onClose, tenantId }) => {
   const { t } = useTranslation()
@@ -66,10 +55,10 @@ const AddUserModal = ({ isOpen, onClose, tenantId }) => {
     if (tenantId && isOpen) dispatch(getLocations({ tenantId }))
   }, [tenantId, isOpen, dispatch])
 
-  const { isLoaded } = useJsApiLoader({
-    id: 'google-map-script',
-    googleMapsApiKey: process.env.REACT_APP_GOOGLE_MAPS_API_KEY
-  })
+  // const { isLoaded } = useJsApiLoader({
+  //   id: 'google-map-script',
+  //   googleMapsApiKey: process.env.REACT_APP_GOOGLE_MAPS_API_KEY
+  // })
 
   const handleLocationToggle = locationId => {
     if (!locationId || locationId === 'default') return
@@ -95,6 +84,10 @@ const AddUserModal = ({ isOpen, onClose, tenantId }) => {
   const handleSubmit = async () => {
     if (!formData.full_name || !formData.email || !formData.password) {
       return toast.error(t('userManagement.errors.requiredFields'))
+    }
+
+    if (formData.role === 'viewer' && formData.meta.assign_locations.length === 0) {
+      return toast.error(t('userManagement.errors.locationRequired') || 'Please select at least one location for viewer.')
     }
 
     try {
@@ -226,7 +219,7 @@ const AddUserModal = ({ isOpen, onClose, tenantId }) => {
           {/* VIEWER SPECIFIC FIELDS */}
           {formData.role === 'viewer' && (
             <div className='space-y-5 pt-4 border-t border-gray-700/50 animate-in fade-in duration-300'>
-              <div className='w-full h-40 rounded-xl overflow-hidden border border-gray-700 bg-[#1c1c24]'>
+              {/* <div className='w-full h-40 rounded-xl overflow-hidden border border-gray-700 bg-[#1c1c24]'>
                 {isLoaded && (
                   <GoogleMap
                     mapContainerStyle={containerStyle}
@@ -255,11 +248,11 @@ const AddUserModal = ({ isOpen, onClose, tenantId }) => {
                     })}
                   </GoogleMap>
                 )}
-              </div>
-
+              </div> */}
               <div className='space-y-2'>
                 <label className='text-sm font-medium text-gray-300 block'>
                   {t('userManagement.addModal.selectLocation')}
+                  <span className='text-red-500 ml-1'>*</span>
                 </label>
                 <div className='relative'>
                   <select

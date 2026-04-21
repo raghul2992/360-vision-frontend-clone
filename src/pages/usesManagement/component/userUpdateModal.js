@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 import { useTranslation } from 'react-i18next'
-import { GoogleMap, useJsApiLoader, Marker } from '@react-google-maps/api'
+// import { GoogleMap, useJsApiLoader, Marker } from '@react-google-maps/api'
 import { toast } from 'react-toastify'
 import { IoClose, IoChevronDown, IoLocationOutline } from 'react-icons/io5'
 import { getLocations } from '../../../features/locations/locationApiSlice'
@@ -35,6 +35,13 @@ const UpdateUserModal = ({ isOpen, onClose, tenantId, userData }) => {
     meta: { assign_locations: [] }
   })
 
+  // Tracks if the user was originally an invitee who hasn't accepted yet.
+  // A user is considered an "invite-type" user if their status is 'invite' or 'inactive'
+  // but they have never been 'active' (i.e., they haven't accepted the invitation).
+  // This flag is set once when the modal loads and persists across status changes
+  // within the same session, preventing inactive invitees from being set to 'active'.
+  const [wasInvited, setWasInvited] = useState(false)
+
   // ------------------------------------------------------------------
   // 1. Role Logic: Determine available roles based on current user
   // ------------------------------------------------------------------
@@ -42,12 +49,14 @@ const UpdateUserModal = ({ isOpen, onClose, tenantId, userData }) => {
 
   const getAvailableRoles = role => {
     switch (role) {
+      case 'superadmin':
+        return ['superadmin', 'admin', 'operator', 'viewer']
       case 'admin':
         return ['admin', 'operator', 'viewer']
       case 'operator':
-        return ['operator', 'viewer'] // Operator cannot create/edit Admins
+        return ['operator', 'viewer']
       case 'viewer':
-        return [] // Viewers usually can't manage users
+        return []
       default:
         return []
     }
@@ -60,6 +69,19 @@ const UpdateUserModal = ({ isOpen, onClose, tenantId, userData }) => {
   // ------------------------------------------------------------------
   useEffect(() => {
     if (userData) {
+      // A user is an invite-type user if:
+      // 1. Their current status is 'invite' (pending acceptance), OR
+      // 2. Their status is 'inactive' but they've never been 'active'
+      //    (indicated by meta.never_accepted OR absence of meta.was_active).
+      // We also treat 'inactive' as invite-type when the user has no prior
+      // active history — this prevents the pattern: invite → set inactive →
+      // re-open modal → set active (bypassing invite acceptance).
+      const isInviteType =
+        userData.status === 'invite' ||
+        userData.meta?.never_accepted === true ||
+        (userData.status === 'inactive' && !userData.meta?.was_active)
+      setWasInvited(isInviteType)
+
       setFormData({
         full_name: userData.full_name || '',
         role: userData.role || 'viewer',
@@ -78,10 +100,10 @@ const UpdateUserModal = ({ isOpen, onClose, tenantId, userData }) => {
     }
   }, [isOpen, tenantId, dispatch])
 
-  const { isLoaded } = useJsApiLoader({
-    id: 'google-map-script',
-    googleMapsApiKey: process.env.REACT_APP_GOOGLE_MAPS_API_KEY
-  })
+  // const { isLoaded } = useJsApiLoader({
+  //   id: 'google-map-script',
+  //   googleMapsApiKey: process.env.REACT_APP_GOOGLE_MAPS_API_KEY
+  // })
 
   const handleChange = e => {
     const { name, value } = e.target
@@ -120,12 +142,28 @@ const UpdateUserModal = ({ isOpen, onClose, tenantId, userData }) => {
   }
 
   const handleSubmit = async () => {
+    // Defense-in-depth: Even if frontend state was manipulated (e.g. via DevTools),
+    // never allow an invite-type user (who hasn't accepted) to be set to 'active'.
+    // NOTE: This is a frontend safeguard only. The backend MUST enforce this rule
+    // independently — reject status:'active' updates for users with invite/pending state.
+    const sanitizedStatus =
+      wasInvited && formData.status === 'active' ? 'invite' : formData.status
+
+    if (wasInvited && formData.status === 'active') {
+      toast.warning(
+        t('userManagement.updateModal.cannotActivateInvite') ||
+          'Cannot set an uninvited user to active. The user must accept their invitation first.'
+      )
+      return
+    }
+
     try {
       await dispatch(
         updateTenantUser({
           tenant_id: tenantId,
           user_id: userData.id,
-          ...formData
+          ...formData,
+          status: sanitizedStatus
         })
       ).unwrap()
       toast.success(t('userManagement.updateModal.successToast'))
@@ -209,13 +247,19 @@ const UpdateUserModal = ({ isOpen, onClose, tenantId, userData }) => {
                     onChange={handleChange}
                     className='w-full bg-[#1c1c24] appearance-none border border-gray-700 rounded-lg py-3 px-4 text-white outline-none cursor-pointer focus:border-blue-500'
                   >
-                    {userData?.status === 'invite' ? (
+                    {wasInvited ? (
                       <>
+                        {/* Invite-type users (not yet accepted) can only be
+                            'invited' (pending) or 'inactive'. Active is
+                            locked until the user accepts their invitation. */}
                         <option value='invite'>
                           {t('userManagement.updateModal.invited') || 'Invited (Pending)'}
                         </option>
                         <option value='inactive'>
                           {t('userManagement.updateModal.inactive')}
+                        </option>
+                        <option value='active' disabled>
+                          {t('userManagement.updateModal.active')} ({ 'Pending Invite'})
                         </option>
                       </>
                     ) : (
@@ -231,6 +275,13 @@ const UpdateUserModal = ({ isOpen, onClose, tenantId, userData }) => {
                   </select>
                   <IoChevronDown className='absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none' />
                 </div>
+                {wasInvited && (
+                  <p className='text-[11px] text-yellow-500/80 mt-1.5 flex items-center gap-1'>
+                    <span>⚠</span>
+                    {
+                      'User has not accepted the invitation yet. Active status is locked.'}
+                  </p>
+                )}
               </div>
             </div>
           </div>
@@ -244,7 +295,7 @@ const UpdateUserModal = ({ isOpen, onClose, tenantId, userData }) => {
                 </label>
 
                 {/* 3. Map Section with Colored Markers */}
-                <div className='w-full h-40 rounded-xl overflow-hidden border border-gray-700 bg-[#1c1c24]'>
+                {/* <div className='w-full h-40 rounded-xl overflow-hidden border border-gray-700 bg-[#1c1c24]'>
                   {isLoaded ? (
                     <GoogleMap
                       mapContainerStyle={containerStyle}
@@ -280,7 +331,7 @@ const UpdateUserModal = ({ isOpen, onClose, tenantId, userData }) => {
                       {t('userManagement.loading')}
                     </div>
                   )}
-                </div>
+                </div> */}
               </div>
 
               {/* Location Select Dropdown */}
@@ -310,7 +361,7 @@ const UpdateUserModal = ({ isOpen, onClose, tenantId, userData }) => {
                           {loc.name}{' '}
                           {isSelected
                             ? `(${
-                                t('userManagement.table.selected') || 'Selected'
+                                'Selected'
                               })`
                             : ''}
                         </option>

@@ -199,7 +199,7 @@ const NotificationBell = ({ unreadCount }) => {
 
       {/* Notification Dropdown */}
       {isOpen && (
-        <div className='absolute right-5 mt-2 min-w-[500px] bg-gray-800 rounded-lg shadow-lg z-20 max-h-[350px] flex flex-col'>
+        <div className='absolute right-5 mt-2 min-w-[500px] bg-gray-800 rounded-lg shadow-lg z-[9999] max-h-[350px] flex flex-col'>
           {/* Header */}
           <div className='sticky top-0 bg-gray-800 p-4 border-b border-gray-700 flex justify-between items-center z-10'>
             <h3 className='text-lg font-semibold text-white'>

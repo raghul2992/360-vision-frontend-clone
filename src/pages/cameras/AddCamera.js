@@ -560,12 +560,23 @@ const AddCamera = () => {
               : t("addCamera.addDescription")}
           </p>
         </div>
-        <Link to="/camera">
-          <button className="flex items-center gap-2 bg-[#3885CC] hover:bg-blue-600 text-white font-semibold py-2.5 px-6 rounded-full transition-colors">
-            <IoArrowBack size={18} />
-            {t("addCamera.backButton")}
-          </button>
-        </Link>
+        <div className="flex items-center gap-3">
+          {cameraId && (
+            <button
+              onClick={() => setShowHealthModal(true)}
+              className="flex items-center gap-2 bg-green-500 hover:bg-green-600 text-white font-semibold py-2.5 px-6 rounded-full transition-colors"
+            >
+              <IoHeartOutline size={18} />
+              {"Camera Health"}
+            </button>
+          )}
+          <Link to="/camera">
+            <button className="flex items-center gap-2 bg-[#3885CC] hover:bg-blue-600 text-white font-semibold py-2.5 px-6 rounded-full transition-colors">
+              <IoArrowBack size={18} />
+              {t("addCamera.backButton")}
+            </button>
+          </Link>
+        </div>
       </div>
 
       <div className='bg-[#2A2B36] rounded-xl p-6 border border-gray-700/50'>
@@ -751,15 +762,6 @@ const AddCamera = () => {
                   errorMessage={cameraErrorMessage}
                 />
               </div>
-              {cameraId && (
-                <button
-                  onClick={() => setShowHealthModal(true)}
-                  className="flex items-center gap-2 text-sm text-[#3885CC] hover:text-blue-400 transition-colors w-fit mt-3"
-                >
-                  <IoHeartOutline size={15} />
-                  <span>Camera Health</span>
-                </button>
-              )}
               {testConnectionResult && (
                 <></>
                 // <p

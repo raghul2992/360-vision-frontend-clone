@@ -141,6 +141,12 @@ const UserManagement = () => {
         color: 'text-green-500'
       },
       {
+        label: t('userManagement.stats.invited') || 'Invited',
+        value: users.filter(u => u.status === 'invite').length,
+        color: 'text-yellow-400',
+        description: t('userManagement.stats.invitedDescription') || 'Users who have been sent an invitation but have not yet accepted it.'
+      },
+      {
         label: t('userManagement.stats.admins'),
         value: users.filter(u => u.role === 'admin').length,
         color: 'text-blue-500',
@@ -255,7 +261,7 @@ const UserManagement = () => {
       </div>
 
       {/* STATS SECTION */}
-      <div className='grid grid-cols-5 gap-4 mb-8'>
+      <div className='grid grid-cols-6 gap-4 mb-8'>
         {stats.map((s, i) => (
           <div
             key={i}
@@ -293,7 +299,7 @@ const UserManagement = () => {
             placeholder={t('userManagement.searchPlaceholder')}
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
-            className='w-full bg-[#3a3b4a] border-none rounded-lg py-3 px-4 text-sm focus:ring-1 focus:ring-blue-500 outline-none transition-all'
+            className='w-full bg-[#3a3b4a] text-gray-400  border-none rounded-lg py-3 px-4 text-sm focus:ring-1 focus:ring-blue-500 outline-none transition-all'
           />
         </div>
         <div className='flex items-center gap-4'>
