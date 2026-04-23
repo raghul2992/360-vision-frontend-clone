@@ -121,11 +121,11 @@ const redirect = params.get("redirect");
           disabled={isLoading}
         />
       </div>
-      <div className="flex items-center justify-center mt-4">
+      {/* Sign-up link — registration temporarily disabled */}
+      {/* <div className="flex items-center justify-center mt-4">
         <p className={`${textSizes.base} ${textcolors.normaltext} mr-1`}>
           {t("login.no_account")}
         </p>
-        {/* <Link to="/register"> */}
         <ButtonComponent
           children={t("login.sign_up")}
           className={`${fontWeights.semibold} ${textcolors.primary}`}
@@ -133,8 +133,7 @@ const redirect = params.get("redirect");
             callbackScreen("register");
           }}
         />
-        {/* </Link> */}
-      </div>
+      </div> */}
     </div>
   );
 };

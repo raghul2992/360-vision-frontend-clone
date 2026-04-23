@@ -58,19 +58,19 @@ const AuthPage = () => {
   const [authscreen, Setauthscreen] = useState('login')
   const { t } = useTranslation()
 
-  useEffect(() => {
-    const handleRegisterSuccess = event => {
-      if (event.detail.success) {
-        Setauthscreen('login')
-      }
-    }
+  // useEffect(() => {
+  //   const handleRegisterSuccess = event => {
+  //     if (event.detail.success) {
+  //       Setauthscreen('login')
+  //     }
+  //   }
 
-    window.addEventListener('registersuccess', handleRegisterSuccess)
+  //   window.addEventListener('registersuccess', handleRegisterSuccess)
 
-    return () => {
-      window.removeEventListener('registersuccess', handleRegisterSuccess)
-    }
-  }, [])
+  //   return () => {
+  //     window.removeEventListener('registersuccess', handleRegisterSuccess)
+  //   }
+  // }, [])
 
   return (
     <div className='flex h-screen flex-col lg:flex-row relative'>
@@ -150,7 +150,8 @@ const AuthPage = () => {
             <div
               className={`border-2 ${bgcolors.white} p-4 sm:p-8 flex flex-col w-full sm:min-w-[340px] lg:min-w-[440px] mb-2 rounded-[20px] justify-start items-start`}
             >
-              <div
+              {/* Tab switcher — registration temporarily disabled */}
+              {/* <div
                 className={`${bgcolors.gray} rounded-[20px] p-1 w-full flex items-start justify-center mb-2`}
               >
                 <ButtonComponent
@@ -188,7 +189,8 @@ const AuthPage = () => {
                 <LoginPage callbackScreen={Setauthscreen} />
               ) : (
                 <RegisterPage callbackScreen={Setauthscreen} />
-              )}
+              )} */}
+              <LoginPage callbackScreen={Setauthscreen} />
             </div>
             <div
               className={`text-center min-w-[64px] ${textcolors.dark} text-xs sm:text-sm lg:text-base 4k:text-xl`}
