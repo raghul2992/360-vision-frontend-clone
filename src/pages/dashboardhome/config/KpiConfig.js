@@ -68,46 +68,46 @@ export const KPI_WIDGETS_CONFIG = [
     hideDateRangeFilter: true,
      hideCameraFilter: true,
   },
-  {
-  id: "avg_customer_queue_time",
-  titleKey: "dashboard.kpi.avg_customer_queue_time",
-  descriptionKey: "dashboard.kpi.avg_customer_queue_time_desc",
-  getValue: (data) => {
-    const v = Number(data?.avgCustomerQueueTime);
-    return `${Number.isFinite(v) ? v.toFixed(2) : 0} s`;
-  },
-  getSubText: (data, t) => t("dashboard.kpi.last_7_days"),
-  subClass: "text-gray-400",
-  badge: "dashboard.kpi.badge",
-  infoKey: "dashboard.kpi.avg_customer_queue_time_info_desc",
-  trackingfeatureKey: "dashboard.kpi.tracking_feature_customer",
-},
-{
-  id: "customer_peak_time",
-  titleKey: "dashboard.kpi.customer_peak_time",
-  descriptionKey: "dashboard.kpi.customer_peak_time_desc",
-   getValue: (data) => {
-    const hour = data?.customerPeakTime?.peak_hour;
-    return hour != null ? `${String(hour).padStart(2, '0')}:00` : "00:00";
-  },
-  getSubText: (data, t) => t("dashboard.kpi.last_7_days"),
-  subClass: "text-gray-400",
-  badge: "dashboard.kpi.badge",
-  infoKey: "dashboard.kpi.customer_peak_time_info_desc",
-  trackingfeatureKey: "dashboard.kpi.tracking_feature_customer",
-},
-{
-  id: "visitor_traffic",
-  titleKey: "dashboard.kpi.visitor_traffic",
-  descriptionKey: "dashboard.kpi.visitor_traffic_desc",
-  getValue: (data) => {
-    const v = Number(data?.visitorTraffic);
-    return Number.isFinite(v) ? v.toFixed(0) : "0";
-  },
-  getSubText: (data, t) => t("dashboard.kpi.last_7_days"),
-  subClass: "text-gray-400",
-  badge: "dashboard.kpi.badge",
-  infoKey: "dashboard.kpi.visitor_traffic_info_desc",
-  trackingfeatureKey: "dashboard.kpi.tracking_feature_customer",
-},
+//   {
+//   id: "avg_customer_queue_time",
+//   titleKey: "dashboard.kpi.avg_customer_queue_time",
+//   descriptionKey: "dashboard.kpi.avg_customer_queue_time_desc",
+//   getValue: (data) => {
+//     const v = Number(data?.avgCustomerQueueTime);
+//     return `${Number.isFinite(v) ? v.toFixed(2) : 0} s`;
+//   },
+//   getSubText: (data, t) => t("dashboard.kpi.last_7_days"),
+//   subClass: "text-gray-400",
+//   badge: "dashboard.kpi.badge",
+//   infoKey: "dashboard.kpi.avg_customer_queue_time_info_desc",
+//   trackingfeatureKey: "dashboard.kpi.tracking_feature_customer",
+// },
+// {
+//   id: "customer_peak_time",
+//   titleKey: "dashboard.kpi.customer_peak_time",
+//   descriptionKey: "dashboard.kpi.customer_peak_time_desc",
+//    getValue: (data) => {
+//     const hour = data?.customerPeakTime?.peak_hour;
+//     return hour != null ? `${String(hour).padStart(2, '0')}:00` : "00:00";
+//   },
+//   getSubText: (data, t) => t("dashboard.kpi.last_7_days"),
+//   subClass: "text-gray-400",
+//   badge: "dashboard.kpi.badge",
+//   infoKey: "dashboard.kpi.customer_peak_time_info_desc",
+//   trackingfeatureKey: "dashboard.kpi.tracking_feature_customer",
+// },
+// {
+//   id: "visitor_traffic",
+//   titleKey: "dashboard.kpi.visitor_traffic",
+//   descriptionKey: "dashboard.kpi.visitor_traffic_desc",
+//   getValue: (data) => {
+//     const v = Number(data?.visitorTraffic);
+//     return Number.isFinite(v) ? v.toFixed(0) : "0";
+//   },
+//   getSubText: (data, t) => t("dashboard.kpi.last_7_days"),
+//   subClass: "text-gray-400",
+//   badge: "dashboard.kpi.badge",
+//   infoKey: "dashboard.kpi.visitor_traffic_info_desc",
+//   trackingfeatureKey: "dashboard.kpi.tracking_feature_customer",
+// },
 ];
