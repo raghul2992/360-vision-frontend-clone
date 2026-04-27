@@ -141,12 +141,6 @@ const UserManagement = () => {
         color: 'text-green-500'
       },
       {
-        label: t('userManagement.stats.invited') || 'Invited',
-        value: users.filter(u => u.status === 'invite').length,
-        color: 'text-yellow-400',
-        description: t('userManagement.stats.invitedDescription') || 'Users who have been sent an invitation but have not yet accepted it.'
-      },
-      {
         label: t('userManagement.stats.admins'),
         value: users.filter(u => u.role === 'admin').length,
         color: 'text-blue-500',
@@ -261,7 +255,7 @@ const UserManagement = () => {
       </div>
 
       {/* STATS SECTION */}
-      <div className='grid grid-cols-6 gap-4 mb-8'>
+      <div className='grid grid-cols-5 gap-4 mb-8'>
         {stats.map((s, i) => (
           <div
             key={i}
