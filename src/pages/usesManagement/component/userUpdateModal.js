@@ -50,7 +50,7 @@ const UpdateUserModal = ({ isOpen, onClose, tenantId, userData }) => {
   const getAvailableRoles = role => {
     switch (role) {
       case 'superadmin':
-        return ['superadmin', 'admin', 'operator', 'viewer']
+        return ['admin', 'operator', 'viewer']
       case 'admin':
         return ['admin', 'operator', 'viewer']
       case 'operator':
