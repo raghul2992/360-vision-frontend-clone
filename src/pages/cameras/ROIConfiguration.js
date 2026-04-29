@@ -470,6 +470,7 @@ const ROIConfiguration = () => {
             detectionType === "PPE_GLOVES_VIOLATION" ||
             detectionType === "PPE_SAFETY_SHOE_VIOLATION" ||
             detectionType === "PPE_GOGGLES_VIOLATION" ||
+            detectionType === "PPE_MASK_VIOLATION" ||
             detectionType === "PERSON_FALL_DETECTION"
           ) {
             return {
@@ -572,7 +573,8 @@ const ROIConfiguration = () => {
       roi.detection_type === "PPE_HELMET_VIOLATION" ||
       roi.detection_type === "PPE_GLOVES_VIOLATION" ||
       roi.detection_type === "PPE_SAFETY_SHOE_VIOLATION" ||
-      roi.detection_type === "PPE_GOGGLES_VIOLATION";
+      roi.detection_type === "PPE_GOGGLES_VIOLATION" ||
+      roi.detection_type === "PPE_MASK_VIOLATION";
     setConfidenceThreshold(roi.detection_config?.confidence_threshold || (isPPE ? 80 : 50));
     // FIX: Set tracking type from the ROI being edited - handle both boolean and string values
     if (roi.tracking_activity !== undefined && roi.tracking_activity !== null) {
@@ -720,6 +722,7 @@ const ROIConfiguration = () => {
       roi.detection_type === "PPE_GLOVES_VIOLATION" ||
       roi.detection_type === "PPE_SAFETY_SHOE_VIOLATION" ||
       roi.detection_type === "PPE_GOGGLES_VIOLATION" ||
+      roi.detection_type === "PPE_MASK_VIOLATION" ||
       roi.detection_type === "PERSON_FALL_DETECTION"
     ) {
       setPpeDwellTime(roi.detection_config?.dwell_time_seconds || 5);
@@ -1207,7 +1210,8 @@ const ROIConfiguration = () => {
                       val === "PPE_HELMET_VIOLATION" ||
                       val === "PPE_GLOVES_VIOLATION" ||
                       val === "PPE_SAFETY_SHOE_VIOLATION" ||
-                      val === "PPE_GOGGLES_VIOLATION";
+                      val === "PPE_GOGGLES_VIOLATION" ||
+                      val === "PPE_MASK_VIOLATION";
                     setConfidenceThreshold(isPPE ? 80 : 50);
                   }}
                   className="w-full bg-gray-700 border border-gray-600 rounded-lg py-2 px-4 text-white focus:outline-none focus:border-blue-500 transition-colors appearance-none"
@@ -1235,6 +1239,9 @@ const ROIConfiguration = () => {
                   </option>
                   <option value="PPE_GOGGLES_VIOLATION">
                     {t("roi.PPEGogglesViolation")}
+                  </option>
+                  <option value="PPE_MASK_VIOLATION">
+                    {t("roi.PPEMaskViolation")}
                   </option>
                   <option value="PERSON_FALL_DETECTION">
                     {t("roi.personFallDetection")}
@@ -1387,6 +1394,7 @@ const ROIConfiguration = () => {
             detectionType === "PPE_GLOVES_VIOLATION" ||
             detectionType === "PPE_SAFETY_SHOE_VIOLATION" ||
             detectionType === "PPE_GOGGLES_VIOLATION" ||
+            detectionType === "PPE_MASK_VIOLATION" ||
             detectionType === "PERSON_FALL_DETECTION") && (
               <div>
                 <label className="block text-sm text-gray-400 mb-2">
