@@ -87,7 +87,7 @@ const AddUserModal = ({ isOpen, onClose, tenantId }) => {
     }
 
     if (formData.role === 'viewer' && formData.meta.assign_locations.length === 0) {
-      return toast.error(t('userManagement.errors.locationRequired') || 'Please select at least one location for viewer.')
+      return toast.error( 'Please select at least one location for viewer.')
     }
 
     try {

@@ -49,6 +49,16 @@ function MainApp () {
   const dispatch = useDispatch()
   const { user } = useSelector(state => state.auth)
   const [websocketUrl, setWebsocketUrl] = useState(null)
+  useEffect(() => {
+  if (user) {
+    const tenantId = user.tenant_id || localStorage.getItem('tenant_id')
+    if (tenantId) {
+      setWebsocketUrl(`wss://dev-api.360vision.ai/ws/${tenantId}/`)
+    }
+  } else {
+    setWebsocketUrl(null)
+  }
+}, [user])
 
   // FIX 1: Safely initialize state
   const [notificationPermission, setNotificationPermission] = useState(
