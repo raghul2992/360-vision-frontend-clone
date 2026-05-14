@@ -170,6 +170,8 @@ export const useDashboardLogic = () => {
   const saveLayoutToApi = useCallback(
     (layoutToSave) => {
       if (!hasInitialized) return;
+      const userRole = localStorage.getItem('user_role')
+  if (userRole === 'viewer') return;  
       const tenantId = localStorage.getItem("tenant_id");
       if (!tenantId) {
         console.warn("Cannot save layout: Missing Tenant ID");

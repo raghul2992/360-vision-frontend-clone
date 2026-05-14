@@ -819,7 +819,7 @@
     },
     "roleInfo": {
       "admin": "Full system access, manage users, and configurations.",
-      "operator": "Manage locations and monitor activities (No user management).",
+      "operator": "Manage locations, monitor activities, and User management.",
       "viewer": "Read-only access to assigned locations only."
     }
   }

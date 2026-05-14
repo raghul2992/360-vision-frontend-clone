@@ -16,12 +16,12 @@ import { logoutUser } from './features/auth/authSlice'
 import { ToastContainer, toast } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 
-function AppRoutes () {
+function AppRoutes() {
   const element = useRoutes(routes)
   return element
 }
 
-function App () {
+function App() {
   return (
     // <Provider> is removed here because it is already in index.js
     <div className='font-sans'>
@@ -44,22 +44,19 @@ function App () {
   )
 }
 
-function MainApp () {
+function MainApp() {
   const location = useLocation()
   const dispatch = useDispatch()
   const { user } = useSelector(state => state.auth)
   const [websocketUrl, setWebsocketUrl] = useState(null)
   useEffect(() => {
-  if (user) {
-    const tenantId = user.tenant_id || localStorage.getItem('tenant_id')
+    const tenantId = localStorage.getItem('tenant_id')
     if (tenantId) {
-      setWebsocketUrl(`wss://dev-api.360vision.ai/ws/${tenantId}/`)
+      setWebsocketUrl(`${process.env.REACT_APP_BASE_URL}/ws/${tenantId}`)
+    } else {
+      setWebsocketUrl(null)
     }
-  } else {
-    setWebsocketUrl(null)
-  }
-}, [user])
-
+  }, [user])
   // FIX 1: Safely initialize state
   const [notificationPermission, setNotificationPermission] = useState(
     'Notification' in window ? Notification.permission : 'default'
@@ -160,7 +157,7 @@ function MainApp () {
           .then(permissionStatus => {
             permissionStatus.onchange = null
           })
-          .catch(() => {})
+          .catch(() => { })
       }
     }
   }, [showPermissionDeniedToast, LOCAL_STORAGE_KEY])
