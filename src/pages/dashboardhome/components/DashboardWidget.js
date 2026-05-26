@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react'
-import { FiMove, FiX, FiInfo } from 'react-icons/fi'
 import FilterDropdown from '../../../component/FilterDropdown'
 import ReactDOM from 'react-dom'
+import { bgcolors, textcolors, borderstyles, colors } from '../../../theme'
+import { MoveIcon, CloseIcon, InfoIcon } from '../../../icons'
 
 const DashboardWidget = ({
   title,
@@ -32,6 +33,7 @@ const DashboardWidget = ({
     if (left + tooltipWidth > window.scrollX + window.innerWidth - 8) {
       left = rect.left + window.scrollX - tooltipWidth - 8
     }
+    left = Math.max(window.scrollX + 8, left)
     setTooltipPos({ top, left })
   }
 
@@ -52,17 +54,17 @@ const DashboardWidget = ({
       onMouseDown={onMouseDown}
       onMouseUp={onMouseUp}
       onTouchEnd={onTouchEnd}
-      className={`bg-[#2a2f45] rounded-xl shadow-sm border border-[#2a2f45] hover:border-[#3B3F58] transition-colors h-full flex flex-col ${className}`}
+      className={`${bgcolors.white} rounded-2xl shadow-sm ${borderstyles.light} hover:shadow-md ${borderstyles.hoverGray} transition-all duration-200 h-full flex flex-col ${className}`}
       {...props}
     >
       {/* Header - Fixed */}
-      <div className='flex justify-between items-start p-4 border-b border-[#3B3F58] flex-shrink-0'>
+      <div className='flex justify-between items-start p-4 border-b flex-shrink-0' style={{ borderColor: colors.border }}>
         <div className='flex items-center space-x-3 flex-grow min-w-0'>
-          <div className='drag-handle cursor-move text-gray-400 hover:text-white transition-colors'>
-            <FiMove size={20} />
+          <div className={`drag-handle cursor-move ${textcolors.muted} ${textcolors.hoverMuted} transition-colors`}>
+            <MoveIcon size={20} />
           </div>
           <div className='flex-grow min-w-0'>
-            <h3 className='text-md font-semibold text-white truncate'>
+            <h3 className='text-md font-semibold truncate' style={{ color: colors.text }}>
               {title}
             </h3>
           </div>
@@ -74,9 +76,9 @@ const DashboardWidget = ({
                 ref={infoBtnRef}
                 onMouseEnter={() => setShowInfo(true)}
                 onMouseLeave={() => setShowInfo(false)}
-                className='text-gray-400 hover:text-white flex items-center'
+                className={`${textcolors.muted} ${textcolors.hoverMuted} flex items-center`}
               >
-                <FiInfo size={16} />
+                <InfoIcon size={16} />
               </button>
               {showInfo &&
                 ReactDOM.createPortal(
@@ -85,9 +87,10 @@ const DashboardWidget = ({
                       position: 'absolute',
                       top: tooltipPos.top,
                       left: tooltipPos.left,
-                      zIndex: 9999
+                      zIndex: 9999,
+                      color: colors.text,
                     }}
-                    className='w-72 bg-[#111827] text-xs text-gray-100 p-3 rounded-md shadow-xl border border-[#374151]'
+                    className={`w-72 ${bgcolors.white} text-xs p-3 rounded-md shadow-xl ${borderstyles.light}`}
                     onMouseEnter={() => setShowInfo(true)}
                     onMouseLeave={() => setShowInfo(false)}
                   >
@@ -100,10 +103,10 @@ const DashboardWidget = ({
           {filterProps && <FilterDropdown {...filterProps} />}
           <button
             onClick={() => onRemove(widgetName)}
-            className='text-gray-500 hover:text-red-500 transition-colors p-1 rounded-full hover:bg-gray-700'
+            className={`${textcolors.muted} ${textcolors.hoverDanger} transition-colors p-1 rounded-full ${bgcolors.dangerHover}`}
             title='Remove Widget'
           >
-            <FiX size={18} />
+            <CloseIcon size={18} />
           </button>
         </div>
       </div>
@@ -117,8 +120,8 @@ const DashboardWidget = ({
 
       {/* Footer - Fixed */}
       {footerText && (
-        <div className='flex justify-center items-center p-3 border-t border-[#3B3F58] bg-[#1f2435] rounded-b-xl flex-shrink-0'>
-          <div className='text-xs text-gray-400'>{footerText}</div>
+        <div className={`flex justify-center items-center p-3 border-t ${bgcolors.grayFaint} rounded-b-2xl flex-shrink-0`} style={{ borderColor: colors.border }}>
+          <div className={`text-xs ${textcolors.dim}`}>{footerText}</div>
         </div>
       )}
     </div>

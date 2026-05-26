@@ -3,5 +3,53 @@
   background-position: center;
   background-repeat: no-repeat;
   background-image: url('../assets/auth-left-banner.png');
-  
+}
+
+/* Hide left panel below lg breakpoint (matches Tailwind lg:flex-row at 1024px) */
+@media (max-width: 1023px) {
+  .auth-left-panel {
+    display: none;
+  }
+}
+
+/* Blue focus glow ring — scoped to login inputs */
+.auth-input:focus {
+  outline: none;
+  border-color: #3B82F6;
+  box-shadow: 0 0 0 3px rgba(56, 133, 204, 0.18);
+}
+
+.auth-input-wrap {
+  border: 1.5px solid #e2e8f0;
+  border-radius: 10px;
+  background: #f0f2fa;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.auth-input-wrap:focus-within {
+  border-color: #3B82F6;
+  box-shadow: 0 0 0 3px rgba(56, 133, 204, 0.18);
+  background: #fff;
+}
+
+.auth-input-wrap input {
+  background: transparent;
+  border: none;
+  outline: none;
+  width: 100%;
+}
+
+/* Override browser autofill blue/yellow background */
+.auth-input-wrap input:-webkit-autofill,
+.auth-input-wrap input:-webkit-autofill:hover,
+.auth-input-wrap input:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0px 1000px #f0f2fa inset;
+  box-shadow: 0 0 0px 1000px #f0f2fa inset;
+  -webkit-text-fill-color: #2a2f45;
+}
+
+.auth-input-wrap:focus-within input:-webkit-autofill,
+.auth-input-wrap:focus-within input:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0px 1000px #ffffff inset;
+  box-shadow: 0 0 0px 1000px #ffffff inset;
 }

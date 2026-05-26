@@ -9,18 +9,15 @@ import {
 } from "react-konva";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { bgcolors } from "../../theme";
+import { bgcolors, textcolors, borderstyles, buttons, colors } from "../../theme";
 import {
-  IoArrowBackCircle,
-  IoChatboxEllipsesOutline,
-  IoLogoWhatsapp,
-  IoMailOutline,
-  IoReload,
-  IoScanCircle,
-  IoPencil,
-  IoTrash,
-  IoCamera,
-} from "react-icons/io5";
+  ArrowBackIcon,
+  WhatsAppIcon,
+  MailIcon,
+  ScanAreaIcon,
+  TrashIcon,
+  CameraIcon,
+} from "../../icons";
 import { useDispatch, useSelector } from "react-redux";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -66,6 +63,7 @@ const ROIConfiguration = () => {
   const [rectangleStart, setRectangleStart] = useState(null);
   const [currentRectangle, setCurrentRectangle] = useState(null);
   const stageRef = useRef(null);
+  const containerRef = useRef(null);
   const SNAPSHOT_DIR = `${process.env.REACT_APP_BASE_URL}/api/v1/tenants/${tenantId}/cameras/snapshot/image`;
   const SNAPSHOT_URL = `${SNAPSHOT_DIR}/${snapshot}`;
   const [snapshotUrl, setSnapshotUrl] = useState(SNAPSHOT_URL);
@@ -82,6 +80,20 @@ const ROIConfiguration = () => {
     width: 1100,
     height: 640,
   });
+
+  useEffect(() => {
+    const updateDimensions = () => {
+      if (containerRef.current) {
+        const width = containerRef.current.offsetWidth;
+        const height = Math.round(width * (640 / 1100));
+        setStageDimensions({ width, height });
+      }
+    };
+    updateDimensions();
+    const ro = new ResizeObserver(updateDimensions);
+    if (containerRef.current) ro.observe(containerRef.current);
+    return () => ro.disconnect();
+  }, []);
 
   const { rois, isLoading, error, operationSuccess } = useSelector(
     (state) => state.roilist,
@@ -861,10 +873,10 @@ const ROIConfiguration = () => {
         <React.Fragment key={polyIndex}>
           <Line
             points={flatPoints}
-            stroke="#10b981"
+            stroke={colors.emerald}
             strokeWidth={3}
             closed={true}
-            fill="rgba(16, 185, 129, 0.2)"
+            fill={colors.emeraldFill}
           />
           {stagePolygon.map((point, pointIndex) => (
             <Circle
@@ -872,7 +884,7 @@ const ROIConfiguration = () => {
               x={point.x}
               y={point.y}
               radius={6}
-              fill="#10b981"
+              fill={colors.emerald}
               stroke="white"
               strokeWidth={2}
               draggable
@@ -893,14 +905,14 @@ const ROIConfiguration = () => {
 
     return (
       <>
-        <Line points={flatPoints} stroke="#3b82f6" strokeWidth={2} />
+        <Line points={flatPoints} stroke={colors.primary} strokeWidth={2} />
         {stagePolygon.map((point, index) => (
           <Circle
             key={index}
             x={point.x}
             y={point.y}
             radius={6}
-            fill="#3b82f6"
+            fill={colors.primary}
             stroke="white"
             strokeWidth={2}
           />
@@ -922,35 +934,35 @@ const ROIConfiguration = () => {
   };
 
   return (
-    <div className={`p-6 min-h-screen`}>
+    <div className={`p-3 sm:p-6 min-h-screen ${bgcolors.surface}`}>
       {/* Header */}
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-6">
         <div>
-          <h1 className="text-2xl font-bold">
+          <h1 className={`text-2xl font-bold ${textcolors.dark}`}>
             {t("roi.cameraConfigurationSettings")}
           </h1>
-          <p className="text-sm">
+          <p className={`text-sm ${textcolors.dim}`}>
             {t("roi.configureCameraConnectionSettings")}
           </p>
         </div>
         <button
           onClick={() => navigate(`/add-camera?id=${cameraId}`)}
-          className="bg-[#3885CC] hover:bg-blue-600 text-white font-semibold py-2 px-6 rounded-full flex items-center gap-2 transition-colors"
+          className={`${buttons.primary} py-2 px-6 rounded-full flex items-center justify-center gap-2 w-full sm:w-auto`}
         >
-          <IoArrowBackCircle size={20} className="inline-block" />
+          <ArrowBackIcon size={20} className="inline-block" />
           <span>{t("roi.back")}</span>
         </button>
       </div>
 
       {/* ROI Setting Section */}
-      <div className="bg-[#30313F] rounded-lg p-6 mb-6">
-        <h2 className="text-xl text-white font-bold mb-4">
+      <div className={`${bgcolors.white} ${borderstyles.light} shadow-sm rounded-xl p-4 sm:p-6 mb-6`}>
+        <h2 className={`text-xl ${textcolors.dark} font-bold mb-4`}>
           {t("roi.roiSetting")}
         </h2>
 
         <div className="relative">
           {/* Camera Feed */}
-          <div className="w-full bg-black rounded-lg  relative ">
+          <div ref={containerRef} className={`w-full ${bgcolors.surface} ${borderstyles.light} rounded-xl overflow-hidden relative`}>
             <Stage
               width={stageDimensions.width}
               height={stageDimensions.height}
@@ -979,10 +991,10 @@ const ROIConfiguration = () => {
                     y={currentRectangle.y}
                     width={currentRectangle.width}
                     height={currentRectangle.height}
-                    stroke="#3b82f6"
+                    stroke={colors.primary}
                     strokeWidth={2}
                     dash={[5, 5]}
-                    fill="rgba(59, 130, 246, 0.2)"
+                    fill={colors.primaryFill}
                   />
                 )}
 
@@ -1020,14 +1032,10 @@ const ROIConfiguration = () => {
                         <Line
                           key={`${roi.id}-${polyIndex}`}
                           points={flatPoints}
-                          stroke={addnew ? "rgba(255, 255, 0, 0.5)" : "yellow"}
+                          stroke={addnew ? colors.yellowFaint : colors.yellow}
                           strokeWidth={addnew ? 1 : 3}
                           closed={true}
-                          fill={
-                            addnew
-                              ? "rgba(255, 255, 0, 0.1)"
-                              : "rgba(255, 255, 0, 0.2)"
-                          }
+                          fill={addnew ? colors.yellowFillFaint : colors.yellowFill}
                         />
                       );
                     } catch (error) {
@@ -1074,11 +1082,11 @@ const ROIConfiguration = () => {
             </div> */}
 
             {/* Polygon count display */}
-            <div className="absolute top-4 right-4 bg-gray-800 bg-opacity-80 rounded-lg p-3">
-              <div className="text-sm text-gray-300">
+            <div className={`absolute top-4 right-4 ${bgcolors.white} bg-opacity-90 rounded-lg p-3 shadow-sm`} style={{ border: `1px solid ${colors.border}` }}>
+              <div className={`text-sm font-medium ${textcolors.normaltext}`}>
                 {t("roi.areas")}: {polygons.length}
               </div>
-              <div className="text-sm text-gray-300">
+              <div className={`text-sm ${textcolors.dim}`}>
                 {t("roi.mode")}: {drawingMode}
               </div>
             </div>
@@ -1088,14 +1096,14 @@ const ROIConfiguration = () => {
         {/* ROI Configuration Fields */}
         <div className="flex flex-col mt-3">
           {/* Control Buttons */}
-          <div className="flex gap-3 w-full justify-between">
-            <div className="flex gap-3">
+          <div className="flex flex-wrap gap-2 w-full justify-between mt-3">
+            <div className="flex flex-wrap gap-2">
               <button
                 onClick={handleTakeSnapshot}
                 disabled={isSnapshotLoading}
-                className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-full flex items-center gap-2 transition-colors disabled:opacity-50"
+                className={`${buttons.primary} py-2 px-4 rounded-full flex items-center gap-2 disabled:opacity-50`}
               >
-                <IoCamera size={20} />
+                <CameraIcon size={20} />
                 <span>
                   {isSnapshotLoading ? t("roi.loading") : t("roi.captureFrame")}
                 </span>
@@ -1104,20 +1112,20 @@ const ROIConfiguration = () => {
               {drawingMode === "polygon" && currentPolygon.length > 0 && (
                 <button
                   onClick={completeCurrentPolygon}
-                  className="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-full flex items-center gap-2 transition-colors"
+                  className={`${buttons.success} py-2 px-4 rounded-full flex items-center gap-2`}
                 >
-                  <IoScanCircle size={20} />
+                  <ScanAreaIcon size={20} />
                   <span>{t("roi.completePolygon")}</span>
                 </button>
               )}
             </div>
 
-            <div className="flex gap-3">
+            <div className="flex flex-wrap gap-2">
               <button
                 onClick={deleteAllPolygons}
-                className="bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-full flex items-center gap-2 transition-colors"
+                className={`${buttons.danger} py-2 px-4 rounded-full flex items-center gap-2`}
               >
-                <IoTrash size={20} />
+                <TrashIcon size={20} />
                 <span>{t("roi.clearAll")}</span>
               </button>
 
@@ -1126,9 +1134,9 @@ const ROIConfiguration = () => {
                   deleteAllPolygons();
                   setIsDrawing(true);
                 }}
-                className="bg-[#3885CC] hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-full flex items-center gap-2 transition-colors"
+                className={`${buttons.primary} py-2 px-4 rounded-full flex items-center gap-2`}
               >
-                <IoScanCircle size={20} />
+                <ScanAreaIcon size={20} />
                 <span>{t("roi.drawNewArea")}</span>
               </button>
             </div>
@@ -1137,24 +1145,24 @@ const ROIConfiguration = () => {
           {/* Polygon management */}
           {polygons.length > 0 && (
             <div className="mt-4">
-              <h3 className="text-lg text-white font-semibold mb-2">
+              <h3 className={`text-lg ${textcolors.dark} font-semibold mb-2`}>
                 {t("roi.drawnAreas")}
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
                 {polygons.map((polygon, index) => (
                   <div
                     key={index}
-                    className="bg-gray-700 rounded p-2 flex justify-between items-center"
+                    className={`${bgcolors.surface} ${borderstyles.light} rounded-lg p-2 flex justify-between items-center`}
                   >
-                    <span className="text-sm text-white">
+                    <span className={`text-sm ${textcolors.normaltext}`}>
                       {t("roi.area")} {index + 1} ({polygon.length}{" "}
                       {t("roi.points")})
                     </span>
                     <button
                       onClick={() => deletePolygon(index)}
-                      className="text-red-400 hover:text-red-600"
+                      className={`${textcolors.dangerMuted} ${textcolors.hoverDangerDark}`}
                     >
-                      <IoTrash size={16} />
+                      <TrashIcon size={16} />
                     </button>
                   </div>
                 ))}
@@ -1164,7 +1172,7 @@ const ROIConfiguration = () => {
 
           {rois.length > 0 && (
             <div className="mt-6">
-              <h3 className="text-lg text-white font-bold mb-3">
+              <h3 className={`text-lg ${textcolors.dark} font-bold mb-3`}>
                 {t("roi.configuredRois")}
               </h3>
             </div>
@@ -1172,8 +1180,8 @@ const ROIConfiguration = () => {
 
           <div className="mt-3 space-y-4">
             <div>
-              <label className="block text-sm text-gray-400 mb-2">
-                {t("roi.roiName")}*
+              <label className={`block text-sm ${textcolors.dim} mb-2`}>
+                {t("roi.roiName")} <span style={{ color: colors.danger }}>*</span>
               </label>
               <input
                 type="text"
@@ -1185,19 +1193,19 @@ const ROIConfiguration = () => {
                   }
                 }}
                 placeholder={t("roi.roiNamePlaceholder")}
-                className={`w-full bg-gray-700 border rounded-lg py-2 px-4 text-white placeholder-gray-500 focus:outline-none transition-colors ${roiNameError
-                    ? "border-red-500"
-                    : "border-gray-600 focus:border-blue-500"
+                className={`w-full ${bgcolors.surface} border rounded-lg py-2 px-4 ${textcolors.normaltext} ${textcolors.placeholder} focus:outline-none transition-colors ${roiNameError
+                    ? borderstyles.inputError
+                    : borderstyles.inputDefault
                   }`}
               />
               {roiNameError && (
-                <p className="text-red-500 text-xs mt-1">{roiNameError}</p>
+                <p className={`${textcolors.danger} text-xs mt-1`}>{roiNameError}</p>
               )}
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-gray-400 text-sm mb-2">
+                <label className={`block ${textcolors.dim} text-sm mb-2`}>
                   {t("roi.detectionType")}
                 </label>
                 <select
@@ -1214,7 +1222,7 @@ const ROIConfiguration = () => {
                       val === "PPE_MASK_VIOLATION";
                     setConfidenceThreshold(isPPE ? 80 : 50);
                   }}
-                  className="w-full bg-gray-700 border border-gray-600 rounded-lg py-2 px-4 text-white focus:outline-none focus:border-blue-500 transition-colors appearance-none"
+                  className={`w-full ${bgcolors.surface} ${borderstyles.light} rounded-lg py-2 px-4 ${textcolors.normaltext} focus:outline-none ${borderstyles.focusBlue} transition-colors appearance-none`}
                 >
                   {/* <option value='VEHICLE_QUEUE_DETECTION'>
                     {t('roi.vehicleQueueDetection')}
@@ -1253,13 +1261,13 @@ const ROIConfiguration = () => {
                 </select>
               </div>
               <div>
-                <label className="block text-sm text-gray-400 mb-2">
+                <label className={`block text-sm ${textcolors.dim} mb-2`}>
                   {t("roi.alertPriority")}
                 </label>
                 <select
                   value={displayAlertPriority}
                   onChange={(e) => setDisplayAlertPriority(e.target.value)}
-                  className="w-full bg-gray-700 border border-gray-600 rounded-lg py-2 px-4 text-white focus:outline-none focus:border-blue-500 transition-colors appearance-none"
+                  className={`w-full ${bgcolors.surface} ${borderstyles.light} rounded-lg py-2 px-4 ${textcolors.normaltext} focus:outline-none ${borderstyles.focusBlue} transition-colors appearance-none`}
                 >
                   <option value={t("roi.high")}>{t("roi.high")}</option>
                   <option value={t("roi.medium")}>{t("roi.medium")}</option>
@@ -1269,7 +1277,7 @@ const ROIConfiguration = () => {
             </div>
 
             {detectionType === "PERSON_QUEUE_DETECTION" && (
-              <div className="mt-6 pt-4 border-t border-gray-700">
+              <div className={`mt-6 pt-4 ${borderstyles.separatorMedium}`}>
                 <div className="flex items-center">
                   <div className="flex items-center gap-5">
                     <label className="relative inline-flex items-center cursor-pointer">
@@ -1279,14 +1287,14 @@ const ROIConfiguration = () => {
                         onChange={() => setTrackingType(!trackingType)}
                         className="sr-only peer"
                       />
-                      <div className="w-11 h-6 bg-gray-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-500"></div>
+                      <div className={`w-11 h-6 ${bgcolors.toggleDark} peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-500`}></div>
                     </label>
                     <div>
-                      <h3 className="text-sm font-medium text-gray-300">
+                      <h3 className={`text-sm font-medium ${textcolors.dim}`}>
                         {t("roi.enableActivityTracking") ||
                           "Enable Activity Tracking"}
                       </h3>
-                      <p className="text-xs text-gray-500 mt-1">
+                      <p className={`text-xs ${textcolors.dim} mt-1`}>
                         {t("roi.activityTrackingSubtext") ||
                           "Track and record activity related to this ROI for monitoring and reporting purposes."}
                       </p>
@@ -1300,26 +1308,26 @@ const ROIConfiguration = () => {
       </div>
 
       {/* Detection Configuration Section */}
-      <div className="bg-[#30313F] rounded-lg p-6 mb-6">
-        <h2 className="text-xl text-white font-bold mb-4">
+      <div className={`${bgcolors.white} ${borderstyles.light} shadow-sm rounded-xl p-4 sm:p-6 mb-6`}>
+        <h2 className={`text-xl ${textcolors.dark} font-bold mb-4`}>
           {t("roi.detectionConfiguration")}
         </h2>
-        <p className="text-sm text-gray-400 mb-6">
+        <p className={`text-sm ${textcolors.dim} mb-6`}>
           {detectionType === "ATTENDANT_CELLPHONE_DETECTION" &&
             "Configure settings for cellphone detection."}
           {detectionType !== "ATTENDANT_CELLPHONE_DETECTION" &&
             t("roi.detectionConfigurationDescription")}
         </p>
-        <div className="grid grid-cols-2 gap-x-12 gap-y-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-12 gap-y-6">
           {/* Vehicle/Person Queue Detection Fields */}
           {(detectionType === "VEHICLE_QUEUE_DETECTION" ||
             detectionType === "PERSON_QUEUE_DETECTION") && (
               <>
                 <div>
-                  <label className="block text-sm text-gray-400 mb-2">
+                  <label className={`block text-sm ${textcolors.dim} mb-2`}>
                     {t("roi.queueCountThreshold")}
                   </label>
-                  <p className="text-xs text-gray-500 mb-2">
+                  <p className={`text-xs ${textcolors.dim} mb-2`}>
                     {t("roi.queueCountThresholdDescription")}
                   </p>
                   <input
@@ -1328,14 +1336,14 @@ const ROIConfiguration = () => {
                     onChange={(e) =>
                       setQueueCountThreshold(Number(e.target.value))
                     }
-                    className="w-full bg-gray-700 border border-gray-600 rounded-lg py-2 px-4 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 transition-colors"
+                    className={`w-full ${bgcolors.surface} ${borderstyles.light} rounded-lg py-2 px-4 ${textcolors.normaltext} ${textcolors.placeholder} focus:outline-none ${borderstyles.focusBlue} transition-colors`}
                   />
                 </div>
                 <div>
-                  <label className="block text-sm text-gray-400 mb-2">
+                  <label className={`block text-sm ${textcolors.dim} mb-2`}>
                     {t("roi.queueDwellTimeSeconds")}
                   </label>
-                  <p className="text-xs text-gray-500 mb-2">
+                  <p className={`text-xs ${textcolors.dim} mb-2`}>
                     {t("roi.queueDwellTimeSecondsDescription")}
                   </p>
                   <input
@@ -1344,7 +1352,7 @@ const ROIConfiguration = () => {
                     onChange={(e) =>
                       setQueueDwellTimeSeconds(Number(e.target.value))
                     }
-                    className="w-full bg-gray-700 border border-gray-600 rounded-lg py-2 px-4 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 transition-colors"
+                    className={`w-full ${bgcolors.surface} ${borderstyles.light} rounded-lg py-2 px-4 ${textcolors.normaltext} ${textcolors.placeholder} focus:outline-none ${borderstyles.focusBlue} transition-colors`}
                   />
                 </div>
               </>
@@ -1354,10 +1362,10 @@ const ROIConfiguration = () => {
           {detectionType === "CROWD_SURGE" && (
             <>
               <div>
-                <label className="block text-sm text-gray-400 mb-2">
+                <label className={`block text-sm ${textcolors.dim} mb-2`}>
                   {t("roi.crowdSurgeQueueCountThreshold")}
                 </label>
-                <p className="text-xs text-gray-500 mb-2">
+                <p className={`text-xs ${textcolors.dim} mb-2`}>
                   {t("roi.crowdSurgeQueueCountThresholdDescription")}
                 </p>
                 <input
@@ -1366,14 +1374,14 @@ const ROIConfiguration = () => {
                   onChange={(e) =>
                     setCrowdSurgeQueueThreshold(Number(e.target.value))
                   }
-                  className="w-full bg-gray-700 border border-gray-600 rounded-lg py-2 px-4 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 transition-colors"
+                  className={`w-full ${bgcolors.surface} ${borderstyles.light} rounded-lg py-2 px-4 ${textcolors.normaltext} ${textcolors.placeholder} focus:outline-none ${borderstyles.focusBlue} transition-colors`}
                 />
               </div>
               <div>
-                <label className="block text-sm text-gray-400 mb-2">
+                <label className={`block text-sm ${textcolors.dim} mb-2`}>
                   {t("roi.crowdSurgeDwellTimeSeconds")}
                 </label>
-                <p className="text-xs text-gray-500 mb-2">
+                <p className={`text-xs ${textcolors.dim} mb-2`}>
                   {t("roi.crowdSurgeDwellTimeSecondsDescription")}
                 </p>
                 <input
@@ -1382,7 +1390,7 @@ const ROIConfiguration = () => {
                   onChange={(e) =>
                     setCrowdSurgeDwellTime(Number(e.target.value))
                   }
-                  className="w-full bg-gray-700 border border-gray-600 rounded-lg py-2 px-4 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 transition-colors"
+                  className={`w-full ${bgcolors.surface} ${borderstyles.light} rounded-lg py-2 px-4 ${textcolors.normaltext} ${textcolors.placeholder} focus:outline-none ${borderstyles.focusBlue} transition-colors`}
                 />
               </div>
             </>
@@ -1397,17 +1405,17 @@ const ROIConfiguration = () => {
             detectionType === "PPE_MASK_VIOLATION" ||
             detectionType === "PERSON_FALL_DETECTION") && (
               <div>
-                <label className="block text-sm text-gray-400 mb-2">
+                <label className={`block text-sm ${textcolors.dim} mb-2`}>
                   {t("roi.ppeDwellTimeSeconds")}
                 </label>
-                <p className="text-xs text-gray-500 mb-2">
+                <p className={`text-xs ${textcolors.dim} mb-2`}>
                   {t("roi.ppeDwellTimeSecondsDescription")}
                 </p>
                 <input
                   type="number"
                   value={ppeDwellTime}
                   onChange={(e) => setPpeDwellTime(Number(e.target.value))}
-                  className="w-full bg-gray-700 border border-gray-600 rounded-lg py-2 px-4 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 transition-colors"
+                  className={`w-full ${bgcolors.surface} ${borderstyles.light} rounded-lg py-2 px-4 ${textcolors.normaltext} ${textcolors.placeholder} focus:outline-none ${borderstyles.focusBlue} transition-colors`}
                 />
               </div>
             )}
@@ -1415,17 +1423,17 @@ const ROIConfiguration = () => {
           {/* Fire & Smoke Detection */}
           {detectionType === "FIRE_SMOKE_DETECTION" && (
             <div>
-              <label className="block text-sm text-gray-400 mb-2">
+              <label className={`block text-sm ${textcolors.dim} mb-2`}>
                 {t("roi.fireSmokeDwellTimeSeconds")}
               </label>
-              <p className="text-xs text-gray-500 mb-2">
+              <p className={`text-xs ${textcolors.dim} mb-2`}>
                 {t("roi.fireSmokeDwellTimeSecondsDescription")}
               </p>
               <input
                 type="number"
                 value={fireSmokeDwellTime}
                 onChange={(e) => setFireSmokeDwellTime(Number(e.target.value))}
-                className="w-full bg-gray-700 border border-gray-600 rounded-lg py-2 px-4 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 transition-colors"
+                className={`w-full ${bgcolors.surface} ${borderstyles.light} rounded-lg py-2 px-4 ${textcolors.normaltext} ${textcolors.placeholder} focus:outline-none ${borderstyles.focusBlue} transition-colors`}
               />
             </div>
           )}
@@ -1435,11 +1443,11 @@ const ROIConfiguration = () => {
           {(detectionType === "VEHICLE_DWELL_TIME" ||
             detectionType === "ATTENDANT_CELLPHONE_DETECTION") && (
               <div>
-                <label className="block text-sm text-gray-400 mb-2">
+                <label className={`block text-sm ${textcolors.dim} mb-2`}>
                   {t("roi.dwellTimeSeconds")}
                 </label>
 
-                <p className="text-xs text-gray-500 mb-2">
+                <p className={`text-xs ${textcolors.dim} mb-2`}>
                   {dwellDescriptions[detectionType]}
                 </p>
 
@@ -1447,7 +1455,7 @@ const ROIConfiguration = () => {
                   type="number"
                   value={dwellTimeSeconds}
                   onChange={(e) => setDwellTimeSeconds(Number(e.target.value))}
-                  className="w-full bg-gray-700 border border-gray-600 rounded-lg py-2 px-4 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 transition-colors"
+                  className={`w-full ${bgcolors.surface} ${borderstyles.light} rounded-lg py-2 px-4 ${textcolors.normaltext} ${textcolors.placeholder} focus:outline-none ${borderstyles.focusBlue} transition-colors`}
                 />
               </div>
             )}
@@ -1455,10 +1463,10 @@ const ROIConfiguration = () => {
           {/* Attendant Absence On Pump Fields */}
           {detectionType === "ATTENDANT_ABSENCE_ON_PUMP" && (
             <div>
-              <label className="block text-sm text-gray-400 mb-2">
+              <label className={`block text-sm ${textcolors.dim} mb-2`}>
                 {t("roi.dwellTimeSeconds")}
               </label>
-              <p className="text-xs text-gray-500 mb-2">
+              <p className={`text-xs ${textcolors.dim} mb-2`}>
                 {t("roi.attendantAbsenceDwellTimeDescription")}
               </p>
               <input
@@ -1467,36 +1475,36 @@ const ROIConfiguration = () => {
                 onChange={(e) =>
                   setAttendantAbsenceDwellTime(Number(e.target.value))
                 }
-                className="w-full bg-gray-700 border border-gray-600 rounded-lg py-2 px-4 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 transition-colors"
+                className={`w-full ${bgcolors.surface} ${borderstyles.light} rounded-lg py-2 px-4 ${textcolors.normaltext} ${textcolors.placeholder} focus:outline-none ${borderstyles.focusBlue} transition-colors`}
               />
             </div>
           )}
           {/* Targeted Hour Slots */}
           {detectionType === "RESTRICTED_AREA_BREACH_DETECTION" && (
             <div>
-              <label className="block text-sm text-gray-400 mb-2">
+              <label className={`block text-sm ${textcolors.dim} mb-2`}>
                 {t("roi.targetedHourSlots")}
               </label>
-              <p className="text-xs text-gray-500 mb-2">
+              <p className={`text-xs ${textcolors.dim} mb-2`}>
                 {t("roi.defineTimeSlots")}
               </p>
-              <div className="flex items-center gap-2 mb-2">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 mb-2">
                 <input
                   type="time"
                   value={newTimeSlot[0]}
                   onChange={(e) =>
                     setNewTimeSlot([e.target.value, newTimeSlot[1]])
                   }
-                  className="w-full bg-gray-700 border border-gray-600 rounded-lg py-2 px-4 text-white time-input"
+                  className={`w-full ${bgcolors.surface} ${borderstyles.light} rounded-lg py-2 px-4 ${textcolors.normaltext} time-input`}
                 />
-                <span>to</span>
+                <span className="text-center text-sm font-medium">to</span>
                 <input
                   type="time"
                   value={newTimeSlot[1]}
                   onChange={(e) =>
                     setNewTimeSlot([newTimeSlot[0], e.target.value])
                   }
-                  className="w-full bg-gray-700 border border-gray-600 rounded-lg py-2 px-4 text-white time-input"
+                  className={`w-full ${bgcolors.surface} ${borderstyles.light} rounded-lg py-2 px-4 ${textcolors.normaltext} time-input`}
                 />
                 <button
                   onClick={() => {
@@ -1505,7 +1513,7 @@ const ROIConfiguration = () => {
                       setNewTimeSlot(["", ""]);
                     }
                   }}
-                  className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg"
+                  className={`${buttons.primary} py-2 px-4 rounded-lg`}
                 >
                   Add
                 </button>
@@ -1514,7 +1522,7 @@ const ROIConfiguration = () => {
                 {targetedHourSlots.map((slot, index) => (
                   <div
                     key={index}
-                    className="flex items-center justify-between bg-gray-700 rounded-lg p-2 mt-2"
+                    className={`flex items-center justify-between ${bgcolors.surface} ${borderstyles.light} rounded-lg p-2 mt-2`}
                   >
                     <span>
                       {slot[0]} - {slot[1]}
@@ -1525,7 +1533,7 @@ const ROIConfiguration = () => {
                         newSlots.splice(index, 1);
                         setTargetedHourSlots(newSlots);
                       }}
-                      className="text-red-500 hover:text-red-700"
+                      className={`${textcolors.danger} ${textcolors.hoverDangerDarker}`}
                     >
                       Remove
                     </button>
@@ -1535,25 +1543,25 @@ const ROIConfiguration = () => {
             </div>
           )}
           <div>
-            <label className="block text-sm text-gray-400 mb-2">
+            <label className={`block text-sm ${textcolors.dim} mb-2`}>
               {t("roi.alertcooldownperiod")}
             </label>
-            <p className="text-xs text-gray-500 mb-2">
+            <p className={`text-xs ${textcolors.dim} mb-2`}>
               {t("roi.alertcooldownperioddes")}
             </p>
             <input
               type="number"
               value={alertCooldown}
               onChange={(e) => setAlertCooldown(Number(e.target.value))}
-              className="w-full bg-gray-700 border border-gray-600 rounded-lg py-2 px-4 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 transition-colors"
+              className={`w-full ${bgcolors.surface} ${borderstyles.light} rounded-lg py-2 px-4 ${textcolors.normaltext} ${textcolors.placeholder} focus:outline-none ${borderstyles.focusBlue} transition-colors`}
             />
           </div>
 
           <div>
-            <label className="block text-sm text-gray-400 mb-2">
+            <label className={`block text-sm ${textcolors.dim} mb-2`}>
               {t("roi.newconfidenceThreshold")}
             </label>
-            <p className="text-xs text-gray-500 mb-2">
+            <p className={`text-xs ${textcolors.dim} mb-2`}>
               {t("roi.newconfidenceThresholdDescription")}
             </p>
             <input
@@ -1568,27 +1576,27 @@ const ROIConfiguration = () => {
                   setConfidenceThreshold(val);
                 }
               }}
-              className="w-full bg-gray-700 border border-gray-600 rounded-lg py-2 px-4 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 transition-colors"
+              className={`w-full ${bgcolors.surface} ${borderstyles.light} rounded-lg py-2 px-4 ${textcolors.normaltext} ${textcolors.placeholder} focus:outline-none ${borderstyles.focusBlue} transition-colors`}
             />
           </div>
         </div>
       </div>
 
       {/* Notifications Section */}
-      <div className="bg-[#30313F] rounded-lg p-6 mb-6">
-        <h2 className="text-xl text-white font-bold mb-1">
+      <div className={`${bgcolors.white} ${borderstyles.light} shadow-sm rounded-xl p-4 sm:p-6 mb-6`}>
+        <h2 className={`text-xl ${textcolors.dark} font-bold mb-1`}>
           {t("roi.notifications")}
         </h2>
-        <p className="text-xs text-gray-500 leading-relaxed mb-2">
+        <p className={`text-xs ${textcolors.dim} leading-relaxed mb-2`}>
           {t("roi.notificationsubtext")}
         </p>
-        <div className="grid grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* WhatsApp Notification */}
-          <div className="bg-gray-900 rounded-lg p-4 border border-gray-700">
+          <div className={`${bgcolors.surface} ${borderstyles.light} rounded-xl p-4`}>
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
-                <IoLogoWhatsapp size={20} color="white" />
-                <span className="font-semibold text-white">
+                <WhatsAppIcon size={20} color={colors.primary} />
+                <span className={`font-semibold ${textcolors.normaltext}`}>
                   {t("roi.whatsAppNotification")}
                 </span>
               </div>
@@ -1601,11 +1609,11 @@ const ROIConfiguration = () => {
                   }
                   className="sr-only peer"
                 />
-                <div className="w-11 h-6 bg-gray-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-500"></div>
+                <div className={`w-11 h-6 ${bgcolors.toggleDark} peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-500`}></div>
               </label>
             </div>
             <div>
-              <label className="block text-sm text-gray-400 mb-2">
+              <label className={`block text-sm ${textcolors.dim} mb-2`}>
                 {t("roi.enableWhatsAppAlerts")}
               </label>
               <div className="flex flex-col gap-2">
@@ -1617,10 +1625,10 @@ const ROIConfiguration = () => {
                     if (e.target.value.trim()) setWhatsappNameError("");
                   }}
                   placeholder={`${t("roi.enterName")} *`}
-                  className={`flex-1 bg-gray-700 border rounded-lg py-2 px-3 text-white placeholder-gray-500 text-sm focus:outline-none transition-colors ${whatsappNameError ? "border-red-500" : "border-gray-600 focus:border-blue-500"}`}
+                  className={`flex-1 ${bgcolors.surface} border rounded-lg py-2 px-3 ${textcolors.normaltext} ${textcolors.placeholder} text-sm focus:outline-none transition-colors ${whatsappNameError ? "border-red-500" : "border-gray-200 focus:border-blue-500"}`}
                 />
                 {whatsappNameError && (
-                  <p className="text-red-500 text-xs mt-1">
+                  <p className={`${textcolors.danger} text-xs mt-1`}>
                     {whatsappNameError}
                   </p>
                 )}
@@ -1646,9 +1654,9 @@ const ROIConfiguration = () => {
                       }
                     }}
                     placeholder={t("roi.enterWhatsAppNumber")}
-                    className={`flex-1 bg-gray-700 border rounded-lg py-2 px-3 text-white placeholder-gray-500 text-sm focus:outline-none transition-colors ${whatsappNumberError
+                    className={`flex-1 ${bgcolors.surface} border rounded-lg py-2 px-3 ${textcolors.normaltext} ${textcolors.placeholder} text-sm focus:outline-none transition-colors ${whatsappNumberError
                         ? "border-red-500"
-                        : "border-gray-600 focus:border-blue-500"
+                        : "border-gray-200 focus:border-blue-500"
                       }`}
                   />
                   <button
@@ -1694,13 +1702,13 @@ const ROIConfiguration = () => {
                       setWhatsappNumberError("");
                       setWhatsappNameError("");
                     }}
-                    className="bg-[#3885CC] hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg transition-colors"
+                    className={`${buttons.primary} py-2 px-4 rounded-lg`}
                   >
                     +
                   </button>
                 </div>
                 {whatsappNumberError && (
-                  <p className="text-red-500 text-xs mt-1">
+                  <p className={`${textcolors.danger} text-xs mt-1`}>
                     {whatsappNumberError}
                   </p>
                 )}
@@ -1709,7 +1717,7 @@ const ROIConfiguration = () => {
                 {whatsappRecipients.map((recipient, idx) => (
                   <span
                     key={idx}
-                    className="bg-gray-600 text-white text-xs px-2 py-1 rounded-full flex items-center gap-1"
+                    className={`${bgcolors.accentLight} ${textcolors.accentText} ${borderstyles.accentFaint} text-xs px-2 py-1 rounded-full flex items-center gap-1`}
                   >
                     {recipient.name} ({recipient.number})
                     <button
@@ -1720,7 +1728,7 @@ const ROIConfiguration = () => {
                           ),
                         )
                       }
-                      className="text-red-400 hover:text-red-600"
+                      className={`${textcolors.dangerMuted} ${textcolors.hoverDangerDark}`}
                     >
                       x
                     </button>
@@ -1730,11 +1738,11 @@ const ROIConfiguration = () => {
             </div>
           </div>
           {/* Email Notification */}
-          <div className="bg-gray-900 rounded-lg p-4 border border-gray-700">
+          <div className={`${bgcolors.surface} ${borderstyles.light} rounded-xl p-4`}>
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
-                <IoMailOutline size={20} color="white" />
-                <span className="font-semibold text-white">
+                <MailIcon size={20} color={colors.primary} />
+                <span className={`font-semibold ${textcolors.normaltext}`}>
                   {t("roi.emailNotification")}
                 </span>
               </div>
@@ -1745,11 +1753,11 @@ const ROIConfiguration = () => {
                   onChange={() => setEmailNotification(!emailNotification)}
                   className="sr-only peer"
                 />
-                <div className="w-11 h-6 bg-gray-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-500"></div>
+                <div className={`w-11 h-6 ${bgcolors.toggleDark} peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-500`}></div>
               </label>
             </div>
             <div>
-              <label className="block text-sm text-gray-400 mb-2">
+              <label className={`block text-sm ${textcolors.dim} mb-2`}>
                 {t("roi.enableEmailAlerts")}
               </label>
               <div className="flex flex-col gap-2">
@@ -1761,10 +1769,10 @@ const ROIConfiguration = () => {
                     if (e.target.value.trim()) setEmailNameError("");
                   }}
                   placeholder={`${t("roi.enterName")} *`}
-                  className={`flex-1 bg-gray-700 border rounded-lg py-2 px-3 text-white placeholder-gray-500 text-sm focus:outline-none transition-colors ${emailNameError ? "border-red-500" : "border-gray-600 focus:border-blue-500"}`}
+                  className={`flex-1 ${bgcolors.surface} border rounded-lg py-2 px-3 ${textcolors.normaltext} ${textcolors.placeholder} text-sm focus:outline-none transition-colors ${emailNameError ? "border-red-500" : "border-gray-200 focus:border-blue-500"}`}
                 />
                 {emailNameError && (
-                  <p className="text-red-500 text-xs mt-1">
+                  <p className={`${textcolors.danger} text-xs mt-1`}>
                     {emailNameError}
                   </p>
                 )}
@@ -1779,9 +1787,9 @@ const ROIConfiguration = () => {
                       }
                     }}
                     placeholder={t("roi.enterEmailAddress")}
-                    className={`flex-1 bg-gray-700 border rounded-lg py-2 px-3 text-white placeholder-gray-500 text-sm focus:outline-none transition-colors ${emailAddressError
+                    className={`flex-1 ${bgcolors.surface} border rounded-lg py-2 px-3 ${textcolors.normaltext} ${textcolors.placeholder} text-sm focus:outline-none transition-colors ${emailAddressError
                         ? "border-red-500"
-                        : "border-gray-600 focus:border-blue-500"
+                        : "border-gray-200 focus:border-blue-500"
                       }`}
                   />
                   <button
@@ -1820,13 +1828,13 @@ const ROIConfiguration = () => {
                       setEmailAddressError("");
                       setEmailNameError("");
                     }}
-                    className="bg-[#3885CC] hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg transition-colors"
+                    className={`${buttons.primary} py-2 px-4 rounded-lg`}
                   >
                     +
                   </button>
                 </div>
                 {emailAddressError && (
-                  <p className="text-red-500 text-xs mt-1">
+                  <p className={`${textcolors.danger} text-xs mt-1`}>
                     {emailAddressError}
                   </p>
                 )}
@@ -1835,7 +1843,7 @@ const ROIConfiguration = () => {
                 {emailRecipients.map((recipient, idx) => (
                   <span
                     key={idx}
-                    className="bg-gray-600 text-white text-xs px-2 py-1 rounded-full flex items-center gap-1"
+                    className={`${bgcolors.accentLight} ${textcolors.accentText} ${borderstyles.accentFaint} text-xs px-2 py-1 rounded-full flex items-center gap-1`}
                   >
                     {recipient.name} ({recipient.email})
                     <button
@@ -1846,7 +1854,7 @@ const ROIConfiguration = () => {
                           ),
                         )
                       }
-                      className="text-red-400 hover:text-red-600"
+                      className={`${textcolors.dangerMuted} ${textcolors.hoverDangerDark}`}
                     >
                       x
                     </button>
@@ -1859,19 +1867,19 @@ const ROIConfiguration = () => {
       </div>
 
       {/* Save Camera Button */}
-      <div className="bg-[#30313F] flex justify-between items-center rounded-lg p-4 mb-6">
-        <p className="text-white font-medium">{t("roi.saveCamera")}</p>
+      <div className={`${bgcolors.white} ${borderstyles.light} shadow-sm flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 rounded-xl p-4 mb-6`}>
+        <p className={`${textcolors.normaltext} font-medium`}>{t("roi.saveCamera")}</p>
 
         <div className="flex gap-3">
           <button
             onClick={resetForm}
-            className="bg-[#4D4D4D] text-sm text-white font-semibold py-2 px-6 rounded-full transition-colors hover:bg-gray-600"
+            className={`${buttons.secondary} text-sm py-2 px-6 rounded-full flex-1 sm:flex-none`}
           >
             {t("roi.clear")}
           </button>
           <button
             onClick={handleSaveRoi}
-            className="bg-[#3885CC] text-sm text-white font-semibold py-2 px-6 rounded-full transition-colors hover:bg-blue-600"
+            className={`${buttons.primary} text-sm py-2 px-6 rounded-full flex-1 sm:flex-none`}
           >
             {currentRoiId ? t("roi.updateRoi") : t("roi.saveRoi")}
           </button>

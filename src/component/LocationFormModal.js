@@ -14,9 +14,9 @@ import {
   updateLocation
 } from '../features/locations/locationApiSlice'
 import ButtonComponent from './Button'
-import { IoCloseOutline } from 'react-icons/io5'
-
 import SearchableSelect from "./SearchableSelect";
+import { bgcolors, textcolors, borderstyles, buttons, colors, iconSizes } from '../theme'
+import { CloseIcon } from '../icons'
 
 
 const ICON_LABELS = {
@@ -294,15 +294,15 @@ const LocationFormModal = ({ isOpen, onClose, locationToEdit, isLoaded }) => {
   if (!isOpen) return null
 
   return (
-    <div className='fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-70 p-4'>
-      <div className='bg-[#2A2B36] w-full max-w-[900px] rounded-xl shadow-2xl max-h-[90vh]'>
+    <div className={`fixed inset-0 z-50 flex items-center justify-center ${bgcolors.overlay} backdrop-blur-sm p-4`}>
+      <div className={`${bgcolors.white} w-full max-w-[900px] rounded-xl shadow-2xl max-h-[90vh] ${borderstyles.light}`}>
         {/* HEADER */}
-        <div className='flex justify-between items-center px-6 py-4 border-b border-[#2f303a] sticky top-0 bg-[#1c1c24] z-10'>
-          <h2 className='text-xl font-semibold text-white'>
+        <div className={`flex justify-between items-center px-6 py-4 ${borderstyles.tableHeader} sticky top-0 ${bgcolors.white} z-10 rounded-t-xl`}>
+          <h2 className={`text-xl font-semibold ${textcolors.normaltext}`}>
             {isEditing ? t('location.modal.edit') : t('location.modal.create')}
           </h2>
-          <button onClick={onClose} className='text-gray-400 hover:text-white'>
-            <IoCloseOutline size={26} />
+          <button onClick={onClose} className={`${textcolors.muted} ${textcolors.hoverMuted} transition-colors`}>
+            <CloseIcon size={iconSizes.large} />
           </button>
         </div>
 
@@ -424,14 +424,14 @@ const LocationFormModal = ({ isOpen, onClose, locationToEdit, isLoaded }) => {
 
           {/* NAME */}
           <div>
-            <label className='text-gray-300 text-sm mb-2 block'>
-              {t('location.form.name')}
+            <label className={`${textcolors.normaltext} text-sm font-medium mb-2 block`}>
+              {t('location.form.name')} <span style={{ color: colors.danger }}>*</span>
             </label>
             <input
               name='name'
               value={formState.name}
               onChange={handleChange}
-              className='w-full bg-[#3A3B47] border border-gray-600/50 rounded-lg py-2.5 px-4 text-white text-sm'
+              className={`w-full ${bgcolors.surface} ${borderstyles.light} rounded-lg py-2.5 px-4 ${textcolors.normaltext} ${textcolors.placeholder} focus:outline-none ${borderstyles.focusRing} text-sm`}
               required
             />
           </div>
@@ -494,8 +494,8 @@ const LocationFormModal = ({ isOpen, onClose, locationToEdit, isLoaded }) => {
           </div> */}
 
           <div>
-            <label className='text-gray-300 text-sm mb-2 block'>
-              {t('location.form.timezone')}
+            <label className={`${textcolors.normaltext} text-sm font-medium mb-2 block`}>
+              {t('location.form.timezone')} <span style={{ color: colors.danger }}>*</span>
             </label>
             <div className="relative">
               <SearchableSelect
@@ -513,7 +513,7 @@ const LocationFormModal = ({ isOpen, onClose, locationToEdit, isLoaded }) => {
           <ButtonComponent
             type='submit'
             disabled={isLoading}
-            className='w-full bg-[#3885CC] hover:bg-[#2a6da8] text-white py-3 rounded-full font-semibold'
+            className={`w-full ${buttons.primary} py-3 rounded-full`}
           >
             {isLoading
               ? t('common.saving')

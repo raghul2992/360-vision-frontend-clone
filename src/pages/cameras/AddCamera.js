@@ -1,31 +1,27 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
+import ReactDOM from "react-dom";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useSelector, useDispatch } from "react-redux";
-import { bgcolors } from "../../theme";
+import { bgcolors, textcolors, textSizes, borderstyles, buttons, colors, shadows } from "../../theme";
 import LocationFormModal from "../../component/LocationFormModal";
 import { useLoadScript } from "@react-google-maps/api";
 
 import {
-  IoArrowBack,
-  IoEyeOutline,
-  IoPencil,
-  IoEye,
-  IoTrash,
-  IoMailOutline,
-  IoCallOutline,
-  IoChatbubbleOutline,
-  IoEyeOffOutline,
-  IoChevronDown,
-  IoCheckmarkCircle,
-  IoCloseCircle,
-  IoAlertCircle,
-  IoSyncCircleOutline,
-  IoVideocamOutline,
-  IoWifiOutline,
-  IoBan,
-} from "react-icons/io5";
-import { FaCircleNotch } from "react-icons/fa";
+  ArrowBackIcon,
+  EditIcon,
+  TrashIcon,
+  MailIcon,
+  PhoneIcon,
+  ChatIcon,
+  ChevronDownIcon,
+  CloseCircleIcon,
+  VideoIcon,
+  WifiIcon,
+  BanIcon,
+  HeartIcon,
+  SpinnerIcon,
+} from "../../icons";
 import {
   createCamera,
   updateCamera,
@@ -45,9 +41,7 @@ import {
 import { toast } from "react-toastify";
 import CreatableSelect from "../../component/CreatableSelect";
 import "react-toastify/dist/ReactToastify.css";
-import CreateTableSelect from "../../component/CreatableSelect";
 import CameraHealthModal from "./Camerahealthmodal";
-import { IoHeartOutline } from "react-icons/io5";
 
 const libraries = ["places"];
 const AddCamera = () => {
@@ -97,6 +91,9 @@ const AddCamera = () => {
   const [cameraErrorMessage, setCameraErrorMessage] = useState(null);
   const [isLocationModalOpen, setIsLocationModalOpen] = useState(false);
   const [showHealthModal, setShowHealthModal] = useState(false);
+  const [isStatusDropdownOpen, setIsStatusDropdownOpen] = useState(false);
+  const [openRoiDropdownId, setOpenRoiDropdownId] = useState(null);
+  const [roiDropdownCoords, setRoiDropdownCoords] = useState({ top: 0, left: 0, width: 0 });
 
   // Fetch locations on component mount
   useEffect(() => {
@@ -147,6 +144,22 @@ const AddCamera = () => {
       toast.error(error);
     }
   }, [error]);
+
+  // Close status dropdown on outside click
+  useEffect(() => {
+    if (!isStatusDropdownOpen) return;
+    const handler = () => setIsStatusDropdownOpen(false);
+    document.addEventListener("click", handler);
+    return () => document.removeEventListener("click", handler);
+  }, [isStatusDropdownOpen]);
+
+  // Close ROI dropdown on outside click
+  useEffect(() => {
+    if (!openRoiDropdownId) return;
+    const handler = () => setOpenRoiDropdownId(null);
+    document.addEventListener("click", handler);
+    return () => document.removeEventListener("click", handler);
+  }, [openRoiDropdownId]);
 
   // Reset flags when form data changes for new cameras
   useEffect(() => {
@@ -465,39 +478,21 @@ const AddCamera = () => {
       });
   };
 
+  const isActive = cameraStatus === "active";
+
   // Utility function to determine status display details
   const getStatusDisplay = (status) => {
     switch (status) {
       case "active":
-        return {
-          icon: IoWifiOutline,
-          text: t("common.active"),
-          color: "text-green-400",
-        };
+        return { icon: WifiIcon, text: t("common.active"), color: textcolors.success };
       case "inactive":
-        return {
-          icon: IoBan,
-          text: t("common.inactive"),
-          color: "text-gray-400",
-        };
+        return { icon: BanIcon, text: t("common.inactive"), color: textcolors.muted };
       case "error":
-        return {
-          icon: IoCloseCircle,
-          text: t("common.error"),
-          color: "text-red-400",
-        };
+        return { icon: CloseCircleIcon, text: t("common.error"), color: textcolors.danger };
       case "processing":
-        return {
-          icon: FaCircleNotch,
-          text: t("common.processing"),
-          color: "text-yellow-400 animate-spin",
-        };
+        return { icon: SpinnerIcon, text: t("common.processing"), color: `${textcolors.warning} animate-spin` };
       default:
-        return {
-          icon: IoBan,
-          text: t("common.unknown"),
-          color: "text-gray-400",
-        };
+        return { icon: BanIcon, text: t("common.unknown"), color: textcolors.muted };
     }
   };
 
@@ -511,7 +506,7 @@ const AddCamera = () => {
         <div>
           <span className={`text-sm font-medium ${color}`}>{text}</span>
           {status === "error" && errorMessage && (
-            <p className="text-xs text-red-400 mt-1 max-w-xs truncate">
+            <p className={`text-xs ${textcolors.danger} mt-1 max-w-xs truncate`}>
               {t("common.error")}: {errorMessage}
             </p>
           )}
@@ -521,26 +516,26 @@ const AddCamera = () => {
   };
 
   return (
-    <div className={`${bgcolors.white}  p-8 min-h-screen`}>
+    <div className={`${bgcolors.surface} p-4 sm:p-6 lg:p-8 min-h-screen`}>
       {showConfirm && (
-        <div className={`${bgcolors.white}  fixed inset-0 flex items-center justify-center bg-black/60 z-50`}>
-          <div className="bg-[#2A2B36] rounded-xl p-6 w-[90%] max-w-sm border border-gray-700 shadow-lg text-center">
-            <h3 className="text-lg font-semibold text-white mb-3">
+        <div className={`fixed inset-0 flex items-center justify-center ${bgcolors.modalOverlay} z-50`}>
+          <div className={`${bgcolors.white} rounded-2xl p-6 w-[90%] max-w-sm ${borderstyles.light} shadow-2xl text-center`}>
+            <h3 className={`text-lg font-bold ${textcolors.normaltext} mb-2`}>
               {t("addCamera.confirmDeletionTitle")}
             </h3>
-            <p className="text-gray-300 mb-6">
+            <p className={`${textcolors.dim} text-sm mb-6`}>
               {t("addCamera.confirmDeletionMessage")}
             </p>
             <div className="flex justify-center gap-4">
               <button
                 onClick={confirmDelete}
-                className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-md"
+                className={`${buttons.danger} px-5 py-2.5 rounded-xl`}
               >
                 {t("common.delete")}
               </button>
               <button
                 onClick={() => setShowConfirm(false)}
-                className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-md"
+                className={`${buttons.secondary} px-5 py-2.5 rounded-xl`}
               >
                 {t("common.cancel")}
               </button>
@@ -548,39 +543,39 @@ const AddCamera = () => {
           </div>
         </div>
       )}
-      <div className="flex justify-between items-center mb-8">
+      <div className="flex flex-wrap justify-between items-start gap-3 mb-6">
         <div>
-          <h1 className='text-3xl font-bold flex items-center gap-3'>
-            <IoVideocamOutline size={35} />
+          <h1 className={`text-3xl font-bold flex items-center gap-3 ${textcolors.dark}`}>
+            <VideoIcon size={35} />
             {cameraId ? t('addCamera.editTitle') : t('addCamera.addTitle')}
           </h1>
-          <p className='mt-1'>
+          <p className={`mt-1 ${textcolors.dim} text-sm`}>
             {cameraId
               ? t("addCamera.editDescription")
               : t("addCamera.addDescription")}
           </p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3 shrink-0">
           {cameraId && (
             <button
               onClick={() => setShowHealthModal(true)}
-              className="flex items-center gap-2 bg-green-500 hover:bg-green-600 text-white font-semibold py-2.5 px-6 rounded-full transition-colors"
+              className={`flex items-center gap-2 ${buttons.success} py-2.5 px-6 rounded-full transition-colors shrink-0`}
             >
-              <IoHeartOutline size={18} />
+              <HeartIcon size={18} />
               {"Camera Health"}
             </button>
           )}
           <Link to="/camera">
-            <button className="flex items-center gap-2 bg-[#3885CC] hover:bg-blue-600 text-white font-semibold py-2.5 px-6 rounded-full transition-colors">
-              <IoArrowBack size={18} />
+            <button className={`flex items-center gap-2 ${buttons.primary} py-2.5 px-5 rounded-full shrink-0`}>
+              <ArrowBackIcon size={18} />
               {t("addCamera.backButton")}
             </button>
           </Link>
         </div>
       </div>
 
-      <div className='bg-[#2A2B36] rounded-xl p-6 border border-gray-700/50'>
-        <h2 className='text-lg text-white font-semibold mb-6'>
+      <div className={`${bgcolors.white} rounded-xl p-4 sm:p-6 ${borderstyles.light} shadow-sm`}>
+        <h2 className={`text-lg font-semibold mb-6 ${textcolors.normaltext}`}>
           {cameraId
             ? t("addCamera.editCameraDetails")
             : t("addCamera.addCameraDetails")}
@@ -589,12 +584,12 @@ const AddCamera = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
           {/* Camera Name */}
           <div>
-            <label className="block text-white mb-2 text-sm font-medium">
-              {t("cameraSetup.cameraNameLabel")} *
+            <label className={`block ${textcolors.normaltext} mb-2 text-sm font-medium`}>
+              {t("cameraSetup.cameraNameLabel")} <span style={{ color: colors.danger }}>*</span>
             </label>
             <input
               type="text"
-              className="w-full bg-[#3A3B47] border border-gray-600/50 rounded-lg py-2.5 px-4 text-white placeholder-gray-500 focus:outline-none focus:border-gray-500 text-sm"
+              className={`w-full ${bgcolors.surface} ${borderstyles.light} rounded-lg py-2.5 px-4 ${textcolors.normaltext} ${textcolors.placeholder} focus:outline-none ${borderstyles.focusRing} ${textSizes.subtitle}`}
               placeholder={t("cameraSetup.cameraNamePlaceholder")}
               value={cameraName}
               onChange={(e) => setCameraName(e.target.value)}
@@ -603,11 +598,11 @@ const AddCamera = () => {
 
           {/* Location Dropdown */}
           <div>
-            <label className="block text-white mb-2 text-sm font-medium">
-              {t("cameraSetup.locationLabel")} *
+            <label className={`block ${textcolors.normaltext} mb-2 text-sm font-medium`}>
+              {t("cameraSetup.locationLabel")} <span style={{ color: colors.danger }}>*</span>
             </label>
             <div className="relative">
-              <CreateTableSelect
+              <CreatableSelect
                 options={locations}
                 value={location}
                 onChange={(e) => setLocation(e.target.value)}
@@ -615,7 +610,7 @@ const AddCamera = () => {
                 onCreateNew={handleOpenLocationModal}
                 placeholder={
                   locationsLoading
-                    ? t("addCamera.loadingLocations") || "Loading locations..."
+                    ? "Loading locations..."
                     : t("cameraSetup.locationPlaceholder") || "Select Location"
                 }
                 disabled={locationsLoading}
@@ -625,12 +620,12 @@ const AddCamera = () => {
 
           {/* RTSP URL */}
           <div>
-            <label className="block text-white mb-2 text-sm font-medium">
-              {t("cameraSetup.rtspUrlLabel")}
+            <label className={`block ${textcolors.normaltext} mb-2 text-sm font-medium`}>
+              {t("cameraSetup.rtspUrlLabel")} <span style={{ color: colors.danger }}>*</span>
             </label>
             <input
               type="text"
-              className="w-full bg-[#3A3B47] border border-gray-600/50 rounded-lg py-2.5 px-4 text-white placeholder-gray-500 focus:outline-none focus:border-gray-500 text-sm"
+              className={`w-full ${bgcolors.surface} ${borderstyles.light} rounded-lg py-2.5 px-4 ${textcolors.normaltext} ${textcolors.placeholder} focus:outline-none ${borderstyles.focusRing} ${textSizes.subtitle}`}
               placeholder={
                 "rtsp://[username]:[password]@[domain_or_ip]:[port]/[stream_path]"
               }
@@ -642,37 +637,51 @@ const AddCamera = () => {
           {/* Camera Status Display and Control */}
           {cameraId && (
             <div className="flex flex-col">
-              {/* Dropdown for setting overall Active/Inactive status */}
-              <div className="">
-                <label className="block text-white mb-2 text-sm font-medium">
+              <div>
+                <label className={`block ${textcolors.normaltext} mb-2 text-sm font-medium`}>
                   {t("addCamera.statusControlLabel")}
                 </label>
                 <div className="relative">
-                  <select
-                    className="w-full bg-[#3A3B47] border border-gray-600/50 rounded-lg py-2.5 px-4 pr-10 text-white focus:outline-none focus:border-gray-500 text-sm appearance-none cursor-pointer"
-                    value={
-                      cameraStatus === "active" || cameraStatus === "processing"
-                        ? "active"
-                        : "inactive"
-                    }
-                    onChange={(e) =>
-                      // The camera status is simplified to active/inactive based on dropdown selection
-                      setCameraStatus(
-                        e.target.value === "active" ? "active" : "inactive",
-                      )
-                    }
+                  <div
+                    className={`w-full ${bgcolors.surface} ${borderstyles.light} rounded-lg py-2.5 px-4 pr-10 ${textcolors.normaltext} ${textSizes.subtitle} cursor-pointer select-none`}
+                    onClick={(e) => { e.stopPropagation(); setIsStatusDropdownOpen((prev) => !prev); }}
                   >
-                    <option value="active">
-                      {t("common.active")} ({t("common.enable")})
-                    </option>
-                    <option value="inactive">
-                      {t("common.inactive")} ({t("common.disable")})
-                    </option>
-                  </select>
-                  <IoChevronDown
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
-                    size={16}
-                  />
+                    {cameraStatus === "active" || cameraStatus === "processing"
+                      ? `${t("common.active")} (${t("common.enable")})`
+                      : `${t("common.inactive")} (${t("common.disable")})`}
+                    <ChevronDownIcon
+                      className={`absolute right-3 top-1/2 -translate-y-1/2 ${textcolors.muted} pointer-events-none transition-transform ${isStatusDropdownOpen ? "rotate-180" : ""}`}
+                      size={16}
+                    />
+                  </div>
+                  {isStatusDropdownOpen && (
+                    <div
+                      className={`absolute z-10 w-full mt-1 ${bgcolors.white} ${borderstyles.light} rounded-xl shadow-lg overflow-hidden`}
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      {[
+                        { value: "active", label: `${t("common.active")} (${t("common.enable")})` },
+                        { value: "inactive", label: `${t("common.inactive")} (${t("common.disable")})` },
+                      ].map((opt) => (
+                        <div
+                          key={opt.value}
+                          className={`px-4 py-2.5 ${textSizes.subtitle} cursor-pointer transition-colors ${
+                            (cameraStatus === "active" || cameraStatus === "processing"
+                              ? "active"
+                              : "inactive") === opt.value
+                              ? `${bgcolors.accentLight} ${textcolors.primary} font-medium`
+                              : `${textcolors.normaltext} ${bgcolors.accentHover} ${textcolors.accentHover}`
+                          }`}
+                          onClick={() => {
+                            setCameraStatus(opt.value);
+                            setIsStatusDropdownOpen(false);
+                          }}
+                        >
+                          {opt.label}
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -694,7 +703,7 @@ const AddCamera = () => {
                 <option value='thermal'>Thermal Camera</option>
                 <option value='ptz'>PTZ Camera</option>
               </select>
-              <IoChevronDown
+              <ChevronDownIcon
                 className='absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none'
                 size={16}
               />
@@ -743,17 +752,17 @@ const AddCamera = () => {
           </div> */}
         </div>
         {cameras.status === "error" && cameras.meta?.error?.message && (
-          <p style={{ color: "#f87171" }} className="mt-2 text-xs">
+          <p className={`mt-2 text-xs ${textcolors.danger}`}>
             <span className="text-sm">Error: </span>
             {cameras.meta.error.message}
           </p>
         )}
         {/* Test Connection Section */}
-        <div className="mt-8 pt-6 border-t border-gray-700/50">
-          <div className="flex justify-between items-center">
+        <div className={`mt-8 pt-6 ${borderstyles.separator}`}>
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
             <div>
               <div className="flex gap-2 items-center justify-center">
-                <label className="block text-white text-sm font-medium">
+                <label className={`block ${textcolors.normaltext} text-sm font-medium`}>
                   {t("addCamera.currentStatusLabel")}
                 </label>
                 {/* Display Current Status (Active, Inactive, Error, Processing) */}
@@ -780,7 +789,7 @@ const AddCamera = () => {
               )}
 
               {!cameraId && isConnectionTested && (
-                <p className="text-green-400 text-sm mt-1">
+                <p className={`${textcolors.success} text-sm mt-1`}>
                   {t("addCamera.connectionTestedSuccessfully")}
                 </p>
               )}
@@ -790,15 +799,15 @@ const AddCamera = () => {
                 </p>
               )} */}
             </div>
-            <div className="flex items-center gap-4">
+            <div className="flex flex-wrap items-center gap-3">
               <button
-                className="bg-gray-600 hover:bg-gray-700 text-white font-semibold py-2.5 px-6 rounded-full transition-colors text-sm"
+                className={`${buttons.secondary} py-2.5 px-5 rounded-full text-sm`}
                 onClick={() => navigate("/camera")}
               >
                 {t("addCamera.cancelButton") || "Cancel"}
               </button>
               <button
-                className="bg-[#3885CC] hover:bg-blue-600 text-white font-semibold py-2.5 px-6 rounded-full transition-colors text-sm disabled:bg-gray-600 disabled:cursor-not-allowed"
+                className={`${buttons.primary} py-2.5 px-5 rounded-full text-sm disabled:bg-gray-300 disabled:cursor-not-allowed`}
                 onClick={handleTestConnection}
                 disabled={isTestingConnection}
               >
@@ -807,7 +816,7 @@ const AddCamera = () => {
                   : t("cameraSetup.testConnectionButton") || "Test Connection"}
               </button>
               <button
-                className="bg-[#3885CC] hover:bg-blue-600 text-white font-semibold py-2.5 px-6 rounded-full transition-colors text-sm disabled:bg-gray-600 disabled:cursor-not-allowed"
+                className={`${buttons.primary} py-2.5 px-5 rounded-full text-sm disabled:bg-gray-300 disabled:cursor-not-allowed`}
                 onClick={handleAddCameraWithTest}
                 disabled={isLoading || isTestingConnection || isAddingRoi}
               >
@@ -837,16 +846,16 @@ const AddCamera = () => {
       </div>
 
       {/* ROI List Section */}
-      <div className="bg-[#2A2B36] rounded-xl p-6 border border-gray-700/50 mt-6">
+      <div className={`${bgcolors.white} rounded-xl p-4 sm:p-6 ${borderstyles.light} shadow-sm mt-6`}>
         {!cameraId ? (
           // No Camera Selected (for new cameras)
           <div className="text-center py-12">
-            <h3 className="text-2xl text-white font-bold mb-2">
+            <h3 className={`text-2xl ${textcolors.normaltext} font-bold mb-2`}>
               {isCameraSaved
                 ? t("addCamera.cameraSavedSuccessfully")
                 : t("addCamera.noCameraSaved")}
             </h3>
-            <p className="text-gray-400 mb-6 text-sm">
+            <p className={`${textcolors.dim} mb-6 text-sm`}>
               {isCameraSaved
                 ? t("addCamera.canNowAddRois")
                 : t("addCamera.saveCameraFirstToAddRois")}
@@ -858,81 +867,101 @@ const AddCamera = () => {
             )} */}
             <button
               onClick={handleAddRoi}
-              disabled={!isCameraSaved || !cameraId}
-              className={`flex items-center gap-2 text-white font-semibold py-2.5 px-5 rounded-full transition-colors mx-auto ${isCameraSaved && cameraId
-                ? "bg-[#3885CC] hover:bg-blue-600"
-                : "bg-gray-600 cursor-not-allowed"
+              disabled={!isCameraSaved || !cameraId || !isActive}
+              className={`flex items-center gap-2 py-2.5 px-5 rounded-full mx-auto ${isCameraSaved && cameraId && isActive
+                ? `${buttons.primary}`
+                : `${bgcolors.disabledBg} ${textcolors.muted} cursor-not-allowed`
                 }`}
             >
               <span className="text-lg">+</span>
               <span className="text-sm">{t("addCamera.addRoiButton")}</span>
             </button>
             {!isCameraSaved && (
-              <p className="text-yellow-400 text-sm mt-2">
+              <p className={`${textcolors.warning} text-sm mt-2`}>
                 {t("addCamera.pleaseSaveCameraFirst")}
               </p>
             )}
             {isCameraSaved && !cameraId && (
-              <p className="text-yellow-400 text-sm mt-2">
+              <p className={`${textcolors.warning} text-sm mt-2`}>
                 {t("addCamera.cameraIdNotAvailable")}
+              </p>
+            )}
+            {isCameraSaved && cameraId && !isActive && (
+              <p className={`${textcolors.warning} text-sm mt-2`}>
+                {t("addCamera.activateCameraToAddRoi")}
               </p>
             )}
           </div>
         ) : roiList.length === 0 ? (
           // Camera Selected but No ROI Found
           <div className='text-center py-12'>
-            <h3 className='text-2xl text-white font-bold mb-2'>
+            <h3 className={`text-2xl ${textcolors.normaltext} font-bold mb-2`}>
               {t('addCamera.noRoiFound')}
             </h3>
-            <p className="text-gray-400 mb-6 text-sm">
+            <p className={`${textcolors.dim} mb-6 text-sm`}>
               {t("addCamera.noRoiForThisCamera")}
             </p>
             <button
               onClick={handleAddRoi}
-              className="flex items-center gap-2 bg-[#3885CC] hover:bg-blue-600 text-white font-semibold py-2.5 px-5 rounded-full transition-colors mx-auto"
+              disabled={!isActive}
+              className={`flex items-center gap-2 py-2.5 px-5 rounded-full mx-auto transition-colors ${isActive ? buttons.primary : `${bgcolors.disabledBg} ${textcolors.muted} cursor-not-allowed`}`}
             >
               <span className="text-lg">+</span>
               <span className="text-sm">{t("addCamera.addRoiButton")}</span>
             </button>
+            {!isActive && (
+              <p className={`${textcolors.warning} text-sm mt-3`}>
+                {t("addCamera.activateCameraToAddRoi")}
+              </p>
+            )}
           </div>
         ) : (
           <div>
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="text-lg font-semibold text-white">
+            <div className="flex flex-wrap justify-between items-center gap-3 mb-6">
+              <h3 className={`text-lg font-semibold ${textcolors.normaltext}`}>
                 {t("addCamera.roiListTitle")}
               </h3>
-              <button
-                onClick={handleAddRoi}
-                className="flex items-center gap-2 bg-[#3885CC] hover:bg-blue-600 text-white font-semibold py-2.5 px-5 rounded-full transition-colors"
-              >
-                <span className="text-xl leading-none">+</span>
-                <span className="text-sm">{t("addCamera.addRoiButton")}</span>
-              </button>
+              <div className="flex flex-col items-end gap-1">
+                <button
+                  onClick={handleAddRoi}
+                  disabled={!isActive}
+                  title={!isActive ? (t("addCamera.activateCameraToAddRoi")) : undefined}
+                  className={`flex items-center gap-2 py-2.5 px-5 rounded-full transition-colors ${isActive ? buttons.primary : `${bgcolors.disabledBg} ${textcolors.muted} cursor-not-allowed`}`}
+                >
+                  <span className="text-xl leading-none">+</span>
+                  <span className="text-sm">{t("addCamera.addRoiButton")}</span>
+                </button>
+                {!isActive && (
+                  <p className={`${textcolors.warning} text-xs`}>
+                    {t("addCamera.activateCameraToAddRoi")}
+                  </p>
+                )}
+              </div>
             </div>
 
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="bg-[#3A3B47] border-b border-gray-700/50">
-                    <th className="text-left py-3 px-4 text-sm font-semibold text-gray-300">
+                  <tr className={`${bgcolors.tableHeader} ${borderstyles.tableHeader}`}>
+                    <th className={`text-left py-3 px-4 text-sm font-semibold ${textcolors.dim}`}>
                       {t("addCamera.roiNameHeader")}
                     </th>
-                    <th className="text-left py-3 px-4 text-sm font-semibold text-gray-300">
+                    <th className={`text-left py-3 px-4 text-sm font-semibold ${textcolors.dim}`}>
                       {t("addCamera.detectionTypeHeader")}
                     </th>
-                    <th className="text-left py-3 px-4 text-sm font-semibold text-gray-300">
+                    <th className={`text-left py-3 px-4 text-sm font-semibold ${textcolors.dim}`}>
                       {t("addCamera.alertPriorityHeader")}
                     </th>
-                    <th className="text-left py-3 px-4 text-sm font-semibold text-gray-300">
+                    <th className={`text-left py-3 px-4 text-sm font-semibold ${textcolors.dim}`}>
                       {t("common.status")}
                     </th>
-                    <th className="text-left py-3 px-4 text-sm font-semibold text-gray-300">
+                    <th className={`text-left py-3 px-4 text-sm font-semibold ${textcolors.dim}`}>
                       {t("addCamera.enableDisableHeader")}
                     </th>
-                    <th className="text-left py-3 px-4 text-sm font-semibold text-gray-300">
+                    <th className={`text-left py-3 px-4 text-sm font-semibold ${textcolors.dim}`}>
                       {t("addCamera.notificationsHeader")}
                     </th>
-                    <th className="text-left py-3 px-4 text-sm font-semibold text-gray-300">
+                    <th className={`text-left py-3 px-4 text-sm font-semibold ${textcolors.dim}`}>
                       {t("common.actions")}
                     </th>
                   </tr>
@@ -941,21 +970,21 @@ const AddCamera = () => {
                   {roiList.map((roi, index) => (
                     <tr
                       key={index}
-                      className="border-b border-gray-700/30 hover:bg-[#1C1C24] transition-colors"
+                      className={`${borderstyles.tableHeader} ${bgcolors.accentHoverSubtle} transition-colors`}
                     >
-                      <td className="py-4 px-4 text-sm text-white">
+                      <td className={`py-4 px-4 text-sm ${textcolors.normaltext}`}>
                         {roi.name}
                       </td>
-                      <td className="py-4 px-4 text-sm text-gray-300">
+                      <td className={`py-4 px-4 text-sm ${textcolors.dim}`}>
                         {formatDetectionType(roi.detection_type)}
                       </td>
                       <td className="py-4 px-4 text-sm">
                         <span
                           className={`px-3 py-1 rounded-full text-xs font-medium ${roi.alert_priority === "high"
-                            ? "bg-red-500/20 text-red-400"
+                            ? `${bgcolors.dangerLight} ${textcolors.dangerDark}`
                             : roi.alert_priority === "medium"
-                              ? "bg-yellow-500/20 text-yellow-400"
-                              : "bg-green-500/20 text-green-400"
+                              ? `${bgcolors.warningLight} ${textcolors.warningDark}`
+                              : `${bgcolors.successLighter} ${textcolors.successDark}`
                             }`}
                         >
                           {formatAlertPriority(roi.alert_priority)}
@@ -964,8 +993,8 @@ const AddCamera = () => {
                       <td className="py-4 px-4 text-sm">
                         <span
                           className={`px-3 py-1 rounded-full text-xs font-medium ${roi.status === "active"
-                            ? "bg-green-500/20 text-green-400"
-                            : "bg-red-500/20 text-red-400"
+                            ? `${bgcolors.successLighter} ${textcolors.successDark}`
+                            : `${bgcolors.dangerLight} ${textcolors.dangerDark}`
                             }`}
                         >
                           {roi.status === "active"
@@ -974,51 +1003,75 @@ const AddCamera = () => {
                         </span>
                       </td>
                       <td className="py-4 px-4 text-sm">
-                        <div className="relative">
-                          <select
-                            className="w-full bg-[#3A3B47] border border-gray-600/50 rounded-lg py-1.5 px-3 pr-8 text-white focus:outline-none focus:border-gray-500 text-xs appearance-none cursor-pointer"
-                            value={roi.status || "active"}
-                            onChange={(e) =>
-                              handleRoiStatusChange(roi.id, e.target.value)
+                        <div
+                          className={`flex items-center justify-between gap-2 ${bgcolors.surface} ${borderstyles.light} rounded-lg py-1.5 px-3 text-xs cursor-pointer select-none ${textcolors.normaltext}`}
+                          style={{ border: openRoiDropdownId === roi.id ? `1px solid ${colors.accent}` : undefined, minWidth: 90 }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (openRoiDropdownId === roi.id) {
+                              setOpenRoiDropdownId(null);
+                            } else {
+                              const rect = e.currentTarget.getBoundingClientRect();
+                              setRoiDropdownCoords({ top: rect.bottom + 4, left: rect.left, width: rect.width });
+                              setOpenRoiDropdownId(roi.id);
                             }
-                          >
-                            <option value="active">{t("common.enable")}</option>
-                            <option value="inactive">
-                              {t("common.disable")}
-                            </option>
-                          </select>
-                          <IoChevronDown
-                            className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
-                            size={12}
-                          />
+                          }}
+                        >
+                          <span>{roi.status === "active" ? t("common.enable") : t("common.disable")}</span>
+                          <span style={{ display: "inline-flex", transition: "transform 0.2s", transform: openRoiDropdownId === roi.id ? "rotate(180deg)" : "rotate(0deg)" }}>
+                            <ChevronDownIcon size={12} className={textcolors.muted} />
+                          </span>
                         </div>
+                        {openRoiDropdownId === roi.id && ReactDOM.createPortal(
+                          <div
+                            onClick={(e) => e.stopPropagation()}
+                            style={{ position: "fixed", top: roiDropdownCoords.top, left: roiDropdownCoords.left, width: Math.max(roiDropdownCoords.width, 110), backgroundColor: colors.panel, border: `1px solid ${colors.border}`, borderRadius: 10, boxShadow: shadows.menu, zIndex: 9999, overflow: "hidden" }}
+                          >
+                            {[
+                              { value: "active", label: t("common.enable") },
+                              { value: "inactive", label: t("common.disable") },
+                            ].map((opt) => (
+                              <div
+                                key={opt.value}
+                                onClick={() => { handleRoiStatusChange(roi.id, opt.value); setOpenRoiDropdownId(null); }}
+                                className="px-3 py-2 text-xs cursor-pointer"
+                                style={{ color: roi.status === opt.value ? colors.primary : colors.text, backgroundColor: roi.status === opt.value ? `${colors.primary}12` : "transparent", fontWeight: roi.status === opt.value ? 600 : 400 }}
+                                onMouseEnter={e => { if (roi.status !== opt.value) e.currentTarget.style.backgroundColor = colors.bg2 }}
+                                onMouseLeave={e => { if (roi.status !== opt.value) e.currentTarget.style.backgroundColor = "transparent" }}
+                              >
+                                {opt.label}
+                              </div>
+                            ))}
+                          </div>,
+                          document.body
+                        )}
                       </td>
                       <td className="py-4 px-4">
                         <div className="flex items-center gap-3">
                           {roi.notification_config?.email?.enabled && (
                             <button
-                              className="p-1.5 rounded bg-blue-500/20 text-blue-400"
+                              className={`p-1.5 rounded ${bgcolors.accentLight} ${textcolors.primary}`}
                               title={t("addCamera.emailNotifications")}
                             >
-                              <IoMailOutline size={16} />
+                              <MailIcon size={16} />
                             </button>
                           )}
 
                           {roi.notification_config?.call?.enabled && (
                             <button
-                              className="p-1.5 rounded bg-green-500/20 text-green-400"
+                              className={`p-1.5 rounded ${bgcolors.successLight} ${textcolors.success}`}
                               title={t("addCamera.callNotifications")}
                             >
-                              <IoCallOutline size={16} />
+                              <PhoneIcon size={16} />
                             </button>
                           )}
 
                           {roi.notification_config?.whatsapp?.enabled && (
                             <button
-                              className="p-1.5 rounded bg-purple-500/20 text-purple-400"
+                              className={`p-1.5 rounded ${bgcolors.purpleLight} ${textcolors.purple}`}
                               title={t("addCamera.whatsappNotifications")}
                             >
-                              <IoChatbubbleOutline size={16} />
+                              <ChatIcon size={16} />
                             </button>
                           )}
                         </div>
@@ -1026,17 +1079,19 @@ const AddCamera = () => {
                       <td className="py-4 px-4">
                         <div className="flex items-center gap-2">
                           <button
-                            onClick={() => handleEditRoi(roi)}
-                            className="p-2 rounded-lg border text-white flex items-center justify-center gap-2 px-4 border-[#0088FF] text-[12px] hover:border-gray-500 transition-all"
+                            onClick={() => isActive && handleEditRoi(roi)}
+                            disabled={!isActive}
+                            title={!isActive ? (t("addCamera.activateCameraToAddRoi")) : undefined}
+                            className={`p-2 rounded-lg flex items-center justify-center gap-2 px-4 text-[12px] transition-all ${isActive ? `${borderstyles.accentSoft} ${textcolors.accentText} ${bgcolors.accentHover}` : `${borderstyles.light} ${textcolors.disabled} cursor-not-allowed`}`}
                           >
-                            <IoPencil size={12} />
+                            <EditIcon size={12} />
                             <p>{t("common.edit")}</p>
                           </button>
                           <button
                             onClick={() => handleDeleteRoi(roi.id)}
-                            className="p-2 rounded-lg text-gray-400 hover:text-red-500 transition-all"
+                            className={`p-2 rounded-lg ${textcolors.muted} hover:text-red-500 transition-all`}
                           >
-                            <IoTrash size={14} />
+                            <TrashIcon size={14} />
                           </button>
                         </div>
                       </td>

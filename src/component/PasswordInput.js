@@ -1,7 +1,6 @@
 import { useState } from 'react'
-import { bgcolors } from '../theme'
-import openeye from "../assets/open-eye.png"
-import closeeye from "../assets/hide-eye.png"
+import { bgcolors, borderstyles, colors, iconSizes } from '../theme'
+import { EyeIcon, EyeOffIcon } from '../icons'
 
 export default function PasswordInput ({
   label,
@@ -19,7 +18,7 @@ export default function PasswordInput ({
       {label && (
         <label style={{ fontWeight: 'bold', marginBottom: 4 }}>{label}</label>
       )}
-      <div style={{ position: 'relative' }}>
+      <div style={{ position: 'relative' }} className={`border border-transparent ${borderstyles.focusWithinAccent} rounded-[9px]`}>
         {icon && (
           <span
             style={{
@@ -27,7 +26,7 @@ export default function PasswordInput ({
               left: 8,
               top: '50%',
               transform: 'translateY(-50%)',
-              color: '#aaaaaa'
+              color: colors.textMute
             }}
           >
             {icon}
@@ -56,15 +55,15 @@ export default function PasswordInput ({
             right: 8,
             top: '50%',
             transform: 'translateY(-50%)',
-            color: '#aaaaaa',
+            color: colors.textMute,
             cursor: 'pointer'
           }}
           onClick={() => setShow(v => !v)}
         >
           {show ? (
-            <img src={closeeye} alt='close eye' />
+            <EyeOffIcon size={iconSizes.action} />
           ) : (
-            <img src={openeye} alt='open eye' />
+            <EyeIcon size={iconSizes.action} />
           )}
         </span>
       </div>

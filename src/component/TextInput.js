@@ -1,4 +1,4 @@
-import { bgcolors } from '../theme'
+import { bgcolors, borderstyles, textcolors } from '../theme'
 
 export default function TextInput ({
   icon,
@@ -10,9 +10,9 @@ export default function TextInput ({
   ...rest
 }) {
   return (
-    <div className=' w-full relative'>
+    <div className={`w-full relative border border-transparent ${borderstyles.focusWithinAccent} rounded-[9px]`}>
       {icon && (
-        <span className='absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400'>
+        <span className={`absolute left-2 top-1/2 transform -translate-y-1/2 ${textcolors.muted}`}>
           {icon}
         </span>
       )}

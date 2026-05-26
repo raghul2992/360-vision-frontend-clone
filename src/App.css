@@ -8,22 +8,29 @@
 }
 
 .body-background {
-  /* background-image: url("./assets/background.jpg"); */
-  /* background-color: #E3F2FD; */
+  background-color: #f6f8fc;
   background-repeat: no-repeat;
   background-size: cover;
 }
 
 .menu-item svg {
-  color: #2A2B36;
+  color: #9ca3af;
 }
 
-.menu-item:hover, .active-menu {
-  background-color: #2A2B36;
+.menu-item:hover {
+  background-color: #eef2ff;
 }
 
-.menu-item:hover svg, .active-menu svg {
-  color: white;
+.menu-item:hover svg {
+  color: #3B82F6;
+}
+
+.active-menu {
+  background-color: #e8edf9;
+}
+
+.active-menu svg {
+  color: #3B82F6;
 }
 
 @media (prefers-reduced-motion: no-preference) {

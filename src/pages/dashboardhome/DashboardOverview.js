@@ -3,8 +3,8 @@ import { Responsive, WidthProvider } from 'react-grid-layout'
 import Select, { components } from 'react-select'
 import 'react-grid-layout/css/styles.css'
 import 'react-resizable/css/styles.css'
-import { FiPlus, FiMapPin } from 'react-icons/fi'
-import { bgcolors, textcolors } from '../../theme'
+import { bgcolors, textcolors, borderstyles, colors } from '../../theme'
+import { PlusIcon, MapPinIcon, ChevronDownIcon } from '../../icons'
 
 // Hooks
 import { useDashboardLogic } from './dashboardhooks/useDashboardLogic'
@@ -25,7 +25,7 @@ const CheckboxOption = props => {
           type='checkbox'
           checked={props.isSelected}
           onChange={() => null}
-          className='w-3 h-3 rounded border-gray-500 text-[#6366F1] focus:ring-0 focus:ring-offset-0 bg-transparent'
+          className={`w-3 h-3 rounded ${borderstyles.checkboxBorder} ${textcolors.indigo} focus:ring-0 focus:ring-offset-0 bg-transparent`}
         />
         <label>{props.label}</label>
       </div>
@@ -56,7 +56,7 @@ const CustomValueContainer = ({ children, ...props }) => {
         {values.slice(0, MAX_DISPLAY_TAGS)}
 
         {/* Render the "+N" Badge */}
-        <div className='flex items-center justify-center px-1.5 py-0.5 ml-1 text-[10px] font-medium text-white bg-[#3885CC] rounded'>
+        <div className={`flex items-center justify-center px-1.5 py-0.5 ml-1 text-[10px] font-medium text-white ${bgcolors.primary} rounded`}>
           +{selectedCount - MAX_DISPLAY_TAGS}
         </div>
 
@@ -71,57 +71,80 @@ const CustomValueContainer = ({ children, ...props }) => {
   )
 }
 
-// --- 3. Select Styles (Updated to prevent wrapping) ---
+// --- 3. Custom Dropdown Indicator with smooth rotation ---
+const DropdownIndicator = props => {
+  return (
+    <components.DropdownIndicator {...props}>
+      <ChevronDownIcon
+        size={16}
+        style={{
+          color: colors.textDim,
+          transform: props.selectProps.menuIsOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+          transition: 'transform 0.25s ease'
+        }}
+      />
+    </components.DropdownIndicator>
+  )
+}
+
+// --- 4. Select Styles (Updated to prevent wrapping) ---
 const selectStyles = {
   control: (base, state) => ({
     ...base,
     backgroundColor: 'transparent',
     border: 'none',
     boxShadow: 'none',
-    color: 'white',
+    color: colors.text,
     minHeight: '32px',
     cursor: 'pointer',
     flexWrap: 'nowrap' // Important: prevent wrapping
   }),
   menu: base => ({
     ...base,
-    backgroundColor: '#2a2f45',
-    color: '#FFFFFF',
+    backgroundColor: colors.panel,
+    color: colors.text,
     borderRadius: '8px',
-    border: '1px solid #4B5563',
-    zIndex: 9999
+    border: `1px solid ${colors.border}`,
+    zIndex: 9999,
+    width: '280px',
+    left: '-62px',
+    marginTop: '15px'
+  }),
+  menuList: base => ({
+    ...base,
+    padding: '4px'
   }),
   option: (base, { isFocused }) => ({
     ...base,
-    backgroundColor: isFocused ? '#3B3F58' : 'transparent',
-    color: '#E0E0E0',
+    backgroundColor: isFocused ? colors.bg2 : 'transparent',
+    color: colors.text,
     cursor: 'pointer',
     fontSize: '14px'
   }),
   multiValue: base => ({
     ...base,
-    backgroundColor: '#3885CC',
+    backgroundColor: colors.primary,
     borderRadius: '4px',
     maxWidth: '120px' // Limit individual tag width
   }),
   multiValueLabel: base => ({
     ...base,
-    color: '#FFFFFF',
+    color: colors.panel,
     whiteSpace: 'nowrap',
     overflow: 'hidden',
     textOverflow: 'ellipsis'
   }),
   multiValueRemove: base => ({
     ...base,
-    color: '#FFFFFF',
+    color: colors.panel,
     ':hover': {
-      backgroundColor: '#2d6ca3',
+      backgroundColor: colors.accentDark,
       color: '#FFFFFF'
     }
   }),
-  singleValue: base => ({ ...base, color: '#FFFFFF' }),
-  placeholder: base => ({ ...base, color: '#A5ADC9' }),
-  input: base => ({ ...base, color: '#FFFFFF' }),
+  singleValue: base => ({ ...base, color: colors.text }),
+  placeholder: base => ({ ...base, color: colors.textDim }),
+  input: base => ({ ...base, color: colors.text }),
   // Ensure container doesn't wrap
   valueContainer: base => ({
     ...base,
@@ -223,19 +246,19 @@ export default function DashboardOverview () {
       <div className={`min-h-screen ${bgcolors.white} p-6 w-full`}>
         <div className='mx-auto max-w-7xl animate-pulse'>
           <div className='flex items-center justify-between mb-8'>
-            <div className='h-6 w-64 bg-[#2a2f45] rounded' />
-            <div className='h-10 w-40 bg-[#2a2f45] rounded' />
+            <div className='h-6 w-64 bg-gray-200 rounded' />
+            <div className='h-10 w-40 bg-gray-200 rounded' />
           </div>
-          <div className='bg-[#2a2f45] rounded-xl p-6 mb-8 shadow-sm'>
+          <div className='bg-gray-200 rounded-xl p-6 mb-8 shadow-sm'>
             <div className='grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4'>
               {Array.from({ length: 5 }).map((_, i) => (
-                <div key={i} className='bg-[#1f2435] rounded-lg h-24' />
+                <div key={i} className='bg-gray-100 rounded-lg h-24' />
               ))}
             </div>
           </div>
           <div className='grid grid-cols-1 md:grid-cols-2 gap-4 mt-8'>
             {Array.from({ length: 2 }).map((_, i) => (
-              <div key={i} className='bg-[#2a2f45] rounded-xl h-64' />
+              <div key={i} className='bg-gray-200 rounded-xl h-64' />
             ))}
           </div>
         </div>
@@ -244,22 +267,22 @@ export default function DashboardOverview () {
   }
 
   return (
-    <div className={` ${bgcolors.white} min-h-screen p-6 w-full`}>
+    <div className={` ${bgcolors.surface} min-h-screen p-4 sm:p-6 w-full`}>
       <div className='mx-auto'>
         {/* === GLOBAL FILTER SECTION === */}
         <div className='flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4'>
           <div>
-            <h1 className={`${textcolors.dark} text-2xl font-bold`}>Dashboard</h1>
-            <p className={`${textcolors.dark} text-sm mt-1`}>
+            <h1 className={`${textcolors.dark} text-3xl font-bold`}>Dashboard</h1>
+            <p className={`${textcolors.dim} text-sm mt-1`}>
               Real-time monitoring and analytics
             </p>
           </div>
 
-          <div className='flex items-center bg-[#2a2f45] border border-[#3b4259] rounded-xl px-4 py-2 shadow-lg transition-all hover:border-[#3885CC]'>
-            <div className='bg-[#3885CC]/10 p-2 rounded-full mr-3'>
-              <FiMapPin className='text-[#3885CC]' size={18} />
+          <div className={`flex items-center ${bgcolors.white} ${borderstyles.light} rounded-xl px-4 py-2 shadow-sm transition-all ${borderstyles.hoverAccentStrong} w-full sm:w-[280px]`}>
+            <div className={`${bgcolors.primaryFaint} p-2 rounded-full mr-3 flex-shrink-0`}>
+              <MapPinIcon className={textcolors.primary} size={18} />
             </div>
-            <div className='flex flex-col min-w-[200px]'>
+            <div className='flex-1 min-w-0'>
               {/* Updated: React-Select with Custom ValueContainer */}
               <Select
                 options={dashboardLocationOptions}
@@ -271,7 +294,8 @@ export default function DashboardOverview () {
                 hideSelectedOptions={false}
                 components={{
                   Option: CheckboxOption,
-                  ValueContainer: CustomValueContainer // Injected here
+                  ValueContainer: CustomValueContainer,
+                  DropdownIndicator
                 }}
                 styles={selectStyles}
                 classNamePrefix='react-select'
@@ -281,15 +305,15 @@ export default function DashboardOverview () {
         </div>
 
         {/* === KPI SECTION === */}
-        <div className='flex items-center justify-between mt-8 mb-6'>
-          <h2 className={`${textcolors.dark} text-2xl font-semibold`}>
+        <div className='flex flex-wrap items-center justify-between gap-3 mt-8 mb-6'>
+          <h2 className={`${textcolors.dark} text-2xl font-bold`}>
             {t('dashboard.analytics_overview')}
           </h2>
           <button
             onClick={() => setIsModalOpen(true)}
-            className='flex items-center gap-2 bg-[#3885CC] text-white font-semibold py-2.5 px-5 rounded-full hover:bg-[#2d6ca3]'
+            className={`flex items-center gap-2 ${bgcolors.primary} text-white font-semibold py-2.5 px-5 rounded-full ${bgcolors.primaryHover} transition-colors shadow-sm`}
           >
-            <FiPlus size={20} />
+            <PlusIcon size={20} />
             <span>{t('dashboard.add_widget')}</span>
           </button>
         </div>
@@ -309,48 +333,74 @@ export default function DashboardOverview () {
 
         {/* === CHART SECTION === */}
         {activeChartWidgets.length > 0 ? (
-          <ResponsiveGridLayout
-            className='layout z-40'
-            layouts={{ lg: chartLayout }}
-            breakpoints={{ lg: 1200 }}
-            cols={{ lg: 12 }}
-            rowHeight={30}
-            onLayoutChange={l => handleChartLayoutChange(l)}
-            onDragStop={l => handleChartLayoutChange(l)}
-            onResizeStop={l => handleChartLayoutChange(l)}
-            dragHandleClassName='drag-handle'
-            draggableCancel='.no-drag'
-            margin={[16, 16]}
-          >
-            {activeChartWidgets.map(widget => (
-              <div key={widget.widget_name}>
-                <DashboardWidget
-                  title={t(widget.titleKey)}
-                  widgetName={widget.widget_name}
-                  onRemove={removeWidget}
-                  filterProps={getWidgetProps(widget.widget_name)}
-                  infoText={widget.infoKey ? t(widget.infoKey) : undefined}
-                >
-                  <widget.component
-                    data={
-                      widget.dataKey === 'detectionData'
-                        ? detectionData
-                        : priorityData
-                    }
-                    total={
-                      widget.totalKey === 'totalDetection'
-                        ? totalDetection
-                        : totalAlerts
-                    }
-                    tenantId={localStorage.getItem('tenant_id')}
-                  />
-                </DashboardWidget>
-              </div>
-            ))}
-          </ResponsiveGridLayout>
+          <>
+            {/* Mobile: simple vertical stack, no drag/resize */}
+            <div className='md:hidden flex flex-col gap-4 mt-4'>
+              {activeChartWidgets.map(widget => (
+                <div key={widget.widget_name} className='h-[380px]'>
+                  <DashboardWidget
+                    title={t(widget.titleKey)}
+                    widgetName={widget.widget_name}
+                    onRemove={removeWidget}
+                    filterProps={getWidgetProps(widget.widget_name)}
+                    infoText={widget.infoKey ? t(widget.infoKey) : undefined}
+                  >
+                    <widget.component
+                      data={widget.dataKey === 'detectionData' ? detectionData : priorityData}
+                      total={widget.totalKey === 'totalDetection' ? totalDetection : totalAlerts}
+                      tenantId={localStorage.getItem('tenant_id')}
+                    />
+                  </DashboardWidget>
+                </div>
+              ))}
+            </div>
+
+            {/* Desktop: draggable/resizable grid */}
+            <div className='hidden md:block'>
+              <ResponsiveGridLayout
+                className='layout z-40'
+                layouts={{ lg: chartLayout }}
+                breakpoints={{ lg: 1200 }}
+                cols={{ lg: 12 }}
+                rowHeight={30}
+                onLayoutChange={l => handleChartLayoutChange(l)}
+                onDragStop={l => handleChartLayoutChange(l)}
+                onResizeStop={l => handleChartLayoutChange(l)}
+                dragHandleClassName='drag-handle'
+                draggableCancel='.no-drag'
+                margin={[16, 16]}
+              >
+                {activeChartWidgets.map(widget => (
+                  <div key={widget.widget_name}>
+                    <DashboardWidget
+                      title={t(widget.titleKey)}
+                      widgetName={widget.widget_name}
+                      onRemove={removeWidget}
+                      filterProps={getWidgetProps(widget.widget_name)}
+                      infoText={widget.infoKey ? t(widget.infoKey) : undefined}
+                    >
+                      <widget.component
+                        data={
+                          widget.dataKey === 'detectionData'
+                            ? detectionData
+                            : priorityData
+                        }
+                        total={
+                          widget.totalKey === 'totalDetection'
+                            ? totalDetection
+                            : totalAlerts
+                        }
+                        tenantId={localStorage.getItem('tenant_id')}
+                      />
+                    </DashboardWidget>
+                  </div>
+                ))}
+              </ResponsiveGridLayout>
+            </div>
+          </>
         ) : (
-          <div className='bg-[#2a2f45] rounded-xl p-12 text-center mt-6'>
-            <p className='text-gray-400 text-lg mb-4'>
+          <div className={`${bgcolors.white} rounded-2xl ${borderstyles.light} p-12 text-center mt-6`}>
+            <p className={`${textcolors.muted} text-lg mb-4`}>
               {t('dashboard.no_widgets_yet')}
             </p>
           </div>

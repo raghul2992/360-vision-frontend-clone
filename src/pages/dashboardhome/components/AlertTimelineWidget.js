@@ -3,6 +3,7 @@ import { useSelector } from 'react-redux'
 import { LineChart } from '@mui/x-charts/LineChart'
 import { useTranslation } from 'react-i18next'
 import ListSkeletonLoader from '../../../component/ListSkeletonLoader'
+import { colors, textcolors, textSizes } from '../../../theme'
 
 const AlertTimelineWidget = ({ isLoading: propIsLoading }) => {
   const { t } = useTranslation()
@@ -21,17 +22,22 @@ const AlertTimelineWidget = ({ isLoading: propIsLoading }) => {
         </div>
       )}
       {error && (
-        <p className='text-red-500'>
+        <p className={textcolors.danger}>
           {t('Error')}: {error}
         </p>
       )}
-      {!isLoading && !error && alertTimeline && (
+      {!isLoading && !error && alertTimeline && chartData.length === 0 && (
+        <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <p className={`${textcolors.dim} ${textSizes.subtitle}`}>{t('No data available')}</p>
+        </div>
+      )}
+      {!isLoading && !error && alertTimeline && chartData.length > 0 && (
         <div style={{ width: '100%', height: '100%' }}>
           <LineChart
             series={[
               {
                 data: chartData,
-                color: '#3885CC',
+                color: colors.chartBlue,
                 area: true,
                 showMark: false
               }
@@ -40,14 +46,14 @@ const AlertTimelineWidget = ({ isLoading: propIsLoading }) => {
               {
                 data: xAxisData,
                 scaleType: 'band',
-                tickLabelStyle: { fill: 'white' },
-                axisLine: { stroke: 'white' }
+                tickLabelStyle: { fill: colors.textDim },
+                axisLine: { stroke: colors.border }
               }
             ]}
             yAxis={[
               {
-                tickLabelStyle: { fill: 'white' },
-                axisLine: { stroke: 'white' }
+                tickLabelStyle: { fill: colors.textDim },
+                axisLine: { stroke: colors.border }
               }
             ]}
             margin={{ top: 10, bottom: 30, left: 20, right: 10 }}

@@ -1,10 +1,7 @@
 import React from 'react'
 import { useTranslation, Trans } from 'react-i18next'
-import {
-  IoCheckmarkCircleOutline,
-  IoMailOpenOutline,
-  IoPaperPlaneOutline
-} from 'react-icons/io5'
+import { CheckCircleIcon, MailOpenIcon, PaperPlaneIcon } from '../../../icons'
+import { bgcolors, textcolors, colors } from '../../../theme'
 
 const SendInvitationConfirm = ({
   fullName,
@@ -21,21 +18,21 @@ const SendInvitationConfirm = ({
       {/* Icon Section */}
       <div
         className={`w-20 h-20 rounded-full flex items-center justify-center mb-6 ${
-          isExistingUser ? 'bg-blue-500/10' : 'bg-green-500/10'
+          isExistingUser ? bgcolors.primaryFaintOpacity : bgcolors.successFaintOpacity
         }`}
       >
         {isExistingUser ? (
-          <IoPaperPlaneOutline className='text-blue-500 text-5xl' />
+          <PaperPlaneIcon size={40} color={colors.primary} />
         ) : (
-          <IoCheckmarkCircleOutline className='text-green-500 text-6xl' />
+          <CheckCircleIcon size={48} color={colors.success} />
         )}
       </div>
 
       {/* Dynamic Title (Passed from parent) */}
-      <h2 className='text-2xl font-bold text-white mb-2'>{title}</h2>
+      <h2 className={`text-2xl font-bold ${textcolors.normaltext} mb-2`}>{title}</h2>
 
       {/* Dynamic Description with HTML (Trans component) */}
-      <p className='text-gray-400 mb-8 max-w-xs leading-relaxed'>
+      <p className={`${textcolors.dim} mb-8 max-w-xs leading-relaxed`}>
         <Trans
           i18nKey={
             isExistingUser
@@ -43,7 +40,7 @@ const SendInvitationConfirm = ({
               : 'userManagement.invitation.newBody'
           }
           values={{ name: fullName }}
-          components={{ strong: <strong className='text-white' /> }}
+          components={{ strong: <strong className={`${textcolors.primary} font-semibold`} /> }}
         />
       </p>
 
@@ -52,9 +49,9 @@ const SendInvitationConfirm = ({
         <button
           onClick={onSend}
           disabled={isInviting}
-          className='w-full py-3.5 rounded-xl bg-[#3b82f6] text-white font-bold flex items-center justify-center gap-2 hover:bg-blue-600 shadow-lg shadow-blue-500/20 disabled:opacity-50 transition-all'
+          className={`w-full py-3.5 rounded-xl ${bgcolors.primary} text-white font-bold flex items-center justify-center gap-2 ${bgcolors.primaryHover} shadow-lg shadow-blue-500/20 disabled:opacity-50 transition-all`}
         >
-          <IoMailOpenOutline size={20} />
+          <MailOpenIcon size={20} />
           {isInviting
             ? t('userManagement.invitation.sendingBtn')
             : t('userManagement.invitation.sendBtn')}
@@ -63,7 +60,7 @@ const SendInvitationConfirm = ({
         {/* Skip / Cancel Button */}
         <button
           onClick={onSkip}
-          className='w-full py-3 text-gray-500 hover:text-white transition-colors font-medium text-sm'
+          className={`w-full py-3 ${textcolors.dim} ${textcolors.hoverDanger} transition-colors font-medium text-sm`}
         >
           {isExistingUser
             ? t('userManagement.invitation.cancelBtn')

@@ -4,13 +4,15 @@ import {
   getCameraHealthTimeline,
   clearHealthTimeline,
 } from "../../features/cameras/cameraApiSlice";
+import { colors, gradients, shadows } from "../../theme";
+import { VideoIcon, CloseIcon, ChevronDownIcon, CalendarIcon, ClockIcon, SpinnerIcon, AlertCircleIcon } from "../../icons";
 
 /* ─── constants ──────────────────────────────────────────────────── */
 const STATUS_CFG = {
-  active: { label: "Active", color: "#22c55e" },
-  inactive: { label: "Inactive", color: "#6b7280" },
-  error: { label: "Error", color: "#ef4444" },
-  processing: { label: "Processing", color: "#f59e0b" },
+  active: { label: "Active", color: colors.success },
+  inactive: { label: "Inactive", color: colors.textDim },
+  error: { label: "Error", color: colors.danger },
+  processing: { label: "Processing", color: colors.warning },
 };
 
 const DATE_RANGES = [
@@ -45,60 +47,6 @@ const fmtTick = (iso, hours) => {
     : d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 };
 
-/* ─── SVG Icons ──────────────────────────────────────────────────── */
-const IconCam = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
-    stroke="#3885CC" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M23 7l-7 5 7 5V7z" />
-    <rect x="1" y="5" width="15" height="14" rx="2" />
-  </svg>
-);
-const IconClose = () => (
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
-    stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-    <line x1="18" y1="6" x2="6" y2="18" />
-    <line x1="6" y1="6" x2="18" y2="18" />
-  </svg>
-);
-const IconChev = () => (
-  <svg width="11" height="11" viewBox="0 0 24 24" fill="none"
-    stroke="#6b7280" strokeWidth="2.5" strokeLinecap="round">
-    <polyline points="6 9 12 15 18 9" />
-  </svg>
-);
-const IconCal = () => (
-  <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
-    stroke="#6b7280" strokeWidth="2" strokeLinecap="round">
-    <rect x="3" y="4" width="18" height="18" rx="2" />
-    <line x1="16" y1="2" x2="16" y2="6" />
-    <line x1="8" y1="2" x2="8" y2="6" />
-    <line x1="3" y1="10" x2="21" y2="10" />
-  </svg>
-);
-const IconClock = () => (
-  <svg width="12" height="12" viewBox="0 0 24 24" fill="none"
-    stroke="#4b5563" strokeWidth="2" strokeLinecap="round">
-    <circle cx="12" cy="12" r="10" />
-    <polyline points="12 6 12 12 16 14" />
-  </svg>
-);
-const IconSpin = () => (
-  <>
-    <style>{`@keyframes _hs{to{transform:rotate(360deg)}}`}</style>
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#3885CC" strokeWidth="2"
-      style={{ display: "block", margin: "0 auto 12px", animation: "_hs 1s linear infinite" }}>
-      <path d="M21 12a9 9 0 1 1-6.219-8.56" />
-    </svg>
-  </>
-);
-const IconAlert = () => (
-  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2"
-    style={{ display: "block", margin: "0 auto 10px" }}>
-    <circle cx="12" cy="12" r="10" />
-    <line x1="12" y1="8" x2="12" y2="12" />
-    <line x1="12" y1="16" x2="12.01" y2="16" />
-  </svg>
-);
 
 /* ─── Tooltip ────────────────────────────────────────────────────── */
 const Tooltip = ({ ev, x, y, visible }) => {
@@ -107,12 +55,12 @@ const Tooltip = ({ ev, x, y, visible }) => {
   return (
     <div style={{
       position: "absolute",
-      left: Math.min(x + 10, 580),   // clamp so it never exceeds modal width
+      left: Math.min(x + 10, 580),
       top: 40,
-      background: "#1a1b22", border: "1px solid rgba(255,255,255,0.12)",
+      background: colors.panel, border: `1px solid ${colors.border}`,
       borderRadius: 8, padding: "10px 13px", pointerEvents: "none",
       zIndex: 99999, minWidth: 200, maxWidth: 240,
-      boxShadow: "0 4px 20px rgba(0,0,0,0.5)",
+      boxShadow: shadows.tooltip,
     }}>
       <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 5 }}>
         <div style={{ width: 8, height: 8, borderRadius: "50%", background: cfg.color }} />
@@ -120,14 +68,14 @@ const Tooltip = ({ ev, x, y, visible }) => {
           {cfg.label}
         </span>
       </div>
-      <div style={{ fontSize: 11, color: "#9ca3af", lineHeight: 1.8 }}>
+      <div style={{ fontSize: 11, color: colors.textDim, lineHeight: 1.8 }}>
         <div>{fmtDT(ev.start)}</div>
-        <div style={{ color: "#6b7280" }}>→ {fmtDT(ev.end)}</div>
-        <div style={{ color: "#e5e7eb", fontWeight: 600, marginTop: 3 }}>
+        <div style={{ color: colors.textMute }}>→ {fmtDT(ev.end)}</div>
+        <div style={{ color: colors.text, fontWeight: 600, marginTop: 3 }}>
           Duration: {fmtDur(ev.duration_seconds)}
         </div>
         {ev.error_message && (
-          <div style={{ color: "#ef4444", fontSize: 10, marginTop: 2 }}>{ev.error_message}</div>
+          <div style={{ color: colors.danger, fontSize: 10, marginTop: 2 }}>{ev.error_message}</div>
         )}
       </div>
     </div>
@@ -139,7 +87,7 @@ const StatCard = ({ status, data }) => {
   const d = data || { duration_seconds: 0, percentage: 0, count: 0 };
   return (
     <div style={{
-      background: "#1e1f27", border: `1px solid ${cfg.color}22`,
+      background: colors.panel, border: `1px solid ${cfg.color}33`,
       borderRadius: 9, padding: "12px 14px", flex: 1, minWidth: 0,
     }}>
       <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 7 }}>
@@ -151,11 +99,11 @@ const StatCard = ({ status, data }) => {
           {cfg.label}
         </span>
       </div>
-      <div style={{ fontSize: 22, fontWeight: 700, color: "#f9fafb", lineHeight: 1 }}>
+      <div style={{ fontSize: 22, fontWeight: 700, color: colors.text, lineHeight: 1 }}>
         {d.percentage.toFixed(1)}
-        <span style={{ fontSize: 13, color: "#6b7280", fontWeight: 400 }}>%</span>
+        <span style={{ fontSize: 13, color: colors.textMute, fontWeight: 400 }}>%</span>
       </div>
-      <div style={{ fontSize: 11, color: "#6b7280", marginTop: 3 }}>
+      <div style={{ fontSize: 11, color: colors.textDim, marginTop: 3 }}>
         {fmtDur(d.duration_seconds)}
         {d.count > 0 && <span style={{ marginLeft: 4 }}>· {d.count} evt</span>}
       </div>
@@ -197,8 +145,8 @@ const TimelineBar = ({ events, totalSecs }) => {
           );
         })}
         {(!events || events.length === 0) && (
-          <div style={{ flex: 1, background: "#1e1f27", display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <span style={{ fontSize: 12, color: "#4b5563" }}>No events in this period</span>
+          <div style={{ flex: 1, background: colors.surface, display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <span style={{ fontSize: 12, color: colors.textMute }}>No events in this period</span>
           </div>
         )}
       </div>
@@ -222,6 +170,7 @@ const CameraHealthModal = ({ isOpen, onClose, cameraId, cameraName = "Camera", t
   );
 
   const [hours, setHours] = useState(24);
+  const [isRangeOpen, setIsRangeOpen] = useState(false);
 
   /* Build date params from selected hours range and dispatch */
   const fetchTimeline = useCallback(() => {
@@ -260,6 +209,14 @@ const CameraHealthModal = ({ isOpen, onClose, cameraId, cameraName = "Camera", t
     return () => window.removeEventListener("keydown", onKey);
   }, [isOpen, onClose]);
 
+  /* Close range dropdown on outside click */
+  useEffect(() => {
+    if (!isRangeOpen) return;
+    const handler = () => setIsRangeOpen(false);
+    document.addEventListener("click", handler);
+    return () => document.removeEventListener("click", handler);
+  }, [isRangeOpen]);
+
   if (!isOpen) return null;
 
   /* Derived display data */
@@ -281,20 +238,13 @@ const CameraHealthModal = ({ isOpen, onClose, cameraId, cameraName = "Camera", t
     });
   };
 
-  const selStyle = {
-    appearance: "none", background: "#1e1f27",
-    border: "1px solid rgba(255,255,255,0.12)", borderRadius: 8,
-    color: "#d1d5db", fontSize: 12,
-    padding: "6px 28px 6px 28px",
-    cursor: "pointer", outline: "none", fontFamily: "inherit",
-  };
 
   return (
     <>
       {/* Backdrop */}
       <div
         onClick={onClose}
-        style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.65)", zIndex: 1000 }}
+        style={{ position: "fixed", inset: 0, background: colors.backdropDark, zIndex: 1000 }}
       />
 
       {/* Modal panel */}
@@ -302,47 +252,90 @@ const CameraHealthModal = ({ isOpen, onClose, cameraId, cameraName = "Camera", t
         position: "fixed", top: "50%", left: "50%",
         transform: "translate(-50%,-50%)",
         width: "min(92vw, 860px)",
-        background: "#2a2b36",
-        border: "1px solid rgba(255,255,255,0.08)", borderRadius: 14,
-        zIndex: 1001, boxShadow: "0 24px 80px rgba(0,0,0,0.6)",
+        background: colors.panel,
+        border: `1px solid ${colors.border}`, borderRadius: 14,
+        zIndex: 1001, boxShadow: shadows.healthModal,
         overflow: "visible",
       }}>
 
         {/* ── Header ── */}
         <div style={{
           display: "flex", alignItems: "center", justifyContent: "space-between",
-          padding: "18px 22px", borderBottom: "1px solid rgba(255,255,255,0.06)",
+          padding: "18px 22px", borderBottom: `1px solid ${colors.bg2}`,
         }}>
           {/* Left: icon + title */}
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             <div style={{
               width: 32, height: 32, borderRadius: 8,
-              background: "rgba(56,133,204,0.18)",
+              background: gradients.accentSubtle,
               display: "flex", alignItems: "center", justifyContent: "center",
             }}>
-              <IconCam />
+              <VideoIcon size={16} color={colors.primary} />
             </div>
             <div>
-              <div style={{ fontSize: 15, fontWeight: 600, color: "#f9fafb" }}>Camera health</div>
-              <div style={{ fontSize: 11, color: "#6b7280" }}>{cameraName}</div>
+              <div style={{ fontSize: 15, fontWeight: 600, color: colors.text }}>Camera health</div>
+              <div style={{ fontSize: 11, color: colors.textDim }}>{cameraName}</div>
             </div>
           </div>
 
           {/* Right: date range filter + close (single line) */}
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            {/* Date range dropdown */}
+            {/* Date range custom dropdown */}
             <div style={{ position: "relative" }}>
-              <div style={{ position: "absolute", left: 8, top: "50%", transform: "translateY(-50%)", pointerEvents: "none" }}>
-                <IconCal />
+              {/* Trigger */}
+              <div
+                onClick={(e) => { e.stopPropagation(); setIsRangeOpen(prev => !prev); }}
+                style={{
+                  display: "flex", alignItems: "center", gap: 6,
+                  background: colors.surface, border: `1px solid ${colors.border}`,
+                  borderRadius: 8, padding: "6px 28px 6px 28px",
+                  cursor: "pointer", fontSize: 12, color: colors.text,
+                  userSelect: "none", minWidth: 120,
+                }}
+              >
+                <div style={{ position: "absolute", left: 8, top: "50%", transform: "translateY(-50%)", pointerEvents: "none" }}>
+                  <CalendarIcon size={13} color={colors.textDim} />
+                </div>
+                {DATE_RANGES.find(r => r.hours === hours)?.label}
+                <div style={{
+                  position: "absolute", right: 8, top: "50%",
+                  transform: `translateY(-50%) rotate(${isRangeOpen ? "180deg" : "0deg"})`,
+                  transition: "transform 0.2s", pointerEvents: "none",
+                }}>
+                  <ChevronDownIcon size={11} color={colors.textDim} />
+                </div>
               </div>
-              <select value={hours} onChange={e => setHours(+e.target.value)} style={selStyle}>
-                {DATE_RANGES.map(r => (
-                  <option key={r.hours} value={r.hours}>{r.label}</option>
-                ))}
-              </select>
-              <div style={{ position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)", pointerEvents: "none" }}>
-                <IconChev />
-              </div>
+
+              {/* Options panel */}
+              {isRangeOpen && (
+                <div
+                  onClick={(e) => e.stopPropagation()}
+                  style={{
+                    position: "absolute", top: "calc(100% + 4px)", right: 0,
+                    background: colors.panel, border: `1px solid ${colors.border}`,
+                    borderRadius: 10, boxShadow: shadows.dropdown,
+                    zIndex: 9999, minWidth: "100%", overflow: "hidden",
+                  }}
+                >
+                  {DATE_RANGES.map(r => (
+                    <div
+                      key={r.hours}
+                      onClick={() => { setHours(r.hours); setIsRangeOpen(false); }}
+                      style={{
+                        padding: "8px 14px", fontSize: 12, cursor: "pointer",
+                        color: r.hours === hours ? colors.primary : colors.text,
+                        background: r.hours === hours ? colors.primaryLight : "transparent",
+                        fontWeight: r.hours === hours ? 600 : 400,
+                        transition: "background 0.15s",
+                      }}
+                      onMouseEnter={e => { if (r.hours !== hours) e.currentTarget.style.background = colors.bg2; }}
+                      onMouseLeave={e => { if (r.hours !== hours) e.currentTarget.style.background = "transparent"; }}
+                    >
+                      {r.label}
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Close */}
@@ -350,13 +343,13 @@ const CameraHealthModal = ({ isOpen, onClose, cameraId, cameraName = "Camera", t
               onClick={onClose}
               style={{
                 width: 30, height: 30, borderRadius: 7,
-                background: "rgba(255,255,255,0.05)",
-                border: "1px solid rgba(255,255,255,0.1)",
-                color: "#9ca3af", cursor: "pointer",
+                background: colors.bg2,
+                border: `1px solid ${colors.border}`,
+                color: colors.textDim, cursor: "pointer",
                 display: "flex", alignItems: "center", justifyContent: "center",
               }}
             >
-              <IconClose />
+              <CloseIcon size={14} />
             </button>
           </div>
         </div>
@@ -366,8 +359,8 @@ const CameraHealthModal = ({ isOpen, onClose, cameraId, cameraName = "Camera", t
 
           {/* Loading */}
           {loading && (
-            <div style={{ textAlign: "center", padding: "48px 0", color: "#6b7280" }}>
-              <IconSpin />
+            <div style={{ textAlign: "center", padding: "48px 0", color: colors.textDim }}>
+              <SpinnerIcon size={24} color={colors.primary} className="animate-spin" style={{ display: "block", margin: "0 auto 12px" }} />
               <div style={{ fontSize: 13 }}>Loading health data…</div>
             </div>
           )}
@@ -375,13 +368,13 @@ const CameraHealthModal = ({ isOpen, onClose, cameraId, cameraName = "Camera", t
           {/* Error */}
           {err && !loading && (
             <div style={{ textAlign: "center", padding: "48px 0" }}>
-              <IconAlert />
-              <div style={{ fontSize: 13, color: "#ef4444", marginBottom: 12 }}>{err}</div>
+              <AlertCircleIcon size={28} color={colors.danger} style={{ display: "block", margin: "0 auto 10px" }} />
+              <div style={{ fontSize: 13, color: colors.danger, marginBottom: 12 }}>{err}</div>
               <button
                 onClick={fetchTimeline}
                 style={{
-                  background: "#3885CC", border: "none", borderRadius: 8,
-                  color: "#fff", fontSize: 12, padding: "8px 16px", cursor: "pointer",
+                  background: colors.primary, border: "none", borderRadius: 8,
+                  color: colors.panel, fontSize: 12, padding: "8px 16px", cursor: "pointer",
                 }}
               >
                 Retry
@@ -404,11 +397,11 @@ const CameraHealthModal = ({ isOpen, onClose, cameraId, cameraName = "Camera", t
 
               {/* Timeline label */}
               <div style={{
-                fontSize: 10, fontWeight: 600, color: "#4b5563",
+                fontSize: 10, fontWeight: 600, color: colors.textDim,
                 textTransform: "uppercase", letterSpacing: "0.07em",
                 marginBottom: 8, display: "flex", alignItems: "center", gap: 5,
               }}>
-                <IconClock />
+                <ClockIcon size={12} color={colors.textDim} />
                 <span>Status timeline · {rangeLbl}</span>
               </div>
 
@@ -418,17 +411,17 @@ const CameraHealthModal = ({ isOpen, onClose, cameraId, cameraName = "Camera", t
               {/* Time ticks */}
               <div style={{ display: "flex", justifyContent: "space-between", marginTop: 5 }}>
                 {timeTicks().map((t, i) => (
-                  <span key={i} style={{ fontSize: 10, color: "#4b5563" }}>{t}</span>
+                  <span key={i} style={{ fontSize: 10, color: colors.textMute }}>{t}</span>
                 ))}
               </div>
 
               {/* Legend */}
               <div style={{
                 display: "flex", gap: 14, marginTop: 14,
-                paddingTop: 13, borderTop: "1px solid rgba(255,255,255,0.06)", flexWrap: "wrap",
+                paddingTop: 13, borderTop: `1px solid ${colors.bg2}`, flexWrap: "wrap",
               }}>
                 {Object.entries(STATUS_CFG).map(([key, cfg]) => (
-                  <div key={key} style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 11, color: "#6b7280" }}>
+                  <div key={key} style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 11, color: colors.textDim }}>
                     <div style={{ width: 10, height: 10, borderRadius: 2, background: cfg.color }} />
                     {cfg.label}
                   </div>
@@ -439,7 +432,7 @@ const CameraHealthModal = ({ isOpen, onClose, cameraId, cameraName = "Camera", t
               {data.events?.length > 0 && (
                 <div style={{ marginTop: 18 }}>
                   <div style={{
-                    fontSize: 10, fontWeight: 600, color: "#4b5563",
+                    fontSize: 10, fontWeight: 600, color: colors.textDim,
                     textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 8,
                   }}>
                     Event log
@@ -450,8 +443,8 @@ const CameraHealthModal = ({ isOpen, onClose, cameraId, cameraName = "Camera", t
                       return (
                         <div key={i} style={{
                           display: "flex", alignItems: "flex-start", gap: 10,
-                          background: "#1e1f27",
-                          border: `1px solid ${cfg.color}1a`,
+                          background: colors.bg,
+                          border: `1px solid ${cfg.color}22`,
                           borderLeft: `3px solid ${cfg.color}`,
                           borderRadius: "0 7px 7px 0",
                           padding: "8px 12px",
@@ -459,13 +452,13 @@ const CameraHealthModal = ({ isOpen, onClose, cameraId, cameraName = "Camera", t
                           <div style={{ flex: 1, minWidth: 0 }}>
                             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                               <span style={{ fontSize: 12, fontWeight: 600, color: cfg.color }}>{cfg.label}</span>
-                              <span style={{ fontSize: 11, color: "#4b5563" }}>{fmtDur(ev.duration_seconds)}</span>
+                              <span style={{ fontSize: 11, color: colors.textMute }}>{fmtDur(ev.duration_seconds)}</span>
                             </div>
-                            <div style={{ fontSize: 11, color: "#6b7280", marginTop: 2 }}>
+                            <div style={{ fontSize: 11, color: colors.textDim, marginTop: 2 }}>
                               {fmtDT(ev.start)} → {fmtDT(ev.end)}
                             </div>
                             {ev.error_message && (
-                              <div style={{ fontSize: 10, color: "#ef4444", marginTop: 2 }}>{ev.error_message}</div>
+                              <div style={{ fontSize: 10, color: colors.danger, marginTop: 2 }}>{ev.error_message}</div>
                             )}
                           </div>
                         </div>

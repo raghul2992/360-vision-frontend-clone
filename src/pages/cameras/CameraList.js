@@ -1,40 +1,88 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useRef } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 import {
-  IoWifiOutline,
-  IoCloseCircle,
-  IoWarning,
-  IoPencil,
-  IoTrashOutline,
-IoEyeOutline,
-  IoChevronDown,
-  IoSearchOutline,
-  IoLocationOutline,
-  IoVideocamOutline,
-  IoBan,
-  IoClose,
-  IoEllipsisHorizontal,
-  IoCog,
-  IoRefresh,
-  IoAddCircleOutline,
-  IoCloseCircleOutline
-} from 'react-icons/io5'
-import { FaCircleNotch } from 'react-icons/fa'
+  WifiIcon,
+  ChevronDownIcon,
+  SearchIcon,
+  MapPinIcon,
+  VideoIcon,
+  BanIcon,
+  EyeIcon,
+  TrashIcon,
+  CloseCircleIcon,
+  FilterIcon,
+  CloseIcon,
+  AlertCircleIcon,
+  SpinnerIcon,
+} from '../../icons'
 import { useTranslation } from 'react-i18next'
-import { bgcolors } from '../../theme'
+import { bgcolors, textcolors, textSizes, borderstyles, buttons, colors, iconSizes } from '../../theme'
 import { Link } from 'react-router-dom'
 import { getCameras, deleteCamera } from '../../features/cameras/cameraApiSlice'
 import { getLocations } from '../../features/locations/locationApiSlice'
 import { toast } from 'react-toastify'
 import CameraStatusSummary from './component/CameraStatusSummary'
 
+const CustomSelect = ({ value, onChange, options, placeholder, icon }) => {
+  const [isOpen, setIsOpen] = useState(false)
+  const ref = useRef(null)
+
+  useEffect(() => {
+    const handleOutside = e => {
+      if (ref.current && !ref.current.contains(e.target)) setIsOpen(false)
+    }
+    document.addEventListener('mousedown', handleOutside)
+    return () => document.removeEventListener('mousedown', handleOutside)
+  }, [])
+
+  const selected = options.find(o => o.value === value)
+
+  return (
+    <div ref={ref} className='relative w-full'>
+      {/* Trigger */}
+      <button
+        type='button'
+        onClick={() => setIsOpen(p => !p)}
+        className={`flex items-center gap-2 w-full px-3 py-2.5 ${bgcolors.surface} ${borderstyles.light} rounded-xl ${textSizes.subtitle} cursor-pointer focus:outline-none ${borderstyles.focusRing} transition-all`}
+      >
+        <span className={`flex-shrink-0 ${textcolors.dim}`}>{icon}</span>
+        <span className={`flex-1 text-left truncate ${selected ? textcolors.normaltext : textcolors.dim}`}>
+          {selected ? selected.label : placeholder}
+        </span>
+        <ChevronDownIcon
+          size={14}
+          className={`flex-shrink-0 ${textcolors.dim} transition-transform duration-200`}
+          style={{ transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}
+        />
+      </button>
+
+      {/* Dropdown list */}
+      {isOpen && (
+        <div className={`absolute top-full left-0 mt-1.5 w-full ${bgcolors.white} rounded-xl ${borderstyles.light} shadow-lg z-50 overflow-hidden py-1`}>
+          {options.map(opt => (
+            <div
+              key={opt.value}
+              onClick={() => { onChange(opt.value); setIsOpen(false) }}
+              className={`px-4 py-2.5 ${textSizes.subtitle} cursor-pointer transition-colors rounded-lg mx-1 ${
+                value === opt.value
+                  ? `${bgcolors.primary} text-white font-semibold`
+                  : `${textcolors.normaltext} ${bgcolors.accentHover} ${textcolors.accentHover}`
+              }`}
+            >
+              {opt.label}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 const CameraList = () => {
   const { t } = useTranslation()
   const dispatch = useDispatch()
   const { cameras, isLoading, error } = useSelector(state => state.cameraApi)
-  const { locations, isLoading: locationsLoading } = useSelector(
-    state => state.locationApi
-  )
+  const { locations } = useSelector(state => state.locationApi)
   const [searchTerm, setSearchTerm] = useState('')
   const [locationFilter, setLocationFilter] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
@@ -54,20 +102,13 @@ const CameraList = () => {
   }, [dispatch, tenantId])
 
   const handleDeleteClick = (cameraId, cameraName) => {
-    setDeletePopup({
-      isOpen: true,
-      cameraId,
-      cameraName
-    })
+    setDeletePopup({ isOpen: true, cameraId, cameraName })
   }
 
   const handleDeleteConfirm = async () => {
     if (!deletePopup.cameraId) return
-
     try {
-      await dispatch(
-        deleteCamera({ tenantId, cameraId: deletePopup.cameraId })
-      ).unwrap()
+      await dispatch(deleteCamera({ tenantId, cameraId: deletePopup.cameraId })).unwrap()
       toast.success('Camera deleted successfully!')
       dispatch(getCameras({ tenantId }))
     } catch (error) {
@@ -81,14 +122,20 @@ const CameraList = () => {
     setDeletePopup({ isOpen: false, cameraId: null, cameraName: '' })
   }
 
-  const filteredCameras = cameras.filter(camera => {
-    const matchesSearch = camera.name
-      ?.toLowerCase()
-      .includes(searchTerm.toLowerCase())
-    const matchesLocation =
-      !locationFilter || camera.location_id?.toString() === locationFilter
-    const matchesStatus = !statusFilter || camera.status === statusFilter
+  const getStatusBorderColor = status => {
+    switch (status) {
+      case 'active':     return colors.success
+      case 'inactive':   return colors.textMute
+      case 'processing': return colors.orange
+      case 'error':      return colors.danger
+      default:           return colors.textMute
+    }
+  }
 
+  const filteredCameras = cameras.filter(camera => {
+    const matchesSearch = camera.name?.toLowerCase().includes(searchTerm.toLowerCase())
+    const matchesLocation = !locationFilter || camera.location_id?.toString() === String(locationFilter)
+    const matchesStatus = !statusFilter || camera.status === statusFilter
     return matchesSearch && matchesLocation && matchesStatus
   })
 
@@ -102,93 +149,69 @@ const CameraList = () => {
     switch (status) {
       case 'active':
         return (
-          <div
-            className='w-12 h-12 rounded-xl bg-green-500/20 flex items-center justify-center border border-green-500/30'
-            title='Active'
-          >
-            <IoWifiOutline className='text-green-400' size={24} />
+          <div className={`w-12 h-12 rounded-xl ${bgcolors.successLight} flex items-center justify-center ${borderstyles.successBorder}`} title='Active'>
+            <WifiIcon className={textcolors.success} size={iconSizes.large} />
           </div>
         )
       case 'inactive':
         return (
-          <div
-            className='w-12 h-12 rounded-xl bg-gray-500/20 flex items-center justify-center border border-gray-500/30'
-            title='Inactive'
-          >
-            <IoBan className='text-gray-400' size={24} />
+          <div className={`w-12 h-12 rounded-xl ${bgcolors.grayLight} flex items-center justify-center ${borderstyles.light}`} title='Inactive'>
+            <BanIcon className={textcolors.muted} size={iconSizes.large} />
           </div>
         )
       case 'processing':
         return (
-          <div
-            className='w-12 h-12 rounded-xl bg-orange-500/20 flex items-center justify-center border border-orange-500/30'
-            title='Processing'
-          >
-            <FaCircleNotch className='text-orange-500 animate-spin' size={24} />
+          <div className={`w-12 h-12 rounded-xl ${bgcolors.orangeLight} flex items-center justify-center ${borderstyles.orangeBorder}`} title='Processing'>
+            <SpinnerIcon className={`${textcolors.orange} animate-spin`} size={iconSizes.large} />
           </div>
         )
       case 'error':
         return (
-          <div
-            className='w-12 h-12 rounded-xl bg-red-500/20 flex items-center justify-center border border-red-500/30'
-            title='Error'
-          >
-            <IoCloseCircleOutline className='text-red-400' size={24} />
+          <div className={`w-12 h-12 rounded-xl ${bgcolors.dangerFaint} flex items-center justify-center ${borderstyles.dangerBorder}`} title='Error'>
+            <CloseCircleIcon className={textcolors.danger} size={iconSizes.large} />
           </div>
         )
       default:
         return (
-          <div
-            className='w-12 h-12 rounded-xl bg-gray-500/20 flex items-center justify-center border border-gray-500/30'
-            title='Unknown Status'
-          >
-            <IoWifiOutline className='text-gray-400' size={24} />
+          <div className={`w-12 h-12 rounded-xl ${bgcolors.grayLight} flex items-center justify-center ${borderstyles.light}`} title='Unknown'>
+            <WifiIcon className={textcolors.muted} size={iconSizes.large} />
           </div>
         )
     }
   }
 
   return (
-    <div className='text-white'>
+    <div>
       {/* Delete Confirmation Popup */}
       {deletePopup.isOpen && (
-        <div className='fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4'>
-          <div className='bg-[#2A2B36] rounded-xl p-6 max-w-md w-full border border-gray-700/50'>
-            <div className='flex justify-between items-center mb-4'>
-              <h3 className='text-lg font-semibold'>
-                {t('cameraGrid.deletePopup.title')}
-              </h3>
+        <div className={`fixed inset-0 ${bgcolors.overlay} backdrop-blur-sm flex items-center justify-center z-50 p-4`}>
+          <div className={`${bgcolors.white} rounded-2xl p-6 max-w-sm w-full ${borderstyles.light} shadow-2xl text-center`}>
+            <div className='flex justify-center mb-4'>
+              <div className={`w-12 h-12 rounded-full ${bgcolors.dangerFaint} flex items-center justify-center ${borderstyles.dangerBorder}`}>
+                <TrashIcon className={textcolors.danger} size={22} />
+              </div>
+            </div>
+            <h3 className={`text-lg font-bold mb-2 ${textcolors.normaltext}`}>
+              {t('cameraGrid.deletePopup.title')}
+            </h3>
+            <p className={`${textcolors.dim} ${textSizes.subtitle} mb-2`}>
+              {t('cameraGrid.deletePopup.message', { cameraName: deletePopup.cameraName })}
+            </p>
+            <p className={`${textcolors.danger} text-xs mb-6`}>
+              {t('cameraGrid.deletePopup.warning')}
+            </p>
+            <div className='flex gap-3'>
               <button
                 onClick={handleDeleteCancel}
-                className='text-gray-400 hover:text-white transition-colors'
-              >
-                <IoCloseCircleOutline size={24} />
-              </button>
-            </div>
-
-            <div className='mb-6'>
-              <p className='text-gray-300'>
-                {t('cameraGrid.deletePopup.message', {
-                  cameraName: deletePopup.cameraName
-                })}
-              </p>
-              <p className='text-sm text-red-400 mt-2'>
-                {t('cameraGrid.deletePopup.warning')}
-              </p>
-            </div>
-
-            <div className='flex justify-end gap-3'>
-              <button
-                onClick={handleDeleteCancel}
-                className='px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors'
+                className={`flex-1 py-2.5 rounded-xl ${buttons.secondary}`}
               >
                 {t('cameraGrid.deletePopup.cancelButton')}
               </button>
               <button
                 onClick={handleDeleteConfirm}
-                className='px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors flex items-center gap-2'
+                className={`flex-1 py-2.5 rounded-xl ${buttons.danger} flex items-center justify-center gap-2`}
               >
-                <IoTrashOutline size={16} />
+                <TrashIcon size={16} />
                 {t('cameraGrid.deletePopup.deleteButton')}
               </button>
             </div>
@@ -196,153 +219,137 @@ const CameraList = () => {
         </div>
       )}
 
-      <div className='bg-[#30313F] rounded-xl p-5 mb-6 border border-[#DDDDDD]'>
-        <div className='flex items-center gap-4'>
-          <div className='flex-1 relative'>
-            <IoSearchOutline
-              className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500'
-              size={18}
+      {/* Filter Bar */}
+      <div className={`${bgcolors.white} rounded-xl p-4 mb-6 ${borderstyles.light} shadow-sm`}>
+        <div className='flex flex-col sm:flex-row flex-wrap gap-3'>
+          {/* Search */}
+          <div className='flex-1 min-w-0 relative'>
+            <SearchIcon
+              className={`absolute left-3 top-1/2 -translate-y-1/2 ${textcolors.dim}`}
+              size={16}
             />
             <input
               type='text'
-              placeholder={
-                t('cameraList.searchPlaceholder') || 'Search cameras names'
-              }
+              placeholder={t('cameraList.searchPlaceholder') || 'Search camera names'}
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
-              className='w-full bg-[#4D4D4D] rounded-lg py-2.5 pl-10 pr-4 text-white text-sm placeholder-white focus:outline-none focus:border-gray-600'
+              className={`w-full ${bgcolors.surface} ${borderstyles.light} rounded-lg py-2.5 pl-9 pr-4 ${textcolors.normaltext} ${textSizes.subtitle} ${textcolors.placeholder} focus:outline-none ${borderstyles.focusRing}`}
             />
           </div>
 
           {/* Location Filter */}
-          <div className='relative flex items-center bg-[#4D4D4D] border border-gray-700/50 rounded-lg text-white min-w-[180px]'>
-            <IoLocationOutline className='ml-3 text-white' size={16} />
-            <select
+          <div className='w-full sm:w-52'>
+            <CustomSelect
               value={locationFilter}
-              onChange={e => setLocationFilter(e.target.value)}
-              className='appearance-none w-full bg-[#4D4D4D] border border-gray-700/50 rounded-lg py-2.5 pl-4 pr-10 text-white text-sm focus:outline-none cursor-pointer text-gray-300'
-            >
-              <option value=''>
-                {t('cameraList.locationOption') || 'All Locations'}
-              </option>
-              {locations?.map(loc => (
-                <option key={loc.id} value={loc.id}>
-                  {loc.name}
-                </option>
-              ))}
-            </select>
-            <IoChevronDown
-              className='absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 pointer-events-none'
-              size={16}
+              onChange={val => setLocationFilter(val)}
+              placeholder={t('cameraList.locationOption') || 'Location'}
+              icon={<MapPinIcon size={iconSizes.dropdown} />}
+              options={locations?.map(loc => ({ value: String(loc.id), label: loc.name })) || []}
             />
           </div>
 
-          <div className='relative'>
-            <select
+          {/* Status Filter */}
+          <div className='w-full sm:w-44'>
+            <CustomSelect
               value={statusFilter}
-              onChange={e => setStatusFilter(e.target.value)}
-              className='appearance-none bg-[#4D4D4D] rounded-lg py-2.5 pl-4 pr-10 text-white text-sm focus:outline-none cursor-pointer min-w-[180px]'
-            >
-              <option value=''>
-                {t('cameraList.statusOption') || 'All Status'}
-              </option>
-              <option value='active'>Active</option>
-              <option value='inactive'>Inactive</option>
-              <option value='processing'>Processing</option>
-              <option value='error'>Error</option>
-            </select>
-            <IoChevronDown
-              className='absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 pointer-events-none'
-              size={16}
+              onChange={val => setStatusFilter(val)}
+              placeholder={t('cameraList.statusOption') || 'Select Status'}
+              icon={<FilterIcon size={iconSizes.dropdown} />}
+              options={[
+                { value: 'active',     label: 'Active'     },
+                { value: 'inactive',   label: 'Inactive'   },
+                { value: 'processing', label: 'Processing' },
+                { value: 'error',      label: 'Error'      },
+              ]}
             />
           </div>
 
-          <div className='flex gap-3'>
-            <button
-              onClick={handleClearFilters}
-              className='bg-[#4D4D4D] border border-gray-700/50 text-gray-300 font-medium py-2.5 px-6 rounded-lg transition-colors text-sm'
-            >
-              {t('cameraList.clearButton') || 'Clear'}
-            </button>
-          </div>
+          {/* Clear Button */}
+          <button
+            onClick={handleClearFilters}
+            className={`${buttons.secondary} flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg ${textSizes.subtitle} w-full sm:w-auto`}
+          >
+            <CloseIcon size={16} />
+            {t('cameraList.clearButton') || 'Clear'}
+          </button>
         </div>
       </div>
 
       <CameraStatusSummary cameras={filteredCameras} />
-      
+
+      {/* Loading */}
       {isLoading && (
-        <div
-          className='bg-[#2A2B36] rounded-xl p-5 border border-gray-700/50 mb-2'
-        >
-          <p className='text-center'>
-            {t('cameraList.loading') || 'Loading cameras...'}
-          </p>
-        </div>
-      )}
-      {error && (
-        <div
-          className='bg-[#2A2B36] rounded-xl p-5 border border-gray-700/50 mb-2'
-        >
-          <p className='text-center text-red-400'>
-            {t('cameraList.error') || 'Error loading cameras.'}: {error}
-          </p>
-        </div>
-      )}
-      {!isLoading && filteredCameras.length === 0 && (
-        <div
-          className='bg-[#2A2B36] rounded-xl p-5 border border-gray-700/50 mb-2'
-        >
-          <p className='text-center'>
-            {t('cameraList.noCameras') || 'No cameras found.'}
-          </p>
+        <div className={`${bgcolors.white} rounded-xl p-6 ${borderstyles.light} shadow-sm mb-4 text-center ${textcolors.dim} ${textSizes.subtitle}`}>
+          {t('cameraList.loading') || 'Loading cameras...'}
         </div>
       )}
 
-      <div className='flex flex-col gap-4'>
+      {/* Error */}
+      {error && (
+        <div className={`${bgcolors.white} rounded-xl p-6 ${borderstyles.light} shadow-sm mb-4 text-center ${textcolors.danger} ${textSizes.subtitle}`}>
+          {t('cameraList.error') || 'Error loading cameras.'}: {error}
+        </div>
+      )}
+
+      {/* Empty */}
+      {!isLoading && filteredCameras.length === 0 && (
+        <div className={`${bgcolors.white} rounded-xl p-6 ${borderstyles.light} shadow-sm mb-4 text-center ${textcolors.dim} ${textSizes.subtitle}`}>
+          {t('cameraList.noCameras') || 'No cameras found.'}
+        </div>
+      )}
+
+      {/* Camera Cards */}
+      <div className='flex flex-col gap-3'>
         {filteredCameras.map(camera => (
           <div
             key={camera.id}
-            className='bg-[#2A2B36] rounded-xl p-5 flex items-center justify-between border border-gray-700/50 hover:border-gray-600/50 transition-all'
+            className={`relative ${bgcolors.white} rounded-xl p-3 sm:p-4 pl-5 flex flex-col sm:flex-row sm:items-center justify-between gap-2 shadow-sm hover:shadow-md transition-all duration-200 ${borderstyles.light} ${borderstyles.hoverAccentLight} overflow-hidden`}
           >
-            <div className='flex items-center gap-4'>
+            <span
+              className='absolute left-0 top-3 bottom-3 w-1 rounded-r-full'
+              style={{ backgroundColor: getStatusBorderColor(camera.status) }}
+            />
+            {/* Left: icon + info */}
+            <div className='flex items-center gap-3 min-w-0'>
               {getStatusIcon(camera.status)}
-              <div>
-                <h3 className='font-semibold text-base mb-1'>{camera.name}</h3>
-                <div className='flex items-center gap-2 text-sm text-gray-400'>
-                  <IoLocationOutline className='w-4 h-4' />
-                  <span className='max-w-[50%]'>
+              <div className='min-w-0'>
+                <h3 className={`font-semibold text-base mb-1 ${textcolors.normaltext}`}>
+                  {camera.name}
+                </h3>
+                <div className={`flex flex-wrap items-center gap-x-3 gap-y-1 ${textSizes.subtitle} ${textcolors.dim}`}>
+                  <span className='flex items-center gap-1'>
+                    <MapPinIcon size={14} />
                     {t('cameraGrid.locationLabel')}:{' '}
-                    {locations.find(loc => loc.id === camera.location_id)
-                      ?.name || 'N/A'}
+                    {locations.find(loc => loc.id === camera.location_id)?.name || 'N/A'}
                   </span>
-                  <span className='mx-2 text-gray-600'>|</span>
-                  <IoVideocamOutline className='w-4 h-4' />
-                  <span className='font-mono text-xs truncate max-w-xs'>
-                    {camera.rtsp_url}
+                  <span className={`hidden sm:inline ${textcolors.disabled}`}>|</span>
+                  <span className='flex items-center gap-1.5 min-w-0'>
+                    <VideoIcon size={14} className='flex-shrink-0' />
+                    <span className='font-mono text-xs truncate max-w-[200px] sm:max-w-xs'>{camera.rtsp_url}</span>
                   </span>
                 </div>
                 {camera.status === 'error' && camera.meta?.error?.message && (
-                  <p style={{ color: '#f87171' }} className='mt-2 text-xs'>
-                    <span className='text-sm'>Error: </span>
-                    {camera.meta.error.message}
-                  </p>
+                  <div className='flex items-center gap-1.5 mt-1.5'>
+                    <AlertCircleIcon size={14} className={`${textcolors.danger} flex-shrink-0`} />
+                    <span className={`text-xs ${textcolors.danger}`}>{camera.meta.error.message}</span>
+                  </div>
                 )}
               </div>
             </div>
-            <div className='flex items-center gap-4'>
+
+            {/* Right: actions */}
+            <div className='flex items-center gap-3 flex-shrink-0 self-end sm:self-auto'>
               <Link to={`/add-camera?id=${camera.id}`}>
-                <button className='flex items-center gap-2 px-4 py-2 rounded-lg border border-[#0088FF] text-gray-300 hover:text-white hover:border-gray-600 transition-all text-sm'>
-                  <IoEyeOutline size={16}/>
-                   {t('cameraList.viewButton') || 'View'}  
-                  {/* <IoPencil size={16} />
-                  {t('cameraList.editButton') || 'Edit'} */}
+                <button className={`flex items-center gap-2 px-4 py-2 rounded-lg ${borderstyles.accentSoft} ${textcolors.accentText} ${bgcolors.accentHover} transition-all ${textSizes.subtitle} font-medium`}>
+                  <EyeIcon size={16} />
+                  {t('cameraList.viewButton') || 'View'}
                 </button>
               </Link>
               <button
                 onClick={() => handleDeleteClick(camera.id, camera.name)}
-                className='p-2 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-500/10 transition-all'
+                className={`p-2 rounded-lg ${textcolors.muted} ${textcolors.hoverDanger} ${bgcolors.dangerHover} transition-all`}
               >
-                <IoTrashOutline size={20} />
+                <TrashIcon size={20} />
               </button>
             </div>
           </div>

@@ -1,32 +1,25 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
+import ReactDOM from 'react-dom'
 import { useSelector, useDispatch } from 'react-redux'
 import { useTranslation } from 'react-i18next'
-// import { GoogleMap, useJsApiLoader, Marker } from '@react-google-maps/api'
 import { toast } from 'react-toastify'
-import { IoClose, IoChevronDown, IoLocationOutline } from 'react-icons/io5'
 import { getLocations } from '../../../features/locations/locationApiSlice'
 import { updateTenantUser } from '../../../features/userManagement/userApiSlice'
+import { colors, bgcolors, buttons, gradients, shadows } from '../../../theme'
+import { CloseIcon, ChevronDownIcon, MapPinIcon, ChevronRightIcon } from '../../../icons'
 
-const containerStyle = { width: '100%', height: '100%' }
-// Default center (Brazil roughly, adjust as needed)
-const defaultCenter = { lat: -14.235, lng: -51.9253 }
-
-const mapOptions = {
-  disableDefaultUI: true,
-  styles: [
-    { elementType: 'geometry', stylers: [{ color: '#242f3e' }] },
-    { elementType: 'labels.text.fill', stylers: [{ color: '#746855' }] }
-  ]
+const FieldLabel = ({ text }) => {
+  if (text?.endsWith('*')) {
+    return <>{text.slice(0, -1)}<span style={{ color: colors.danger }}>*</span></>
+  }
+  return <>{text}</>
 }
 
 const UpdateUserModal = ({ isOpen, onClose, tenantId, userData }) => {
   const { t } = useTranslation()
   const dispatch = useDispatch()
   const { isLoading: isUpdating } = useSelector(state => state.users)
-
-  const { locations = [] } = useSelector(
-    state => state.locations || state.locationApi || {}
-  )
+  const { locations = [] } = useSelector(state => state.locations || state.locationApi || {})
 
   const [formData, setFormData] = useState({
     full_name: '',
@@ -35,100 +28,87 @@ const UpdateUserModal = ({ isOpen, onClose, tenantId, userData }) => {
     meta: { assign_locations: [] }
   })
 
-  // Tracks if the user was originally an invitee who hasn't accepted yet.
-  // A user is considered an "invite-type" user if their status is 'invite' or 'inactive'
-  // but they have never been 'active' (i.e., they haven't accepted the invitation).
-  // This flag is set once when the modal loads and persists across status changes
-  // within the same session, preventing inactive invitees from being set to 'active'.
   const [wasInvited, setWasInvited] = useState(false)
 
-  // ------------------------------------------------------------------
-  // 1. Role Logic: Determine available roles based on current user
-  // ------------------------------------------------------------------
-  const currentUserRole = localStorage.getItem('user_role') // 'admin', 'operator', or 'viewer'
+  const [isRoleOpen, setIsRoleOpen] = useState(false)
+  const [roleCoords, setRoleCoords] = useState({ top: 0, left: 0, width: 0 })
+  const roleTriggerRef = useRef(null)
+
+  const [isStatusOpen, setIsStatusOpen] = useState(false)
+  const [statusCoords, setStatusCoords] = useState({ top: 0, left: 0, width: 0 })
+  const statusTriggerRef = useRef(null)
+
+  const currentUserRole = localStorage.getItem('user_role')
 
   const getAvailableRoles = role => {
     switch (role) {
-      case 'superadmin':
-        return ['admin', 'operator', 'viewer']
-      case 'admin':
-        return ['admin', 'operator', 'viewer']
-      case 'operator':
-        return ['operator', 'viewer']
-      case 'viewer':
-        return []
-      default:
-        return []
+      case 'superadmin': return ['admin', 'operator', 'viewer']
+      case 'admin':      return ['admin', 'operator', 'viewer']
+      case 'operator':   return ['operator', 'viewer']
+      case 'viewer':     return []
+      default:           return []
     }
   }
 
   const availableOptions = getAvailableRoles(currentUserRole)
 
-  // ------------------------------------------------------------------
-  // 2. State & Effects
-  // ------------------------------------------------------------------
   useEffect(() => {
     if (userData) {
-      // A user is an invite-type user if:
-      // 1. Their current status is 'invite' (pending acceptance), OR
-      // 2. Their status is 'inactive' but they've never been 'active'
-      //    (indicated by meta.never_accepted OR absence of meta.was_active).
-      // We also treat 'inactive' as invite-type when the user has no prior
-      // active history — this prevents the pattern: invite → set inactive →
-      // re-open modal → set active (bypassing invite acceptance).
       const isInviteType =
         userData.status === 'invite' ||
         userData.meta?.never_accepted === true ||
         (userData.status === 'inactive' && !userData.meta?.was_active)
       setWasInvited(isInviteType)
-
       setFormData({
         full_name: userData.full_name || '',
         role: userData.role || 'viewer',
         status: userData.status || 'active',
-        meta: {
-          ...userData.meta,
-          assign_locations: userData.meta?.assign_locations || []
-        }
+        meta: { ...userData.meta, assign_locations: userData.meta?.assign_locations || [] }
       })
     }
   }, [userData])
 
   useEffect(() => {
-    if (isOpen && tenantId) {
-      dispatch(getLocations({ tenantId }))
-    }
+    if (isOpen && tenantId) dispatch(getLocations({ tenantId }))
   }, [isOpen, tenantId, dispatch])
 
-  // const { isLoaded } = useJsApiLoader({
-  //   id: 'google-map-script',
-  //   googleMapsApiKey: process.env.REACT_APP_GOOGLE_MAPS_API_KEY
-  // })
+  useEffect(() => {
+    if (!isRoleOpen) return
+    if (roleTriggerRef.current) {
+      const r = roleTriggerRef.current.getBoundingClientRect()
+      setRoleCoords({ top: r.bottom + 4, left: r.left, width: r.width })
+    }
+    const h = () => setIsRoleOpen(false)
+    document.addEventListener('click', h)
+    return () => document.removeEventListener('click', h)
+  }, [isRoleOpen])
+
+  useEffect(() => {
+    if (!isStatusOpen) return
+    if (statusTriggerRef.current) {
+      const r = statusTriggerRef.current.getBoundingClientRect()
+      setStatusCoords({ top: r.bottom + 4, left: r.left, width: r.width })
+    }
+    const h = () => setIsStatusOpen(false)
+    document.addEventListener('click', h)
+    return () => document.removeEventListener('click', h)
+  }, [isStatusOpen])
 
   const handleChange = e => {
     const { name, value } = e.target
     if (name === 'role' && value !== 'viewer') {
-      // If role changes from viewer to something else, clear locations (optional logic)
-      setFormData(prev => ({
-        ...prev,
-        [name]: value,
-        meta: { ...prev.meta, assign_locations: [] }
-      }))
+      setFormData(prev => ({ ...prev, [name]: value, meta: { ...prev.meta, assign_locations: [] } }))
     } else {
       setFormData(prev => ({ ...prev, [name]: value }))
     }
   }
 
-  // Logic to handle IDs consistently
   const handleLocationToggle = locationId => {
     if (!locationId || locationId === 'default') return
-
     const idStr = String(locationId)
-
     setFormData(prev => {
       const currentLocs = prev.meta.assign_locations || []
       const isSelected = currentLocs.some(id => String(id) === idStr)
-
       return {
         ...prev,
         meta: {
@@ -142,29 +122,14 @@ const UpdateUserModal = ({ isOpen, onClose, tenantId, userData }) => {
   }
 
   const handleSubmit = async () => {
-    // Defense-in-depth: Even if frontend state was manipulated (e.g. via DevTools),
-    // never allow an invite-type user (who hasn't accepted) to be set to 'active'.
-    // NOTE: This is a frontend safeguard only. The backend MUST enforce this rule
-    // independently — reject status:'active' updates for users with invite/pending state.
-    const sanitizedStatus =
-      wasInvited && formData.status === 'active' ? 'invite' : formData.status
-
+    const sanitizedStatus = wasInvited && formData.status === 'active' ? 'invite' : formData.status
     if (wasInvited && formData.status === 'active') {
-      toast.warning(
-        t('userManagement.updateModal.cannotActivateInvite') ||
-          'Cannot set an uninvited user to active. The user must accept their invitation first.'
-      )
+      toast.warning(t('userManagement.updateModal.cannotActivateInvite') || 'Cannot set an uninvited user to active.')
       return
     }
-
     try {
       await dispatch(
-        updateTenantUser({
-          tenant_id: tenantId,
-          user_id: userData.id,
-          ...formData,
-          status: sanitizedStatus
-        })
+        updateTenantUser({ tenant_id: tenantId, user_id: userData.id, ...formData, status: sanitizedStatus })
       ).unwrap()
       toast.success(t('userManagement.updateModal.successToast'))
       onClose()
@@ -173,229 +138,220 @@ const UpdateUserModal = ({ isOpen, onClose, tenantId, userData }) => {
     }
   }
 
-  // Helper to get name from ID for display chips
   const getLocationName = id => {
     const loc = locations.find(l => String(l.id) === String(id))
     return loc ? loc.name : id
   }
 
+  const inputStyle = {
+    backgroundColor: colors.bg,
+    border: `1px solid ${colors.border}`,
+    color: colors.text,
+  }
+
+  const handleFocus = e => e.currentTarget.style.borderColor = colors.primary
+  const handleBlur  = e => e.currentTarget.style.borderColor = colors.border
+
   if (!isOpen) return null
 
   return (
-    <div className='fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4'>
-      <div className='bg-[#2c2d3a] w-full max-w-3xl rounded-2xl border border-gray-700 max-h-[90vh] flex flex-col shadow-2xl overflow-hidden'>
-        {/* Header */}
-        <div className='flex justify-between items-center p-6 border-b border-gray-700/50'>
-          <h2 className='text-2xl font-semibold text-white'>
+    <div className={`fixed inset-0 z-50 flex items-center justify-center ${bgcolors.overlay} backdrop-blur-sm p-4`}>
+      <div
+        className='w-full max-w-xl rounded-2xl shadow-2xl flex flex-col overflow-hidden max-h-[90vh]'
+        style={{ backgroundColor: colors.panel, border: `1px solid ${colors.border}` }}
+      >
+        {/* Top accent bar */}
+        <div className='h-1 w-full' style={{ background: gradients.accent }} />
+
+        {/* HEADER */}
+        <div
+          className='flex justify-between items-center px-6 py-5'
+          style={{ borderBottom: `1px solid ${colors.border}` }}
+        >
+          <h2 className='text-lg font-bold' style={{ color: colors.text }}>
             {t('userManagement.updateModal.title')}
           </h2>
-          <IoClose
-            className='text-2xl cursor-pointer text-gray-400 hover:text-white transition-colors'
+          <button
             onClick={onClose}
-          />
+            className='w-8 h-8 flex items-center justify-center rounded-lg transition-colors'
+            style={{ color: colors.textDim }}
+            onMouseEnter={e => { e.currentTarget.style.color = colors.text; e.currentTarget.style.backgroundColor = colors.bg2 }}
+            onMouseLeave={e => { e.currentTarget.style.color = colors.textDim; e.currentTarget.style.backgroundColor = 'transparent' }}
+          >
+            <CloseIcon size={20} />
+          </button>
         </div>
 
-        {/* Body */}
-        <div className='p-6 space-y-5 overflow-y-auto custom-scrollbar'>
-          <div className='space-y-4'>
+        {/* BODY */}
+        <div className='px-6 py-5 space-y-4 overflow-y-auto flex-1'>
+
+          {/* Full Name */}
+          <div>
+            <label className='block text-sm font-semibold mb-1.5' style={{ color: colors.text }}>
+              <FieldLabel text={t('userManagement.updateModal.fullName')} />
+            </label>
+            <input
+              type='text'
+              name='full_name'
+              value={formData.full_name}
+              onChange={handleChange}
+              className='w-full rounded-xl py-2.5 px-4 text-sm outline-none transition-all'
+              style={inputStyle}
+              onFocus={handleFocus}
+              onBlur={handleBlur}
+            />
+          </div>
+
+          {/* Role + Status */}
+          <div className='grid grid-cols-2 gap-4'>
+            {/* Role */}
             <div>
-              <label className='text-sm font-medium text-gray-300 block mb-2'>
-                {t('userManagement.updateModal.fullName')}
+              <label className='block text-sm font-semibold mb-1.5' style={{ color: colors.text }}>
+                <FieldLabel text={t('userManagement.updateModal.role')} />
               </label>
-              <input
-                type='text'
-                name='full_name'
-                value={formData.full_name}
-                onChange={handleChange}
-                className='w-full bg-[#1c1c24] border border-gray-700 rounded-lg py-3 px-4 text-white outline-none focus:border-blue-500 transition-all'
-              />
+              <div
+                ref={roleTriggerRef}
+                onClick={(e) => { e.stopPropagation(); setIsRoleOpen(p => !p) }}
+                className='w-full rounded-xl py-2.5 px-4 text-sm cursor-pointer flex items-center justify-between select-none'
+                style={{ ...inputStyle, border: `1px solid ${isRoleOpen ? colors.primary : colors.border}` }}
+              >
+                <span>{formData.role ? t(`userManagement.roles.${formData.role}`) : '—'}</span>
+                <span style={{ display: 'inline-flex', transition: 'transform 0.2s', transform: isRoleOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}>
+                  <ChevronDownIcon size={16} color={colors.textDim} />
+                </span>
+              </div>
+              {isRoleOpen && ReactDOM.createPortal(
+                <div
+                  onClick={(e) => e.stopPropagation()}
+                  style={{ position: 'fixed', top: roleCoords.top, left: roleCoords.left, width: roleCoords.width, backgroundColor: colors.panel, border: `1px solid ${colors.border}`, borderRadius: 12, boxShadow: shadows.dropdown, zIndex: 9999, overflow: 'hidden' }}
+                >
+                  {availableOptions.map(role => (
+                    <div
+                      key={role}
+                      onClick={() => { setFormData(prev => ({ ...prev, role, meta: { ...prev.meta, assign_locations: role !== 'viewer' ? [] : prev.meta.assign_locations } })); setIsRoleOpen(false) }}
+                      className='px-4 py-2.5 text-sm cursor-pointer'
+                      style={{ color: formData.role === role ? colors.primary : colors.text, backgroundColor: formData.role === role ? colors.primaryLight : 'transparent', fontWeight: formData.role === role ? 600 : 400 }}
+                      onMouseEnter={e => { if (formData.role !== role) e.currentTarget.style.backgroundColor = colors.bg2 }}
+                      onMouseLeave={e => { if (formData.role !== role) e.currentTarget.style.backgroundColor = 'transparent' }}
+                    >
+                      {t(`userManagement.roles.${role}`)}
+                    </div>
+                  ))}
+                </div>,
+                document.body
+              )}
             </div>
 
-            <div className='grid grid-cols-2 gap-4'>
-              {/* Role Select */}
-              <div>
-                <label className='text-sm font-medium text-gray-300 block mb-2'>
-                  {t('userManagement.updateModal.role')}
-                </label>
-                <div className='relative'>
-                  <select
-                    name='role'
-                    value={formData.role}
-                    onChange={handleChange}
-                    className='w-full bg-[#1c1c24] appearance-none border border-gray-700 rounded-lg py-3 px-4 text-white outline-none cursor-pointer focus:border-blue-500'
-                  >
-                    {/* Map over allowed roles only */}
-                    {availableOptions.map(role => (
-                      <option key={role} value={role}>
-                        {t(`userManagement.roles.${role}`)}
-                      </option>
-                    ))}
-                  </select>
-                  <IoChevronDown className='absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none' />
-                </div>
-              </div>
-
-              {/* Status Select */}
-              <div>
-                <label className='text-sm font-medium text-gray-300 block mb-2'>
-                  {t('userManagement.updateModal.status')}
-                </label>
-                <div className='relative'>
-                  <select
-                    name='status'
-                    value={formData.status}
-                    onChange={handleChange}
-                    className='w-full bg-[#1c1c24] appearance-none border border-gray-700 rounded-lg py-3 px-4 text-white outline-none cursor-pointer focus:border-blue-500'
-                  >
-                    {wasInvited ? (
-                      <>
-                        {/* Invite-type users (not yet accepted) can only be
-                            'invited' (pending) or 'inactive'. Active is
-                            locked until the user accepts their invitation. */}
-                        <option value='invite'>
-                          {t('userManagement.updateModal.invited') || 'Invited (Pending)'}
-                        </option>
-                        <option value='inactive'>
-                          {t('userManagement.updateModal.inactive')}
-                        </option>
-                        <option value='active' disabled>
-                          {t('userManagement.updateModal.active')} ({ 'Pending Invite'})
-                        </option>
-                      </>
-                    ) : (
-                      <>
-                        <option value='active'>
-                          {t('userManagement.updateModal.active')}
-                        </option>
-                        <option value='inactive'>
-                          {t('userManagement.updateModal.inactive')}
-                        </option>
-                      </>
+            {/* Status */}
+            <div>
+              <label className='block text-sm font-semibold mb-1.5' style={{ color: colors.text }}>
+                <FieldLabel text={t('userManagement.updateModal.status')} />
+              </label>
+              {(() => {
+                const statusOptions = wasInvited
+                  ? [
+                      { value: 'invite', label: t('userManagement.updateModal.invited') || 'Invited (Pending)', disabled: false },
+                      { value: 'inactive', label: t('userManagement.updateModal.inactive'), disabled: false },
+                      { value: 'active', label: `${t('userManagement.updateModal.active')} (Pending Invite)`, disabled: true },
+                    ]
+                  : [
+                      { value: 'active', label: t('userManagement.updateModal.active'), disabled: false },
+                      { value: 'inactive', label: t('userManagement.updateModal.inactive'), disabled: false },
+                    ]
+                return (
+                  <>
+                    <div
+                      ref={statusTriggerRef}
+                      onClick={(e) => { e.stopPropagation(); setIsStatusOpen(p => !p) }}
+                      className='w-full rounded-xl py-2.5 px-4 text-sm cursor-pointer flex items-center justify-between select-none'
+                      style={{ ...inputStyle, border: `1px solid ${isStatusOpen ? colors.primary : colors.border}` }}
+                    >
+                      <span>{statusOptions.find(o => o.value === formData.status)?.label || formData.status}</span>
+                      <span style={{ display: 'inline-flex', transition: 'transform 0.2s', transform: isStatusOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}>
+                        <ChevronDownIcon size={16} color={colors.textDim} />
+                      </span>
+                    </div>
+                    {isStatusOpen && ReactDOM.createPortal(
+                      <div
+                        onClick={(e) => e.stopPropagation()}
+                        style={{ position: 'fixed', top: statusCoords.top, left: statusCoords.left, width: statusCoords.width, backgroundColor: colors.panel, border: `1px solid ${colors.border}`, borderRadius: 12, boxShadow: shadows.dropdown, zIndex: 9999, overflow: 'hidden' }}
+                      >
+                        {statusOptions.map(opt => (
+                          <div
+                            key={opt.value}
+                            onClick={() => { if (!opt.disabled) { setFormData(prev => ({ ...prev, status: opt.value })); setIsStatusOpen(false) } }}
+                            className='px-4 py-2.5 text-sm'
+                            style={{ color: opt.disabled ? colors.textMute : formData.status === opt.value ? colors.primary : colors.text, backgroundColor: formData.status === opt.value ? colors.primaryLight : 'transparent', fontWeight: formData.status === opt.value ? 600 : 400, cursor: opt.disabled ? 'not-allowed' : 'pointer', opacity: opt.disabled ? 0.5 : 1 }}
+                            onMouseEnter={e => { if (!opt.disabled && formData.status !== opt.value) e.currentTarget.style.backgroundColor = colors.bg2 }}
+                            onMouseLeave={e => { if (!opt.disabled && formData.status !== opt.value) e.currentTarget.style.backgroundColor = 'transparent' }}
+                          >
+                            {opt.label}
+                          </div>
+                        ))}
+                      </div>,
+                      document.body
                     )}
-                  </select>
-                  <IoChevronDown className='absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none' />
-                </div>
-                {wasInvited && (
-                  <p className='text-[11px] text-yellow-500/80 mt-1.5 flex items-center gap-1'>
-                    <span>⚠</span>
-                    {
-                      'User has not accepted the invitation yet. Active status is locked.'}
-                  </p>
-                )}
-              </div>
+                    {wasInvited && (
+                      <p className='text-[11px] mt-1.5 flex items-center gap-1' style={{ color: colors.warningDark }}>
+                        <span>⚠</span> User has not accepted the invitation yet.
+                      </p>
+                    )}
+                  </>
+                )
+              })()}
             </div>
           </div>
 
-          {/* Location Section - Only visible if role is viewer */}
+          {/* Viewer location section */}
           {formData.role === 'viewer' && (
-            <div className='space-y-5 pt-4 border-t border-gray-700/50 animate-in fade-in duration-300'>
-              <div className='space-y-2'>
-                <label className='text-sm font-medium text-gray-300'>
-                  {t('userManagement.updateModal.locationVisibility')}
-                </label>
-
-                {/* 3. Map Section with Colored Markers */}
-                {/* <div className='w-full h-40 rounded-xl overflow-hidden border border-gray-700 bg-[#1c1c24]'>
-                  {isLoaded ? (
-                    <GoogleMap
-                      mapContainerStyle={containerStyle}
-                      center={defaultCenter}
-                      zoom={3}
-                      options={mapOptions}
-                    >
-                      {locations.map(loc => {
-                        // Check if ID is selected
-                        const isSelected = formData.meta.assign_locations.some(
-                          id => String(id) === String(loc.id)
-                        )
-                        return (
-                          <Marker
-                            key={loc.id}
-                            position={{
-                              lat: parseFloat(loc.lat),
-                              lng: parseFloat(loc.lang)
-                            }}
-                            onClick={() => handleLocationToggle(loc.id)}
-                            // Differentiate Icon Color
-                            icon={{
-                              url: isSelected
-                                ? 'http://maps.google.com/mapfiles/ms/icons/green-dot.png' // Selected
-                                : 'http://maps.google.com/mapfiles/ms/icons/red-dot.png' // Unselected
-                            }}
-                          />
-                        )
-                      })}
-                    </GoogleMap>
-                  ) : (
-                    <div className='h-full flex items-center justify-center text-gray-500'>
-                      {t('userManagement.loading')}
-                    </div>
-                  )}
-                </div> */}
-              </div>
-
-              {/* Location Select Dropdown */}
-              <div className='space-y-2'>
-                <label className='text-sm font-medium text-gray-300 block'>
+            <div className='space-y-3 pt-3' style={{ borderTop: `1px solid ${colors.border}` }}>
+              <div>
+                <label className='block text-sm font-semibold mb-1.5' style={{ color: colors.text }}>
                   {t('userManagement.updateModal.selectLocation')}
                 </label>
                 <div className='relative'>
                   <select
                     onChange={e => handleLocationToggle(e.target.value)}
                     value='default'
-                    className='w-full bg-[#1c1c24] appearance-none border border-gray-700 rounded-lg py-3 px-4 text-gray-300 outline-none cursor-pointer focus:border-blue-500 transition text-sm'
+                    className='w-full appearance-none rounded-xl py-2.5 px-4 text-sm outline-none cursor-pointer transition-all'
+                    style={{ ...inputStyle, color: colors.textDim }}
+                    onFocus={handleFocus}
+                    onBlur={handleBlur}
                   >
-                    <option value='default' disabled>
-                      {t('userManagement.updateModal.searchLocation')}
-                    </option>
+                    <option value='default' disabled>{t('userManagement.updateModal.searchLocation')}</option>
                     {locations.map(loc => {
-                      const isSelected = formData.meta.assign_locations.some(
-                        id => String(id) === String(loc.id)
-                      )
+                      const isSelected = formData.meta.assign_locations.some(id => String(id) === String(loc.id))
                       return (
-                        <option
-                          key={loc.id}
-                          value={loc.id}
-                          disabled={isSelected}
-                        >
-                          {loc.name}{' '}
-                          {isSelected
-                            ? `(${
-                                'Selected'
-                              })`
-                            : ''}
+                        <option key={loc.id} value={loc.id} disabled={isSelected}>
+                          {loc.name}{isSelected ? ' (Selected)' : ''}
                         </option>
                       )
                     })}
                   </select>
-                  <IoChevronDown className='absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none' />
+                  <ChevronDownIcon size={16} className='absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none' color={colors.textDim} />
                 </div>
               </div>
 
-              {/* Display Chips */}
-              <div className='bg-[#1c1c24] p-3 rounded-xl border border-gray-700'>
-                <p className='text-[10px] text-gray-500 uppercase font-bold mb-2 tracking-wider'>
-                  {t('userManagement.updateModal.assignedCount', {
-                    count: formData.meta.assign_locations.length
-                  })}
+              {/* Location chips */}
+              <div className='rounded-xl p-3' style={{ backgroundColor: colors.bg, border: `1px solid ${colors.border}` }}>
+                <p className='text-[10px] font-bold uppercase tracking-wider mb-2' style={{ color: colors.textMute }}>
+                  {t('userManagement.updateModal.assignedCount', { count: formData.meta.assign_locations.length })}
                 </p>
                 <div className='flex flex-wrap gap-2'>
                   {formData.meta.assign_locations.length > 0 ? (
                     formData.meta.assign_locations.map(locId => (
                       <span
                         key={locId}
-                        className='bg-blue-600/20 text-blue-400 border border-blue-500/30 px-3 py-1 rounded-full text-xs flex items-center gap-2'
+                        className='flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium'
+                        style={{ backgroundColor: colors.priorityLowBg, color: colors.primary, border: `1px solid ${colors.accentBorderLight}` }}
                       >
-                        <IoLocationOutline size={12} />
+                        <MapPinIcon size={12} />
                         {getLocationName(locId)}
-                        <IoClose
-                          className='cursor-pointer hover:text-white transition-colors'
-                          onClick={() => handleLocationToggle(locId)}
-                        />
+                        <CloseIcon size={12} className='cursor-pointer ml-1' onClick={() => handleLocationToggle(locId)} />
                       </span>
                     ))
                   ) : (
-                    <p className='text-xs text-gray-600 italic'>
+                    <p className='text-xs italic' style={{ color: colors.textMute }}>
                       {t('userManagement.updateModal.noLocations')}
                     </p>
                   )}
@@ -405,22 +361,27 @@ const UpdateUserModal = ({ isOpen, onClose, tenantId, userData }) => {
           )}
         </div>
 
-        {/* Footer */}
-        <div className='p-6 border-t border-gray-700/50 flex gap-3 bg-[#2c2d3a]'>
+        {/* FOOTER */}
+        <div
+          className='px-6 py-4 flex justify-end gap-3'
+          style={{ borderTop: `1px solid ${colors.border}`, backgroundColor: colors.panel }}
+        >
           <button
-            className='flex-1 py-3 rounded-xl bg-gray-800 text-white font-medium hover:bg-gray-700 transition-colors'
             onClick={onClose}
+            className='px-5 py-2.5 rounded-xl text-sm font-medium transition-colors'
+            style={{ backgroundColor: colors.bg2, color: colors.textDim, border: `1px solid ${colors.border}` }}
+            onMouseEnter={e => e.currentTarget.style.backgroundColor = colors.border}
+            onMouseLeave={e => e.currentTarget.style.backgroundColor = colors.bg2}
           >
             {t('userManagement.updateModal.cancel')}
           </button>
           <button
             onClick={handleSubmit}
             disabled={isUpdating}
-            className='flex-1 py-3 rounded-xl bg-[#3885CC] text-white font-bold hover:bg-blue-600 transition-all disabled:opacity-50 shadow-lg shadow-blue-500/20'
+            className={`${buttons.primary} px-5 py-2.5 rounded-xl text-sm flex items-center gap-2 disabled:opacity-50`}
           >
-            {isUpdating
-              ? t('userManagement.updateModal.updating')
-              : t('userManagement.updateModal.updateUser')}
+            {isUpdating ? t('userManagement.updateModal.updating') : t('userManagement.updateModal.updateUser')}
+            {!isUpdating && <ChevronRightIcon size={16} />}
           </button>
         </div>
       </div>

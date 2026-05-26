@@ -7,7 +7,7 @@ import React, {
 } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import AlertItem from "./alertlist";
-import { textcolors, bgcolors } from "../../theme";
+import { textcolors, bgcolors, borderstyles, colors, shadows, textSizes } from "../../theme";
 import {
   fetchAlerts,
   resetAlerts,
@@ -309,32 +309,49 @@ const Alerts = () => {
     label: camera.name,
   }));
 
-  const customStyles = {
+  const customStyles = useMemo(() => ({
     control: (provided, state) => ({
       ...provided,
-      backgroundColor: "#393A4A",
-      borderColor: "#393A4A",
-      color: "white",
-      borderRadius: "9999px",
+      backgroundColor: colors.panel,
+      borderColor: state.isFocused ? colors.accent : colors.border,
+      color: colors.text,
+      borderRadius: "0.375rem",
       paddingLeft: "0.4rem",
       paddingRight: "0.4rem",
-      boxShadow: state.isFocused ? "0 0 0 1px #6366F1" : "none",
-      "&:hover": { borderColor: "#393A4A" },
+      boxShadow: state.isFocused ? `0 0 0 1px ${colors.accent}` : "none",
+      "&:hover": { borderColor: colors.border2 },
     }),
-    singleValue: (provided) => ({ ...provided, color: "white" }),
-    placeholder: (provided) => ({ ...provided, color: "#A0AEC0" }),
-    dropdownIndicator: (provided) => ({ ...provided, color: "#A0AEC0" }),
+    singleValue: (provided) => ({ ...provided, color: colors.textDim, fontSize: "0.75rem", fontWeight: "700" }),
+    placeholder: (provided) => ({ ...provided, color: colors.textDim, fontSize: "0.75rem", fontWeight: "700" }),
+    dropdownIndicator: (provided, state) => ({
+      ...provided,
+      color: colors.textDim,
+      padding: "0 4px",
+      transition: "transform 0.25s ease",
+      transform: state.selectProps.menuIsOpen ? "rotate(180deg)" : "rotate(0deg)",
+    }),
     menu: (provided) => ({
       ...provided,
-      backgroundColor: "#393A4A",
+      backgroundColor: colors.panel,
       borderRadius: "0.5rem",
+      border: `1px solid ${colors.border}`,
+      boxShadow: shadows.card,
+    }),
+    menuList: (provided) => ({
+      ...provided,
+      maxHeight: "200px",
+      overflowY: "auto",
+      scrollbarWidth: "thin",
+      scrollbarColor: `${colors.border} transparent`,
     }),
     option: (provided, state) => ({
       ...provided,
-      backgroundColor: state.isFocused ? "#4A5568" : "#393A4A",
-      color: "white",
+      backgroundColor: state.isFocused ? colors.bg2 : colors.panel,
+      color: colors.text,
+      fontSize: "0.75rem",
+      fontWeight: "600",
     }),
-  };
+  }), []);
 
 
   useEffect(() => {
@@ -376,18 +393,21 @@ const Alerts = () => {
     );
   };
   return (
-    <div className={`min-h-screen ${bgcolors.white} p-6 w-full`}>
+    <div className={`min-h-full ${bgcolors.surface} w-full`}>
       <div className="mx-auto max-w-full">
+        {/* Sticky header + filters */}
+        <div className={`sticky top-0 z-10 ${bgcolors.surface} px-4 sm:px-6 pt-1 pb-2`}>
         {/* Header */}
-        <div className="flex items-center justify-between mb-4">
-          <h1 className="text-2xl font-semibold">
-            {t("alerts.latest_alerts")}
-          </h1>
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h1 className="text-2xl font-bold" style={{ color: colors.text }}>Alerts</h1>
+            <p className={`${textSizes.subtitle} ${textcolors.dim} mt-2`}>Review detections across cameras, locations, and timeframes.</p>
+          </div>
         </div>
 
         {/* Filters */}
-        <div className="flex justify-start gap-4 mb-6 flex-wrap">
-          <div className="w-48">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:flex xl:flex-wrap gap-3 mb-6">
+          <div className="w-full xl:w-48">
             <Select
               options={priorityOptions}
               onChange={(opt) => setPriorityFilter(opt ? opt.value : null)}
@@ -396,7 +416,7 @@ const Alerts = () => {
               styles={customStyles}
             />
           </div>
-          <div className="w-50">
+          <div className="w-full xl:w-48">
             <Select
               options={detectionTypeOptions}
               onChange={(opt) => setDetectionType(opt ? opt.value : null)}
@@ -409,7 +429,7 @@ const Alerts = () => {
             />
           </div>
 
-          <div className="w-48">
+          <div className="w-full xl:w-48">
             <Select
               options={locationOptions}
               onChange={(opt) => setSelectedLocation(opt)}
@@ -420,7 +440,7 @@ const Alerts = () => {
             />
           </div>
 
-          <div className="w-52">
+          <div className="w-full xl:w-52">
             <Select
               options={cameraOptions}
               onChange={(opt) => setSelectedCamera(opt)}
@@ -431,7 +451,7 @@ const Alerts = () => {
             />
           </div>
 
-          <div className="w-48">
+          <div className="w-full xl:w-48">
             <Select
               options={readOptions}
               onChange={(opt) => setReadStatus(opt ? opt.value : null)}
@@ -441,7 +461,7 @@ const Alerts = () => {
             />
           </div>
 
-          <div className="w-64">
+          <div className="w-full xl:w-64">
             <DatePicker
               selectsRange
               startDate={startDate}
@@ -449,18 +469,21 @@ const Alerts = () => {
               onChange={(update) => setDateRange(update)}
               isClearable
               placeholderText={t("alerts.select_date_range")}
-              className="w-full px-6 py-2 rounded-full bg-[#393A4A] text-white placeholder-[#A0AEC0] focus:outline-none focus:ring-1 focus:ring-[#6366F1]"
+              className={`w-full px-4 py-2 rounded-md border focus:outline-none focus:ring-1 text-xs font-bold`}
+              style={{ backgroundColor: colors.panel, color: colors.textDim, borderColor: colors.border, "--tw-ring-color": colors.accent }}
             />
           </div>
         </div>
 
+        </div>{/* end sticky */}
+
         {/* Alerts Section */}
-        <div className={`${bgcolors.componentsclr} w-full rounded-lg p-6`}>
+        <div className={`${bgcolors.white} w-full px-4 sm:px-6 pb-6`}>
           <div className="flex flex-col lg:flex-row gap-6">
             <div className="lg:w-[100%] w-full">
               {error && (
-                <div className="bg-red-900 bg-opacity-20 border border-red-500 rounded-lg p-4">
-                  <p className="text-red-400 text-sm">
+                <div className={`${bgcolors.dangerFaint} ${borderstyles.dangerBorder} rounded-lg p-4`}>
+                  <p className={`${textcolors.dangerDark} text-sm`}>
                     <strong>{t("alerts.error")}:</strong> {error}
                   </p>
                 </div>
@@ -468,10 +491,10 @@ const Alerts = () => {
 
               <div
                 ref={containerRef}
-                className="space-y-4 w-full max-h-[650px] overflow-y-auto scrollbar-thin scrollbar-thumb-[#3b405e] scrollbar-track-[#1f2333] hover:scrollbar-thumb-[#4a5070] rounded-lg pr-2"
+                className="space-y-4 w-full flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-[#3885CC] scrollbar-track-transparent hover:scrollbar-thumb-[#2d6da8] pb-6 pr-1"
               >
                 {alerts.length === 0 && !isLoading && !error && (
-                  <div className="text-center py-4 text-gray-400 text-sm">
+                  <div className={`text-center py-4 ${textcolors.dim} text-sm`}>
                     {t("alerts.no_alerts_at_this_time")}
                   </div>
                 )}
@@ -494,21 +517,21 @@ const Alerts = () => {
 
                 {/* Loading indicator for initial load */}
                 {isLoading && !isFetchingMore && (
-                  <div className="text-center py-4 text-gray-400 text-sm">
+                  <div className={`text-center py-4 ${textcolors.dim} text-sm`}>
                     {t("alerts.loading_alerts")}
                   </div>
                 )}
 
                 {/* Loading indicator for infinite scroll */}
                 {isFetchingMore && (
-                  <div className="text-center py-4 text-gray-400 text-sm">
+                  <div className={`text-center py-4 ${textcolors.dim} text-sm`}>
                     Loading more alerts...
                   </div>
                 )}
 
                 {/* No more data message */}
                 {!hasMore && !isLoading && alerts.length > 0 && (
-                  <div className="text-center py-4 text-gray-400 text-sm">
+                  <div className={`text-center py-4 ${textcolors.dim} text-sm`}>
                     No more alerts to load
                   </div>
                 )}

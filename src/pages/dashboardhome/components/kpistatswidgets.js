@@ -1,9 +1,9 @@
 import React from "react";
-import { FiX, FiMaximize2, FiInfo } from "react-icons/fi";
-import FilterDropdown from "../../../component/FilterDropdown"; // Adjust path if needed
+import FilterDropdown from "../../../component/FilterDropdown";
 import { useState, useRef, useEffect } from "react";
+import { bgcolors, textcolors, borderstyles, colors } from "../../../theme";
 import ReactDOM from "react-dom";
-import { MdDragIndicator } from "react-icons/md";
+import { CloseIcon, InfoIcon, MoveIcon } from "../../../icons";
 const KpiWidget = ({
   title,
   value,
@@ -11,6 +11,7 @@ const KpiWidget = ({
   subIcon,
   infoText,
   subClass,
+  accentColor,
   onExpand,
   onRemove,
   filterProps, // Receives all filter props specifically for this card
@@ -29,6 +30,7 @@ const KpiWidget = ({
     if (left + tooltipWidth > window.scrollX + window.innerWidth - 8) {
       left = rect.left + window.scrollX - tooltipWidth - 8;
     }
+    left = Math.max(window.scrollX + 8, left);
     setTooltipPos({ top, left });
   };
   useEffect(() => {
@@ -43,24 +45,29 @@ const KpiWidget = ({
   }, [showInfo]);
 
   return (
-    <div className="bg-[#2a2f45] rounded-lg p-4 flex flex-col justify-between h-full border border-[#2A2F45] shadow-lg hover:border-[#3b4059] transition-all duration-200 group relative">
+    <div className={`${bgcolors.white} rounded-2xl flex flex-col justify-between h-full ${borderstyles.light} shadow-sm hover:shadow-md ${borderstyles.hoverGray} transition-all duration-200 group relative overflow-hidden`}>
+      <span
+        className="absolute left-0 top-1/2 -translate-y-1/2 w-1 rounded-full"
+        style={{ height: '80%', backgroundColor: accentColor || colors.primary }}
+      />
+      <div className="p-4 flex flex-col justify-between h-full">
       {/* --- Card Header --- */}
       <div className="drag-handle flex items-start justify-between mb-2 cursor-move select-none">
-        <div className="flex items-center gap-2 text-gray-400">
+        <div className={`flex items-center gap-2 ${textcolors.muted}`}>
           <button
             onMouseDown={(e) => e.stopPropagation()}
             onClick={onExpand}
-            className="hover:text-white transition-colors cursor-pointer"
+            className={`${textcolors.hoverMuted} transition-colors cursor-pointer`}
             title="Expand"
           >
-            <MdDragIndicator size={20} />
+            <MoveIcon size={20} />
           </button>
-          <span className="text-[11px] font-semibold uppercase tracking-wider text-gray-300">
+          <span className={`text-[11px] font-semibold uppercase tracking-wider ${textcolors.dim}`}>
             {title}
           </span>
         </div>
 
-        <div className="flex items-center gap-2 text-gray-400">
+        <div className={`flex items-center gap-2 ${textcolors.muted}`}>
           {infoText && (
             <>
               <button
@@ -68,9 +75,9 @@ const KpiWidget = ({
                 onMouseDown={(e) => e.stopPropagation()}
                 onMouseEnter={() => setShowInfo(true)}
                 onMouseLeave={() => setShowInfo(false)}
-                className="ml-1 text-gray-400 hover:text-white flex items-center"
+                className={`ml-1 ${textcolors.muted} ${textcolors.hoverMuted} flex items-center`}
               >
-                <FiInfo size={14} />
+                <InfoIcon size={14} />
               </button>
 
               {showInfo &&
@@ -81,8 +88,9 @@ const KpiWidget = ({
                       top: tooltipPos.top,
                       left: tooltipPos.left,
                       zIndex: 9999,
+                      color: colors.text,
                     }}
-                    className="w-72 bg-[#111827] text-xs text-gray-100 p-3 rounded-md shadow-xl border border-[#374151]"
+                    className={`w-72 ${bgcolors.white} text-xs p-3 rounded-md shadow-xl ${borderstyles.light}`}
                     onMouseEnter={() => setShowInfo(true)}
                     onMouseLeave={() => setShowInfo(false)}
                   >
@@ -105,10 +113,10 @@ const KpiWidget = ({
           <button
             onMouseDown={(e) => e.stopPropagation()}
             onClick={onRemove}
-            className="hover:text-red-400 transition-colors cursor-pointer ml-1"
+            className={`${textcolors.hoverDanger} transition-colors cursor-pointer ml-1 ${textcolors.muted}`}
             title="Remove"
           >
-            <FiX size={16} />
+            <CloseIcon size={16} />
           </button>
         </div>
       </div>
@@ -118,7 +126,8 @@ const KpiWidget = ({
         <h3
           className={`${
             isLongText ? "text-[13px] leading-snug uppercase" : "text-[32px]"
-          } font-bold text-white tracking-tight`}
+          } font-bold tracking-tight`}
+          style={{ color: colors.text }}
         >
           {value}
         </h3>
@@ -127,13 +136,14 @@ const KpiWidget = ({
       {/* --- Sub Text --- */}
       <div
         className={`text-[11px] mt-2 flex items-center gap-2 font-medium pointer-events-none ${
-          subClass || "text-gray-500"
+          subClass || textcolors.dim
         }`}
       >
         {subIcon && (
           <span className="flex items-center justify-center">{subIcon}</span>
         )}
         {subText}
+      </div>
       </div>
     </div>
   );

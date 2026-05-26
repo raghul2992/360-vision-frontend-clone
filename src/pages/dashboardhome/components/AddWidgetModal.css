@@ -4,47 +4,53 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background-color: rgba(0, 0, 0, 0.7);
+    background-color: rgba(0, 0, 0, 0.4);
     display: flex;
     justify-content: center;
     align-items: center;
     z-index: 1000;
+    backdrop-filter: blur(4px);
 }
 
 .modal-content {
-    background-color: #2a2f45;
+    background-color: #ffffff;
     padding: 2rem;
-    border-radius: 0.5rem;
+    border-radius: 1rem;
     width: 90%;
     max-width: 600px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+    border: 1px solid #e2e8f0;
 }
 
 .modal-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border-bottom: 1px solid #4b5563;
+    border-bottom: 1px solid #e2e8f0;
     padding-bottom: 1rem;
     margin-bottom: 1rem;
 }
 
 .modal-header h2 {
-    color: #ffffff;
+    color: #1e293b;
     font-size: 1.25rem;
-    font-weight: 600;
+    font-weight: 700;
 }
 
 .close-button {
     background: none;
     border: none;
-    color: #9ca3af;
+    color: #94a3b8;
     cursor: pointer;
-    font-size: 1.5rem;
+    font-size: 1.25rem;
+    border-radius: 8px;
+    padding: 4px;
+    transition: background-color 0.2s, color 0.2s;
 }
 
 .close-button:hover {
-    color: #ffffff;
+    color: #1e293b;
+    background-color: #f1f5f9;
 }
 
 .modal-body {
@@ -54,29 +60,29 @@
 }
 
 .widget-card {
-    background-color: #393a4a;
-    padding: 1.5rem;
-    border-radius: 0.5rem;
+    background-color: #f8fafc;
+    padding: 1rem;
+    border-radius: 0.75rem;
     cursor: pointer;
-    transition:
-        background-color 0.2s,
-        transform 0.2s;
-    border: 1px solid #4b5563;
+    transition: all 0.2s ease;
+    border: 1px solid #e2e8f0;
 }
 
 .widget-card:hover {
-    background-color: #4b5563;
-    transform: translateY(-5px);
+    background-color: #ffffff;
+    border-color: #3b82f6;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.1);
+    transform: translateY(-2px);
 }
 
 .widget-card h3 {
-    color: #ffffff;
-    font-size: 1rem;
+    color: #1e293b;
+    font-size: 0.9rem;
     font-weight: 600;
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.4rem;
 }
 
 .widget-card p {
-    color: #d1d5db;
-    font-size: 0.875rem;
+    color: #94a3b8;
+    font-size: 0.8rem;
 }

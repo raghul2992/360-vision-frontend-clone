@@ -1,20 +1,20 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
+import ReactDOM from 'react-dom'
 import { useSelector, useDispatch } from 'react-redux'
 import { useTranslation } from 'react-i18next'
-// import { GoogleMap, useJsApiLoader, Marker } from '@react-google-maps/api'
 import { toast } from 'react-toastify'
-import {
-  IoClose,
-  IoChevronDown,
-  IoLocationOutline,
-  IoChevronForward
-} from 'react-icons/io5'
 import { getLocations } from '../../../features/locations/locationApiSlice'
-import {
-  addNewUser,
-  inviteUser
-} from '../../../features/userManagement/userApiSlice'
+import { addNewUser, inviteUser } from '../../../features/userManagement/userApiSlice'
 import generateRandomPassword from '../../../utils/generatePassword'
+import { colors, bgcolors, borderstyles, buttons, gradients, shadows } from '../../../theme'
+import { CloseIcon, ChevronDownIcon, MapPinIcon, ChevronRightIcon } from '../../../icons'
+
+const FieldLabel = ({ text }) => {
+  if (text?.endsWith('*')) {
+    return <>{text.slice(0, -1)}<span style={{ color: colors.danger }}>*</span></>
+  }
+  return <>{text}</>
+}
 
 const AddUserModal = ({ isOpen, onClose, tenantId }) => {
   const { t } = useTranslation()
@@ -22,7 +22,10 @@ const AddUserModal = ({ isOpen, onClose, tenantId }) => {
   const { isLoading: isCreating } = useSelector(state => state.users)
   const { locations = [] } = useSelector(state => state.locationApi)
 
-  // Removed showInviteConfirm state
+  const [isRoleOpen, setIsRoleOpen] = useState(false)
+  const [roleDropdownCoords, setRoleDropdownCoords] = useState({ top: 0, left: 0, width: 0 })
+  const roleTriggerRef = useRef(null)
+
   const [formData, setFormData] = useState({
     full_name: '',
     email: '',
@@ -35,17 +38,11 @@ const AddUserModal = ({ isOpen, onClose, tenantId }) => {
 
   const getAvailableRoles = role => {
     switch (role) {
-      case "superadmin":
-        
-        return [ "admin", "operator", "viewer"];
-      case 'admin':
-        return ['admin', 'operator', 'viewer']
-      case 'operator':
-        return ['operator', 'viewer']
-      case 'viewer':
-        return []
-      default:
-        return []
+      case 'superadmin': return ['admin', 'operator', 'viewer']
+      case 'admin':      return ['admin', 'operator', 'viewer']
+      case 'operator':   return ['operator', 'viewer']
+      case 'viewer':     return []
+      default:           return []
     }
   }
 
@@ -55,20 +52,23 @@ const AddUserModal = ({ isOpen, onClose, tenantId }) => {
     if (tenantId && isOpen) dispatch(getLocations({ tenantId }))
   }, [tenantId, isOpen, dispatch])
 
-  // const { isLoaded } = useJsApiLoader({
-  //   id: 'google-map-script',
-  //   googleMapsApiKey: process.env.REACT_APP_GOOGLE_MAPS_API_KEY
-  // })
+  useEffect(() => {
+    if (!isRoleOpen) return
+    if (roleTriggerRef.current) {
+      const rect = roleTriggerRef.current.getBoundingClientRect()
+      setRoleDropdownCoords({ top: rect.bottom + 4, left: rect.left, width: rect.width })
+    }
+    const handler = () => setIsRoleOpen(false)
+    document.addEventListener('click', handler)
+    return () => document.removeEventListener('click', handler)
+  }, [isRoleOpen])
 
   const handleLocationToggle = locationId => {
     if (!locationId || locationId === 'default') return
-
     const targetId = locationId.toString()
-
     setFormData(prev => {
       const currentIds = prev.meta.assign_locations
       const isSelected = currentIds.includes(targetId)
-
       return {
         ...prev,
         meta: {
@@ -85,18 +85,12 @@ const AddUserModal = ({ isOpen, onClose, tenantId }) => {
     if (!formData.full_name || !formData.email || !formData.password) {
       return toast.error(t('userManagement.errors.requiredFields'))
     }
-
     if (formData.role === 'viewer' && formData.meta.assign_locations.length === 0) {
-      return toast.error( 'Please select at least one location for viewer.')
+      return toast.error('Please select at least one location for viewer.')
     }
-
     try {
-      // 1. Create the User
-      const res = await dispatch(
-        addNewUser({ tenant_id: tenantId, ...formData })
-      ).unwrap()
+      const res = await dispatch(addNewUser({ tenant_id: tenantId, ...formData })).unwrap()
       console.log(res)
-      // 2. Immediately Send Invitation
       try {
         await dispatch(
           inviteUser({
@@ -105,21 +99,11 @@ const AddUserModal = ({ isOpen, onClose, tenantId }) => {
             redirect_url: window.location.origin + '/accept-invitation'
           })
         ).unwrap()
-
-        // Success message for both actions
-        toast.success(
-          t('userManagement.toast.inviteSuccess') ||
-            'User added and invitation sent!'
-        )
+        toast.success(t('userManagement.toast.inviteSuccess') || 'User added and invitation sent!')
       } catch (inviteErr) {
-        // Handle case where user is created but invite fails
         console.error(inviteErr)
-        toast.warning(
-          'User added, but failed to send invitation email automatically.'
-        )
+        toast.warning('User added, but failed to send invitation email automatically.')
       }
-
-      // 3. Refresh List and Close Modal
       window.dispatchEvent(new CustomEvent('triggeruserapi', { detail: true }))
       onClose()
     } catch (err) {
@@ -128,137 +112,169 @@ const AddUserModal = ({ isOpen, onClose, tenantId }) => {
     }
   }
 
-  // Removed separate handleSendInvitation function
-
   if (!isOpen) return null
 
   return (
-    <div className='fixed inset-0 z-[90] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4'>
-      <div className='bg-[#2c2d3a] w-full max-w-3xl rounded-2xl border border-gray-700 max-h-[90vh] flex flex-col shadow-2xl overflow-hidden'>
-        {/* Removed ternary check for showInviteConfirm. Always show form now. */}
+    <div className={`fixed inset-0 z-[90] flex items-center justify-center ${bgcolors.overlay} backdrop-blur-sm p-4`}>
+      <div
+        className='w-full max-w-lg rounded-2xl shadow-2xl flex flex-col overflow-hidden max-h-[90vh]'
+        style={{ backgroundColor: colors.panel, border: `1px solid ${colors.border}` }}
+      >
+        {/* Top accent bar */}
+        <div className='h-1 w-full' style={{ background: gradients.accent }} />
 
-        {/* MODAL HEADER */}
-        <div className='flex justify-between items-center p-6 border-b border-gray-700/50'>
-          <h2 className='text-2xl font-semibold text-white'>
+        {/* HEADER */}
+        <div
+          className='flex justify-between items-center px-6 py-5'
+          style={{ borderBottom: `1px solid ${colors.border}` }}
+        >
+          <h2 className='text-lg font-bold' style={{ color: colors.text }}>
             {t('userManagement.addModal.title')}
           </h2>
-          <IoClose
-            className='text-2xl cursor-pointer text-gray-400 hover:text-white transition-colors'
+          <button
             onClick={onClose}
-          />
+            className='w-8 h-8 flex items-center justify-center rounded-lg transition-colors'
+            style={{ color: colors.textDim }}
+            onMouseEnter={e => { e.currentTarget.style.color = colors.text; e.currentTarget.style.backgroundColor = colors.bg2 }}
+            onMouseLeave={e => { e.currentTarget.style.color = colors.textDim; e.currentTarget.style.backgroundColor = 'transparent' }}
+          >
+            <CloseIcon size={20} />
+          </button>
         </div>
 
-        {/* MODAL BODY */}
-        <div className='p-6 space-y-5 overflow-y-auto custom-scrollbar'>
-          <div className='space-y-4'>
-            <div>
-              <label className='text-sm font-medium text-gray-300 block mb-2'>
-                {t('userManagement.addModal.fullName')}
-              </label>
-              <input
-                type='text'
-                placeholder={t('userManagement.addModal.fullNamePlaceholder')}
-                value={formData.full_name}
-                onChange={e =>
-                  setFormData({ ...formData, full_name: e.target.value })
-                }
-                className='w-full bg-[#1c1c24] border border-gray-700 rounded-lg py-3 px-4 text-white outline-none focus:border-blue-500'
-              />
-            </div>
-            <div>
-              <label className='text-sm font-medium text-gray-300 block mb-2'>
-                {t('userManagement.addModal.email')}
-              </label>
-              <input
-                type='email'
-                placeholder={t('userManagement.addModal.emailPlaceholder')}
-                value={formData.email}
-                onChange={e =>
-                  setFormData({ ...formData, email: e.target.value })
-                }
-                className='w-full bg-[#1c1c24] border border-gray-700 rounded-lg py-3 px-4 text-white outline-none focus:border-blue-500'
-              />
-            </div>
-            <div>
-              {/* Password field hidden as per previous code context, but keeping struct */}
-              <div className='relative'>
-                {/* Input removed in previous snippet */}
-              </div>
-            </div>
-            <div>
-              <label className='text-sm font-medium text-gray-300 block mb-2'>
-                {t('userManagement.addModal.role')}
-              </label>
-              <div className='relative'>
-                <select
-                  value={formData.role}
-                  onChange={e =>
-                    setFormData({
-                      ...formData,
-                      role: e.target.value,
-                      meta: { assign_locations: [] }
-                    })
-                  }
-                  className='w-full bg-[#1c1c24] appearance-none border border-gray-700 rounded-lg py-3 px-4 text-white outline-none cursor-pointer focus:border-blue-500'
-                >
-                  <option value='' disabled>
-                    {t('userManagement.selectRole', 'Select a Role')}
-                  </option>
+        {/* BODY */}
+        <div className='px-6 py-5 space-y-4 overflow-y-auto flex-1'>
 
-                  {availableOptions.map(role => (
-                    <option key={role} value={role}>
-                      {t(`userManagement.roles.${role}`)}
-                    </option>
-                  ))}
-                </select>
-                <IoChevronDown className='absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none' />
+          {/* Full Name */}
+          <div>
+            <label className='block text-sm font-semibold mb-1.5' style={{ color: colors.text }}>
+              <FieldLabel text={t('userManagement.addModal.fullName')} />
+            </label>
+            <input
+              type='text'
+              placeholder={t('userManagement.addModal.fullNamePlaceholder')}
+              value={formData.full_name}
+              onChange={e => setFormData({ ...formData, full_name: e.target.value })}
+              className='w-full rounded-xl py-2.5 px-4 text-sm outline-none transition-all'
+              style={{
+                backgroundColor: colors.bg,
+                border: `1px solid ${colors.border}`,
+                color: colors.text,
+              }}
+              onFocus={e => e.currentTarget.style.borderColor = colors.primary}
+              onBlur={e => e.currentTarget.style.borderColor = colors.border}
+            />
+          </div>
+
+          {/* Email */}
+          <div>
+            <label className='block text-sm font-semibold mb-1.5' style={{ color: colors.text }}>
+              <FieldLabel text={t('userManagement.addModal.email')} />
+            </label>
+            <input
+              type='email'
+              placeholder={t('userManagement.addModal.emailPlaceholder')}
+              value={formData.email}
+              onChange={e => setFormData({ ...formData, email: e.target.value })}
+              className='w-full rounded-xl py-2.5 px-4 text-sm outline-none transition-all'
+              style={{
+                backgroundColor: colors.bg,
+                border: `1px solid ${colors.border}`,
+                color: colors.text,
+              }}
+              onFocus={e => e.currentTarget.style.borderColor = colors.primary}
+              onBlur={e => e.currentTarget.style.borderColor = colors.border}
+            />
+          </div>
+
+          {/* Role */}
+          <div>
+            <label className='block text-sm font-semibold mb-1.5' style={{ color: colors.text }}>
+              <FieldLabel text={t('userManagement.addModal.role')} />
+            </label>
+            <div className='relative'>
+              {/* Trigger */}
+              <div
+                ref={roleTriggerRef}
+                onClick={(e) => { e.stopPropagation(); setIsRoleOpen(prev => !prev) }}
+                className='w-full rounded-xl py-2.5 px-4 text-sm cursor-pointer flex items-center justify-between select-none'
+                style={{
+                  backgroundColor: colors.bg,
+                  border: `1px solid ${isRoleOpen ? colors.primary : colors.border}`,
+                  color: formData.role ? colors.text : colors.textMute,
+                }}
+              >
+                <span>
+                  {formData.role
+                    ? t(`userManagement.roles.${formData.role}`)
+                    : t('userManagement.selectRole', 'Select a Role')}
+                </span>
+                <span style={{ display: 'inline-flex', transition: 'transform 0.2s', transform: isRoleOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}>
+                  <ChevronDownIcon size={16} color={colors.textDim} />
+                </span>
               </div>
+
+              {/* Options panel — portalled to body so it doesn't cause modal scroll */}
+              {isRoleOpen && ReactDOM.createPortal(
+                <div
+                  onClick={(e) => e.stopPropagation()}
+                  style={{
+                    position: 'fixed',
+                    top: roleDropdownCoords.top,
+                    left: roleDropdownCoords.left,
+                    width: roleDropdownCoords.width,
+                    backgroundColor: colors.panel,
+                    border: `1px solid ${colors.border}`,
+                    borderRadius: 12,
+                    boxShadow: shadows.dropdown,
+                    zIndex: 9999,
+                    overflow: 'hidden',
+                  }}
+                >
+                  {availableOptions.map(role => (
+                    <div
+                      key={role}
+                      onClick={() => {
+                        setFormData({ ...formData, role, meta: { assign_locations: [] } })
+                        setIsRoleOpen(false)
+                      }}
+                      className='px-4 py-2.5 text-sm cursor-pointer transition-colors'
+                      style={{
+                        color: formData.role === role ? colors.primary : colors.text,
+                        backgroundColor: formData.role === role ? colors.primaryLight : 'transparent',
+                        fontWeight: formData.role === role ? 600 : 400,
+                      }}
+                      onMouseEnter={e => { if (formData.role !== role) e.currentTarget.style.backgroundColor = colors.bg2 }}
+                      onMouseLeave={e => { if (formData.role !== role) e.currentTarget.style.backgroundColor = 'transparent' }}
+                    >
+                      {t(`userManagement.roles.${role}`)}
+                    </div>
+                  ))}
+                </div>,
+                document.body
+              )}
             </div>
           </div>
 
-          {/* VIEWER SPECIFIC FIELDS */}
+          {/* Viewer location selector */}
           {formData.role === 'viewer' && (
-            <div className='space-y-5 pt-4 border-t border-gray-700/50 animate-in fade-in duration-300'>
-              {/* <div className='w-full h-40 rounded-xl overflow-hidden border border-gray-700 bg-[#1c1c24]'>
-                {isLoaded && (
-                  <GoogleMap
-                    mapContainerStyle={containerStyle}
-                    center={defaultCenter}
-                    zoom={3}
-                    options={mapOptions}
-                  >
-                    {locations.map(l => {
-                      const isSelected =
-                        formData.meta.assign_locations.includes(l.id.toString())
-                      return (
-                        <Marker
-                          key={l.id}
-                          position={{
-                            lat: parseFloat(l.lat),
-                            lng: parseFloat(l.lang)
-                          }}
-                          onClick={() => handleLocationToggle(l.id)}
-                          icon={{
-                            url: isSelected
-                              ? 'https://maps.google.com/mapfiles/ms/icons/blue-dot.png'
-                              : 'https://maps.google.com/mapfiles/ms/icons/red-dot.png'
-                          }}
-                        />
-                      )
-                    })}
-                  </GoogleMap>
-                )}
-              </div> */}
-              <div className='space-y-2'>
-                <label className='text-sm font-medium text-gray-300 block'>
+            <div className='space-y-3 pt-3' style={{ borderTop: `1px solid ${colors.border}` }}>
+              <div>
+                <label className='block text-sm font-semibold mb-1.5' style={{ color: colors.text }}>
                   {t('userManagement.addModal.selectLocation')}
-                  <span className='text-red-500 ml-1'>*</span>
-                </label>
+                    </label>
                 <div className='relative'>
                   <select
                     onChange={e => handleLocationToggle(e.target.value)}
                     value='default'
-                    className='w-full bg-[#1c1c24] appearance-none border border-gray-700 rounded-lg py-3 px-4 text-gray-300 outline-none cursor-pointer focus:border-blue-500 transition-all text-sm'
+                    className='w-full appearance-none rounded-xl py-2.5 px-4 text-sm outline-none cursor-pointer transition-all'
+                    style={{
+                      backgroundColor: colors.bg,
+                      border: `1px solid ${colors.border}`,
+                      color: colors.textDim,
+                    }}
+                    onFocus={e => e.currentTarget.style.borderColor = colors.primary}
+                    onBlur={e => e.currentTarget.style.borderColor = colors.border}
                   >
                     <option value='default' disabled>
                       {t('userManagement.addModal.searchLocation')}
@@ -267,47 +283,47 @@ const AddUserModal = ({ isOpen, onClose, tenantId }) => {
                       <option
                         key={l.id}
                         value={l.id}
-                        disabled={formData.meta.assign_locations.includes(
-                          l.id.toString()
-                        )}
+                        disabled={formData.meta.assign_locations.includes(l.id.toString())}
                       >
                         {l.name}
                       </option>
                     ))}
                   </select>
-                  <IoChevronDown className='absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none' />
+                  <ChevronDownIcon
+                    size={16}
+                    className='absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none'
+                    color={colors.textDim}
+                  />
                 </div>
               </div>
 
-              {/* CHIPS */}
-              <div className='bg-[#1c1c24] p-3 rounded-xl border border-gray-700'>
-                <p className='text-[10px] text-gray-500 uppercase font-bold mb-2 tracking-wider'>
-                  {t('userManagement.addModal.assignedCount', {
-                    count: formData.meta.assign_locations.length
-                  })}
+              {/* Location chips */}
+              <div className='rounded-xl p-3' style={{ backgroundColor: colors.bg, border: `1px solid ${colors.border}` }}>
+                <p className='text-[10px] font-bold uppercase tracking-wider mb-2' style={{ color: colors.textMute }}>
+                  {t('userManagement.addModal.assignedCount', { count: formData.meta.assign_locations.length })}
                 </p>
                 <div className='flex flex-wrap gap-2'>
                   {formData.meta.assign_locations.length > 0 ? (
                     formData.meta.assign_locations.map(locId => {
-                      const locationObj = locations.find(
-                        l => l.id.toString() === locId.toString()
-                      )
+                      const locationObj = locations.find(l => l.id.toString() === locId.toString())
                       return (
                         <span
                           key={locId}
-                          className='bg-blue-600/20 text-blue-400 border border-blue-500/30 px-3 py-1 rounded-full text-xs flex items-center gap-2'
+                          className='flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium'
+                          style={{ backgroundColor: colors.priorityLowBg, color: colors.primary, border: `1px solid ${colors.accentBorderLight}` }}
                         >
-                          <IoLocationOutline size={12} />
+                          <MapPinIcon size={12} />
                           {locationObj ? locationObj.name : locId}
-                          <IoClose
-                            className='cursor-pointer hover:text-white'
+                          <CloseIcon
+                            size={12}
+                            className='cursor-pointer ml-1'
                             onClick={() => handleLocationToggle(locId)}
                           />
                         </span>
                       )
                     })
                   ) : (
-                    <p className='text-xs text-gray-600 italic'>
+                    <p className='text-xs italic' style={{ color: colors.textMute }}>
                       {t('userManagement.addModal.noLocations')}
                     </p>
                   )}
@@ -317,23 +333,27 @@ const AddUserModal = ({ isOpen, onClose, tenantId }) => {
           )}
         </div>
 
-        {/* MODAL FOOTER */}
-        <div className='p-6 border-t border-gray-700/50 flex gap-3 bg-[#2c2d3a]'>
+        {/* FOOTER */}
+        <div
+          className='px-6 py-4 flex justify-end gap-3'
+          style={{ borderTop: `1px solid ${colors.border}`, backgroundColor: colors.panel }}
+        >
           <button
-            className='flex-1 py-3 rounded-xl bg-gray-800 text-white font-medium hover:bg-gray-700 transition-all'
             onClick={onClose}
+            className='px-5 py-2.5 rounded-xl text-sm font-medium transition-colors'
+            style={{ backgroundColor: colors.bg2, color: colors.textDim, border: `1px solid ${colors.border}` }}
+            onMouseEnter={e => e.currentTarget.style.backgroundColor = colors.border}
+            onMouseLeave={e => e.currentTarget.style.backgroundColor = colors.bg2}
           >
             {t('userManagement.addModal.cancel')}
           </button>
           <button
             onClick={handleSubmit}
             disabled={isCreating}
-            className='flex-1 py-3 rounded-xl bg-[#3b82f6] text-white font-bold hover:bg-blue-600 disabled:opacity-50 transition-all flex items-center justify-center gap-2'
+            className={`${buttons.primary} px-5 py-2.5 rounded-xl text-sm flex items-center gap-2 disabled:opacity-50`}
           >
-            {isCreating
-              ? t('userManagement.addModal.adding')
-              : t('userManagement.addModal.addUser')}
-            {!isCreating && <IoChevronForward />}
+            {isCreating ? t('userManagement.addModal.adding') : t('userManagement.addModal.addUser')}
+            {!isCreating && <ChevronRightIcon size={16} />}
           </button>
         </div>
       </div>

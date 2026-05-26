@@ -1,12 +1,8 @@
-import { bgcolors, fontWeights, textcolors, textSizes } from "../../theme";
-import Label from "../../component/Label";
-import TextInput from "../../component/TextInput";
-import { IoLockClosed, IoMailOutline } from "react-icons/io5";
-import PasswordInput from "../../component/PasswordInput";
-import ButtonComponent from "../../component/Button";
-import { Link, useNavigate ,useLocation} from "react-router-dom";
+import { textcolors, bgcolors, colors } from "../../theme";
+import { MailIcon, LockIcon, EyeIcon, EyeOffIcon } from "../../icons";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { loginUser } from "../../features/auth/authSlice";
 import { toast } from "react-toastify";
@@ -14,56 +10,36 @@ import "react-toastify/dist/ReactToastify.css";
 import { unwrapResult } from "@reduxjs/toolkit";
 
 const LoginPage = ({ callbackScreen }) => {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const dispatch = useDispatch();
   const navigate = useNavigate();
- const location = useLocation();
-  const { isLoading, error, success } = useSelector((state) => state.auth);
+  const location = useLocation();
+  const { isLoading } = useSelector((state) => state.auth);
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
- const params = new URLSearchParams(location.search);
-const redirect = params.get("redirect");
-  const changeLanguage = (lng) => {
-    i18n.changeLanguage(lng);
-  };
+  const [showPassword, setShowPassword] = useState(false);
 
-  // useEffect(() => {
-  //   if (success && localStorage.getItem('tenant_id')) {
-  //     // toast.success()
-  //     navigate('/dashboard')
-  //     // navigate('/camera')
-  //   }
-  //   if (error) {
-  //     console.log(error)
-  //     toast.error(error)
-  //   }
-  // }, [success, error, navigate, t])
+  const params = new URLSearchParams(location.search);
+  const redirect = params.get("redirect");
 
   const handleLogin = async () => {
     try {
       const actionResult = await dispatch(loginUser({ email, password }));
       const result = unwrapResult(actionResult);
 
-      console.log(result);
-
-      // Store user info
       localStorage.setItem("user_role", result.data.role);
       localStorage.setItem("user_id", result.data.id);
 
-      // Handle tenant_id based on role
       if (result.status === 200) {
         if (result.data.role === "superadmin") {
-          // Clear any existing tenant_id for superadmin
           localStorage.removeItem("tenant_id");
-          
           navigate("/tenants");
         } else {
-          // Store tenant_id for regular users (admin, operator, viewer)
           if (result.data.tenant_id) {
             localStorage.setItem("tenant_id", result.data.tenant_id);
           }
-         navigate(redirect || "/dashboard", { replace: true });
+          navigate(redirect || "/dashboard", { replace: true });
         }
       }
     } catch (error) {
@@ -73,67 +49,80 @@ const redirect = params.get("redirect");
   };
 
   return (
-    <div className="flex flex-col justify-start items-center w-full">
-      {/* Heading - centered */}
-      <div className="mb-1 text-center w-full max-w-sm">
-        <h2 className={`${fontWeights.semibold} ${textSizes.title1}`}>
+    <div className="flex flex-col w-full gap-1">
+      {/* Card heading */}
+      <div className="mb-4 text-center w-full">
+        <h2 className={`text-xl font-semibold ${textcolors.dark} mb-1`}>
           {t("login.welcome")}
         </h2>
-        <p
-          className={`${textSizes.subtitle} ${textcolors.normaltext} ${fontWeights.normal}`}
-        >
+        <p className={`text-sm ${textcolors.dim} font-normal`}>
           {t("login.subtitle")}
         </p>
       </div>
 
-      <div className="flex flex-col gap-3 w-full p-1 items-start">
-        <Label>{t("login.email")}</Label>
-        <TextInput
-          icon={<IoMailOutline size={20} color="#888888" />}
-          placeholder={t("login.email")}
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-        />
-      </div>
-      <div className="flex flex-col gap-3 w-full  p-1 items-start">
-        <Label>{t("login.password")}</Label>
-        <PasswordInput
-          icon={<IoLockClosed size={20} color="#888888" />}
-          placeholder={t("login.password")}
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-        />
-      </div>
-      <div className="self-start p-1 mb-1 ">
-        <Link to={"/forgot-password"}>
-          <ButtonComponent
-            children={t("login.forgot_password")}
-            className={`${fontWeights.semibold}`}
+      {/* Email field */}
+      <div className="flex flex-col gap-1.5 w-full mb-3">
+        <label className={`text-sm font-medium ${textcolors.dark}`}>
+          {t("login.email")}
+        </label>
+        <div className="auth-input-wrap flex items-center px-3 py-[10px] gap-2">
+          <MailIcon size={18} color={colors.textMute} className="shrink-0" />
+          <input
+            type="email"
+            placeholder={t("login.email")}
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className={`auth-input flex-1 text-sm ${textcolors.dark} ${textcolors.inputPlaceholder} bg-transparent`}
           />
+        </div>
+      </div>
+
+      {/* Password field */}
+      <div className="flex flex-col gap-1.5 w-full mb-2">
+        <label className={`text-sm font-medium ${textcolors.dark}`}>
+          {t("login.password")}
+        </label>
+        <div className="auth-input-wrap flex items-center px-3 py-[10px] gap-2">
+          <LockIcon size={18} color={colors.textMute} className="shrink-0" />
+          <input
+            type={showPassword ? "text" : "password"}
+            placeholder={t("login.password")}
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className={`auth-input flex-1 text-sm ${textcolors.dark} ${textcolors.inputPlaceholder} bg-transparent`}
+          />
+          <button
+            type="button"
+            onClick={() => setShowPassword((v) => !v)}
+            className={`shrink-0 ${textcolors.slateCaption} ${textcolors.hoverSlate} transition-colors focus:outline-none`}
+            tabIndex={-1}
+          >
+            {showPassword
+              ? <EyeOffIcon size={18} />
+              : <EyeIcon size={18} />
+            }
+          </button>
+        </div>
+      </div>
+
+      {/* Forgot password */}
+      <div className="self-start mb-4">
+        <Link
+          to="/forgot-password"
+          className={`text-sm font-semibold underline ${textcolors.normaltext} ${textcolors.hoverLink} transition-colors`}
+        >
+          {t("login.forgot_password")}
         </Link>
       </div>
 
-      <div className="p-1 w-full ">
-        <ButtonComponent
-          children={isLoading ? t("login.logging_in") : t("login.login_button")}
-          className={`${fontWeights.semibold} ${textcolors.white} ${textSizes.base} ${bgcolors.primary} w-full py-[8px] px-[16px]  flex items-center justify-center rounded-[100px]`}
-          onClick={handleLogin}
-          disabled={isLoading}
-        />
-      </div>
-      {/* Sign-up link — registration temporarily disabled */}
-      {/* <div className="flex items-center justify-center mt-4">
-        <p className={`${textSizes.base} ${textcolors.normaltext} mr-1`}>
-          {t("login.no_account")}
-        </p>
-        <ButtonComponent
-          children={t("login.sign_up")}
-          className={`${fontWeights.semibold} ${textcolors.primary}`}
-          onClick={() => {
-            callbackScreen("register");
-          }}
-        />
-      </div> */}
+      {/* Login button */}
+      <button
+        onClick={handleLogin}
+        disabled={isLoading}
+        className={`w-full py-[11px] px-4 ${bgcolors.primary} ${bgcolors.primaryHover} hover:-translate-y-0.5 disabled:opacity-60 text-white text-sm font-semibold rounded-xl flex items-center justify-center transition-all shadow-sm`}
+      >
+        {isLoading ? t("login.logging_in") : t("login.login_button")}
+      </button>
     </div>
   );
 };

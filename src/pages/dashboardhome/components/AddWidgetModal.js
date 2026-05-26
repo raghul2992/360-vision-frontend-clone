@@ -1,53 +1,72 @@
 import React from "react";
-import { FiX, FiInfo } from "react-icons/fi";
 import { useTranslation, Trans } from "react-i18next";
-import "./AddWidgetModal.css";
+import { bgcolors, textcolors, borderstyles, colors } from "../../../theme";
+import { CloseIcon, InfoIcon, PlusIcon } from "../../../icons";
 
-// Add Widget Modal Component
 const AddWidgetModal = ({ widgets, onAddWidget, onClose }) => {
   const { t } = useTranslation();
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999]">
-      <div className="bg-[#2a2f45] rounded-xl p-6 max-w-4xl w-full mx-4 max-h-[80vh] overflow-y-auto">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-white text-2xl font-semibold">
-            {t("dashboard.add_widget")}
-          </h2>
+    <div className={`fixed inset-0 ${bgcolors.overlay} flex items-center justify-center z-[9999] backdrop-blur-sm`}>
+      <div className={`${bgcolors.white} rounded-2xl shadow-xl p-6 max-w-4xl w-full mx-4 max-h-[80vh] overflow-y-auto ${borderstyles.light}`}>
+
+        {/* Header */}
+        <div className="flex items-center justify-between mb-6 pb-4 border-b flex-shrink-0" style={{ borderColor: colors.border }}>
+          <div>
+            <h2 className="text-xl font-bold" style={{ color: colors.text }}>
+              {t("dashboard.add_widget")}
+            </h2>
+            {widgets.length > 0 && (
+              <p className={`${textcolors.muted} text-sm mt-0.5`}>Select widgets to add to your dashboard</p>
+            )}
+          </div>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-white transition-colors"
+            className={`${textcolors.muted} ${bgcolors.hoverLight} p-2 rounded-lg transition-colors`}
           >
-            <FiX size={24} />
+            <CloseIcon size={20} />
           </button>
         </div>
+
+        {/* Widget Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {widgets.map((widget) => (
             <div
               key={widget.widget_name}
               onClick={() => onAddWidget(widget.widget_name)}
-              className="bg-[#1a1d29] rounded-lg p-3 cursor-pointer hover:bg-[#393A4A] transition-colors border border-transparent hover:border-[#6366F1]"
+              className={`group ${bgcolors.surface} rounded-xl p-4 cursor-pointer hover:bg-white transition-all duration-200 ${borderstyles.light} ${borderstyles.hoverAccentStrong} hover:shadow-md`}
             >
+              {/* Badge */}
               {widget.badge && (
-                <span className="text-sm font-semibold text-blue-400 border border-blue-500 bg-blue-500/10 px-3 py-0.5 pb-1 rounded-full inline-flex items-center">
+                <span className={`text-xs font-semibold ${textcolors.primary} ${borderstyles.accentBadge} ${bgcolors.primaryFaint} px-2.5 py-0.5 rounded-full inline-flex items-center mb-2`}>
                   {t(widget.badge)}
                 </span>
               )}
-              <p className="text-gray-400 text-sm pt-2">{t(widget.titleKey)}</p>
-              <p className="text-gray-500 text-xs mt-1">
+
+              {/* Title row */}
+              <div className="flex items-start justify-between gap-2 mt-1">
+                <p className="text-sm font-semibold leading-snug" style={{ color: colors.text }}>
+                  {t(widget.titleKey)}
+                </p>
+                <span className={`flex-shrink-0 w-6 h-6 rounded-full ${bgcolors.grayLight} ${bgcolors.primaryGroupHover} flex items-center justify-center transition-colors duration-200`}>
+                  <PlusIcon size={13} className={`${textcolors.muted} ${textcolors.groupHoverWhite} transition-colors duration-200`} />
+                </span>
+              </div>
+
+              {/* Description */}
+              <p className={`${textcolors.muted} text-xs mt-1.5 leading-relaxed`}>
                 {t(widget.descriptionKey)}
               </p>
 
+              {/* Tracking feature note */}
               {widget.trackingfeatureKey && (
-                <div className="mt-3 pt-2 border-t border-gray-700">
-                  <div className="flex items-start gap-2 text-xs text-gray-400">
-                    <FiInfo size={14} className="mt-[10px] flex-shrink-0" />
+                <div className="mt-3 pt-2 border-t" style={{ borderColor: colors.border }}>
+                  <div className={`flex items-start gap-2 text-xs ${textcolors.muted}`}>
+                    <InfoIcon size={13} className={`mt-[1px] flex-shrink-0 ${textcolors.primary}`} />
                     <span className="leading-relaxed line-clamp-3">
                       <Trans
                         i18nKey={widget.trackingfeatureKey}
-                        components={{
-                          highlight: <span className="text-blue-400" />,
-                        }}
+                        components={{ highlight: <span className={textcolors.primary} /> }}
                       />
                     </span>
                   </div>
@@ -56,8 +75,10 @@ const AddWidgetModal = ({ widgets, onAddWidget, onClose }) => {
             </div>
           ))}
         </div>
+
+        {/* Empty state */}
         {widgets.length === 0 && (
-          <div className="text-center text-gray-400 py-8">
+          <div className={`text-center ${textcolors.muted} py-10`}>
             All available widgets are already added
           </div>
         )}

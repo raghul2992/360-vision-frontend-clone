@@ -7,6 +7,7 @@ import { KPI_WIDGETS_CONFIG } from "../config/KpiConfig";
 import { fetchOverviewReports } from "../../../features/reports/reportsApiSlice";
 import { Responsive, WidthProvider } from "react-grid-layout";
 import { formatKpiDateLabel } from "../../../utils/dateHelpers";
+import { colors, bgcolors } from "../../../theme";
 
 import "react-grid-layout/css/styles.css";
 import "react-resizable/css/styles.css";
@@ -26,6 +27,13 @@ const KpiSection = ({
 }) => {
   const dispatch = useDispatch();
   const { t } = useTranslation();
+
+  const [rowHeight, setRowHeight] = useState(
+    typeof window !== 'undefined' && window.innerWidth < 768 ? 125 : 140
+  );
+  const handleBreakpointChange = (bp) => {
+    setRowHeight(bp === 'xxs' ? 125 : 140);
+  };
 
   // Internal data fetching state
   const [widgetFilters, setWidgetFilters] = useState({});
@@ -226,21 +234,22 @@ const KpiSection = ({
   );
 
   if (isLoading)
-    return <div className="h-[140px] bg-[#212332] animate-pulse rounded" />;
+    return <div className={`h-[125px] sm:h-[140px] ${bgcolors.disabledBg} animate-pulse rounded`} />;
   if (activeWidgets.length === 0) return null;
 
   return (
-    <div className="mb-8">
+    <div className="mb-8 px-4 sm:px-0">
       <ResponsiveGridLayout
         layouts={{ lg: displayLayout }}
         breakpoints={{ lg: 996, md: 768, xxs: 0 }}
         cols={{ lg: 5, md: 2, xxs: 1 }}
-        rowHeight={140}
+        rowHeight={rowHeight}
         margin={[16, 16]}
         compactType="horizontal"
         isDraggable={window.innerWidth > 768}
         isResizable={false}
         draggableHandle=".drag-handle"
+        onBreakpointChange={handleBreakpointChange}
         onLayoutChange={(l) => onLayoutChange && onLayoutChange(l)}
       >
         {activeWidgets.map((widget) => {
@@ -277,8 +286,8 @@ const KpiSection = ({
             <div key={widget.id} className="relative overflow-visible !z-auto">
               <div className="h-full relative">
                 {isWidgetLoading && (
-                  <div className="absolute inset-0 bg-[#212332]/80 z-20 flex items-center justify-center rounded-lg backdrop-blur-sm">
-                    <div className="w-5 h-5 border-2 border-t-transparent border-white rounded-full animate-spin"></div>
+                  <div className={`absolute inset-0 ${bgcolors.whiteOpaque} z-20 flex items-center justify-center rounded-lg backdrop-blur-sm`}>
+                    <div className="w-5 h-5 border-2 rounded-full animate-spin" style={{ borderColor: colors.primary, borderTopColor: 'transparent' }}></div>
                   </div>
                 )}
                 <KpiWidget
@@ -291,6 +300,7 @@ const KpiSection = ({
                   }
                   subIcon={widget.subIcon}
                   subClass={widget.subClass}
+                  accentColor={widget.accentColor}
                   onRemove={() => onRemoveWidget(widget.id)}
                   filterProps={specificFilterProps}
                   infoText={widget.infoKey ? t(widget.infoKey) : t(widget.descriptionKey)}

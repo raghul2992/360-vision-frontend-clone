@@ -1,20 +1,13 @@
 import { useMemo } from 'react'
-import {
-  IoWifi,
-  IoBanOutline,
-  IoRefresh,
-  IoCloseCircleOutline
-} from 'react-icons/io5'
+import { WifiIcon, BanIcon, RefreshIcon, CloseCircleIcon } from '../../../icons'
+import { bgcolors, borderstyles, textcolors, textSizes } from '../../../theme'
 
 const CameraStatusSummary = ({ cameras }) => {
-  // Calculate counts dynamically based on the passed cameras
   const counts = useMemo(() => {
     const stats = { active: 0, inactive: 0, processing: 0, error: 0 }
     cameras.forEach(camera => {
       const status = camera.status?.toLowerCase() || 'inactive'
-      if (stats[status] !== undefined) {
-        stats[status]++
-      }
+      if (stats[status] !== undefined) stats[status]++
     })
     return stats
   }, [cameras])
@@ -24,65 +17,63 @@ const CameraStatusSummary = ({ cameras }) => {
       key: 'active',
       label: 'Active (Good)',
       count: counts.active,
-      icon: <IoWifi size={20} />,
-      styles: {
-        border: 'border-green-500/30',
-        text: 'text-green-400',
-        bg: 'bg-green-500/10' // Subtle background tint if needed, or keeping it dark
-      }
+      icon: <WifiIcon size={20} />,
+      accent: bgcolors.success,
+      iconColor: textcolors.success,
+      countColor: textcolors.successDark,
+      border: borderstyles.successBorder,
+      iconBg: bgcolors.successLight,
     },
     {
       key: 'inactive',
       label: 'Inactive (Concern)',
       count: counts.inactive,
-      icon: <IoBanOutline size={20} />,
-      styles: {
-        border: 'border-gray-500/30',
-        text: 'text-gray-400',
-        bg: 'bg-gray-500/10'
-      }
+      icon: <BanIcon size={20} />,
+      accent: bgcolors.grayAccent,
+      iconColor: textcolors.muted,
+      countColor: textcolors.dim,
+      border: borderstyles.light,
+      iconBg: bgcolors.grayFaint,
     },
     {
       key: 'processing',
       label: 'Processing',
       count: counts.processing,
-      icon: <IoRefresh size={20} className='animate-spin-slow' />, // Added spin for processing effect
-      styles: {
-        border: 'border-orange-500/30',
-        text: 'text-orange-400',
-        bg: 'bg-orange-500/10'
-      }
+      icon: <RefreshIcon size={20} className='animate-spin-slow' />,
+      accent: bgcolors.orangeAccent,
+      iconColor: textcolors.orange,
+      countColor: textcolors.orangeDark,
+      border: borderstyles.orangeBorder,
+      iconBg: bgcolors.orangeLight,
     },
     {
       key: 'error',
       label: 'Error (Critical)',
       count: counts.error,
-      icon: <IoCloseCircleOutline size={20} />,
-      styles: {
-        border: 'border-red-500/30',
-        text: 'text-red-400',
-        bg: 'bg-red-500/10'
-      }
-    }
+      icon: <CloseCircleIcon size={20} />,
+      accent: bgcolors.danger,
+      iconColor: textcolors.danger,
+      countColor: textcolors.dangerDark,
+      border: borderstyles.dangerBorder,
+      iconBg: bgcolors.dangerFaint,
+    },
   ]
 
   return (
-    <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6'>
+    <div className='grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6'>
       {cards.map(card => (
         <div
           key={card.key}
-          className={`relative bg-[#30313F] rounded-lg p-4 border ${card.styles.border} flex items-center justify-between shadow-sm`}
+          className={`relative ${bgcolors.white} rounded-xl p-3 ${card.border} shadow-sm overflow-hidden flex items-center justify-between`}
         >
-          {/* Left side: Icon and Label */}
-          <div className='flex items-center gap-3'>
-            <div className={`${card.styles.text}`}>{card.icon}</div>
-            <span className={`text-sm font-medium ${card.styles.text}`}>
-              {card.label}
-            </span>
+          <span className={`absolute left-0 top-3 bottom-3 w-1 rounded-r-full ${card.accent}`} />
+          <div className='flex items-center gap-3 pl-2'>
+            <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${card.iconBg}`}>
+              <span className={card.iconColor}>{card.icon}</span>
+            </div>
+            <span className={`${textSizes.subtitle} font-semibold ${textcolors.dim}`}>{card.label}</span>
           </div>
-
-          {/* Right side: Count */}
-          <div className='text-2xl font-bold text-gray-200'>{card.count}</div>
+          <span className={`text-2xl font-extrabold ${card.countColor}`}>{card.count}</span>
         </div>
       ))}
     </div>

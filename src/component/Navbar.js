@@ -1,139 +1,222 @@
-// components/Navbar.js
-import React, { useState, useEffect } from "react";
-import { IoGlobeOutline } from "react-icons/io5";
+import React, { useState, useEffect, useRef } from "react";
+import { colors, gradients, shadows, bgcolors, textcolors, borderstyles, iconSizes } from "../theme";
 import { useTranslation } from "react-i18next";
-import { bgcolors, textcolors } from "../theme";
 import NotificationBell from "./NotificationBell";
-import useWebSocket from "../hooks/useWebSocket";
 import { useSelector, useDispatch } from "react-redux";
-import { useLocation } from "react-router-dom";
-import {
-  fetchNotifications,
-  markNotificationAsRead,
-  markAllNotificationsAsRead,
-} from "../features/notification/notificationSlice";
-import { Tooltip } from "@mui/material";
+import { useLocation, useNavigate } from "react-router-dom";
+import { logoutUser } from "../features/auth/authSlice";
+import { MenuIcon, UserIcon, SettingsIcon, PeopleIcon, LogoutIcon } from "../icons";
 
-const Navbar = () => {
-  const { t, i18n } = useTranslation();
-  const [isOpen, setIsOpen] = useState(false);
-  const [wsStatus, setWsStatus] = useState("disconnected"); // Track status locally
-  const selectedTenantName = localStorage.getItem("tenant_name");
-   const location = useLocation();
+const PAGE_TITLES = {
+  "/tenants": "Tenant Management",
+  "/dashboard": "Dashboard",
+  "/alerts": "Alerts",
+  "/camera": "Cameras",
+  "/user-management": "User Management",
+  "/settings": "Settings",
+  "/analytics": "Analytics",
+};
 
-  const isAdminPage = location.pathname.startsWith("/tenants");
-
+const Navbar = ({ onMenuClick }) => {
+  const { t } = useTranslation();
+  const location = useLocation();
+  const navigate = useNavigate();
   const dispatch = useDispatch();
+  const dropdownRef = useRef(null);
+
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+
   const { unreadCount } = useSelector((state) => state.notifications);
+  const user = useSelector((state) => state.auth?.user);
 
-  const tenantId = localStorage.getItem("tenant_id");
-  const wsUrl = tenantId
-    ? `${process.env.REACT_APP_BASE_URL}/ws/${tenantId}`
-    : null;
-
-  const { isConnected, error } = useWebSocket(wsUrl, tenantId);
-
-  // Fetch notifications on mount
-  // useEffect(() => {
-  //   if (tenantId) {
-  //     dispatch(fetchNotifications({ tenantId }))
-  //   }
-  // }, [dispatch, tenantId])
-
-  // Update local WebSocket status
+  // Close dropdown on outside click
   useEffect(() => {
-    setWsStatus(isConnected ? "connected" : "disconnected");
-    console.log(
-      "WebSocket status updated:",
-      isConnected ? "connected" : "disconnected",
-    );
-  }, [isConnected]);
+    const handleClickOutside = (e) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        setDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
-  const changeLanguage = (lng) => {
-    i18n.changeLanguage(lng);
-    setIsOpen(false);
+  const pageTitle =
+    Object.entries(PAGE_TITLES).find(([path]) =>
+      location.pathname.startsWith(path)
+    )?.[1] ?? "Dashboard";
+
+  const userRole = user?.role ?? localStorage.getItem("user_role") ?? "";
+  const isSuperAdmin = userRole === "superadmin" || userRole === "super_admin";
+  const isViewer = userRole === "viewer";
+
+  const fullName = user?.full_name ?? "";
+  const initials = fullName
+    ? fullName.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2)
+    : isSuperAdmin
+    ? "SA"
+    : (fullName[0] ?? "U").toUpperCase();
+
+  const roleLabel = isSuperAdmin
+    ? "Super Admin"
+    : userRole
+    ? userRole.charAt(0).toUpperCase() + userRole.slice(1)
+    : "Admin";
+
+  const handleLogout = async () => {
+    setDropdownOpen(false);
+    try {
+      await dispatch(logoutUser()).unwrap();
+    } catch (_) {}
+    localStorage.removeItem("tenant_id");
+    localStorage.removeItem("user_role");
+    localStorage.removeItem("user_id");
+    navigate("/");
+  };
+
+  const handleNav = (path) => {
+    setDropdownOpen(false);
+    navigate(path);
   };
 
   return (
     <div
-      className={` ${bgcolors.white}  h-16 flex items-center justify-between px-6`}
+      className={`flex items-center justify-between px-6 ${bgcolors.white} ${borderstyles.tableHeader}`}
+      style={{ height: "72px" }}
     >
-      {/* LEFT SIDE */}
-      <div className="flex items-center">
-        {selectedTenantName && !isAdminPage && (
-          <h1 className="text-sm md:text-base bg-[#3885CC]/20 border border-[#3885CC]/30 px-3 py-1 rounded-md uppercase tracking-widest font-bold ">
-            {selectedTenantName}
-          </h1>
-        )}
-      </div>
+      {/* Hamburger — mobile only */}
+      <button
+        onClick={onMenuClick}
+        className={`md:hidden p-2 rounded-lg ${textcolors.dim} ${bgcolors.hoverLight} transition-colors mr-2`}
+      >
+        <MenuIcon size={iconSizes.sidebar} />
+      </button>
 
-      <div className="flex items-center gap-6">
-        {/* WebSocket Connection Indicator */}
-        <Tooltip
-          title={
-            wsStatus === "connected"
-              ? t("realtime_sync.connected_title")
-              : `${t("realtime_sync.disconnected_title")} ${
-                  error ? `- ${error}` : ""
-                }`
-          }
-        >
-          <div className="flex items-center gap-2">
-            <div
-              className={`w-3 h-3 rounded-full transition-colors ${
-                wsStatus === "connected" ? "bg-green-500" : "bg-red-500"
-              }`}
-            ></div>
-
-            <span className={`text-xs font-semibold ${textcolors.dark}`}>
-              {wsStatus === "connected"
-                ? t("realtime_sync.connected_text")
-                : t("realtime_sync.disconnected_text")}
+      {/* LEFT — tenant name (hidden on tenants page) */}
+      {(() => {
+        const tenantName = localStorage.getItem('tenant_name')
+        return tenantName && !location.pathname.startsWith('/tenants') ? (
+          <div
+            className="px-4 py-1.5 rounded-lg border"
+            style={{
+              backgroundColor: colors.surface,
+              borderColor: colors.border
+            }}
+          >
+            <span
+              className="text-[13px] font-extrabold uppercase tracking-widest"
+              style={{ color: colors.text }}
+            >
+              {tenantName}
             </span>
           </div>
-        </Tooltip>
-        {/* Language Selector */}
-        {/* <div className='relative'>
+        ) : <div />
+      })()}
+
+      {/* RIGHT */}
+      <div className="flex items-center gap-2 sm:gap-5">
+        {/* Notification Bell — hidden on Tenant Management page */}
+        {!location.pathname.startsWith("/tenants") && (
+          <NotificationBell unreadCount={unreadCount} />
+        )}
+
+        {/* Avatar + Dropdown */}
+        <div className="relative" ref={dropdownRef}>
           <button
-            onClick={() => setIsOpen(!isOpen)}
-            className='flex items-center gap-2 p-2 rounded-full bg-gray-700 hover:bg-gray-600 transition-colors'
+            onClick={() => setDropdownOpen((o) => !o)}
+            className="flex items-center gap-2 rounded-full focus:outline-none group"
+            aria-label="Open profile menu"
           >
-            <IoGlobeOutline size={20} className='text-white' />
-            <span className='text-sm font-medium'>
-              {i18n.language.toUpperCase()}
-            </span>
+            <div
+              className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 transition-all"
+              style={{
+                background: gradients.accent,
+                boxShadow: dropdownOpen ? shadows.button : "none",
+              }}
+            >
+              <span className={`${textcolors.white} text-xs font-bold`}>{initials}</span>
+            </div>
           </button>
 
-          {isOpen && (
-            <div className='absolute top-12 right-0 bg-gray-800 border border-gray-700 rounded-md shadow-lg w-36 text-white z-50'>
-              <button
-                onClick={() => changeLanguage('en')}
-                className={`block w-full text-left px-4 py-2 text-sm ${
-                  i18n.language === 'en'
-                    ? 'bg-gray-700 font-semibold'
-                    : 'hover:bg-gray-700'
-                }`}
+          {/* Dropdown */}
+          {dropdownOpen && (
+            <div
+              className="absolute right-0 mt-2 w-56 rounded-2xl z-50 overflow-hidden"
+              style={{
+                background: colors.panel,
+                border: `1px solid ${colors.border}`,
+                boxShadow: shadows.cardHover,
+                top: "100%",
+              }}
+            >
+              {/* Profile header */}
+              <div
+                className="px-4 py-3 border-b"
+                style={{ borderColor: colors.border }}
               >
-                English
-              </button>
-              <button
-                onClick={() => changeLanguage('pt')}
-                className={`block w-full text-left px-4 py-2 text-sm ${
-                  i18n.language === 'pt'
-                    ? 'bg-gray-700 font-semibold'
-                    : 'hover:bg-gray-700'
-                }`}
-              >
-                Português
-              </button>
+                <div className="flex items-center gap-3">
+                  <div
+                    className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0"
+                    style={{ background: gradients.accent }}
+                  >
+                    <span className={`${textcolors.white} text-xs font-bold`}>{initials}</span>
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-[13px] font-semibold truncate" style={{ color: colors.text }}>
+                      {fullName || roleLabel}
+                    </p>
+                    <p className="text-[11px] font-medium" style={{ color: colors.textMute }}>
+                      {roleLabel}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Menu items */}
+              <div className="py-1.5">
+                <DropdownItem icon={<UserIcon size={iconSizes.dropdown} />} label="My Profile" onClick={() => setDropdownOpen(false)} />
+                <DropdownItem icon={<SettingsIcon size={iconSizes.dropdown} />} label="Settings" onClick={() => handleNav("/settings")} />
+                {!isViewer && !location.pathname.startsWith("/tenants") && (
+                  <DropdownItem icon={<PeopleIcon size={iconSizes.dropdown} />} label="User Management" onClick={() => handleNav("/user-management")} />
+                )}
+              </div>
+
+              {/* Divider + Logout */}
+              <div style={{ borderTop: `1px solid ${colors.border}` }} className="py-1.5">
+                <DropdownItem icon={<LogoutIcon size={iconSizes.dropdown} />} label="Logout" onClick={handleLogout} danger />
+              </div>
             </div>
           )}
-        </div> */}
-
-        {/* Notification Bell Component */}
-        <NotificationBell unreadCount={unreadCount} />
+        </div>
       </div>
     </div>
+  );
+};
+
+const DropdownItem = ({ icon, label, onClick, danger = false }) => {
+  const [hovered, setHovered] = useState(false);
+
+  return (
+    <button
+      onClick={onClick}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      className="w-full flex items-center gap-3 px-4 py-2 text-left transition-colors"
+      style={{
+        background: hovered
+          ? danger
+            ? colors.dangerSubtle
+            : colors.accentSubtle
+          : "transparent",
+        color: hovered
+          ? danger ? colors.dangerDark : colors.accentDark
+          : danger ? colors.danger : colors.textDim,
+        fontSize: "13px",
+        fontWeight: 500,
+      }}
+    >
+      <span style={{ flexShrink: 0 }}>{icon}</span>
+      {label}
+    </button>
   );
 };
 

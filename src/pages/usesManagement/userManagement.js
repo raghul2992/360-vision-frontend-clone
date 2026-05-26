@@ -1,19 +1,20 @@
 import React, { useState, useMemo, useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { useTranslation } from 'react-i18next'
-import {
-  IoPersonAddOutline,
-  IoPencilOutline,
-  IoTrashOutline,
-  IoAlertCircleOutline,
-  IoMailOpenOutline,
-  IoSearchOutline,
-  IoFilterOutline,
-  IoChevronDownOutline,
-  IoInformationCircleOutline,
-  IoLockClosedOutline
-} from 'react-icons/io5'
 import { toast } from 'react-toastify'
+
+import {
+  AddUserIcon,
+  EditIcon,
+  TrashIcon,
+  AlertCircleIcon,
+  MailOpenIcon,
+  SearchIcon,
+  ChevronDownIcon,
+  InfoIcon,
+  LockIcon,
+} from '../../icons'
+import { bgcolors, textcolors, textSizes, borderstyles, colors, kpiAccents, buttons } from '../../theme'
 
 import AddUserModal from './component/userAddModal'
 import UpdateUserModal from './component/userUpdateModal'
@@ -27,7 +28,6 @@ import {
 } from '../../features/userManagement/userApiSlice'
 
 import { getLocations } from '../../features/locations/locationApiSlice'
-import { bgcolors } from '../../theme'
 
 const UserManagement = () => {
   const { t } = useTranslation()
@@ -45,6 +45,7 @@ const UserManagement = () => {
   const [refreshTrigger, setRefreshTrigger] = useState(0)
 
   /* ---------------- MODAL STATES ---------------- */
+  const [isRoleDropdownOpen, setIsRoleDropdownOpen] = useState(false)
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const [updateModal, setUpdateModal] = useState({ isOpen: false, user: null })
   const [deleteModal, setDeleteModal] = useState({
@@ -65,6 +66,14 @@ const UserManagement = () => {
       window.removeEventListener('triggeruserapi', handleRefresh)
     }
   }, [])
+
+  /* Close role dropdown on outside click */
+  useEffect(() => {
+    if (!isRoleDropdownOpen) return
+    const handler = () => setIsRoleDropdownOpen(false)
+    document.addEventListener('click', handler)
+    return () => document.removeEventListener('click', handler)
+  }, [isRoleDropdownOpen])
 
   /* ---------------- FETCH USERS ---------------- */
   useEffect(() => {
@@ -131,31 +140,31 @@ const UserManagement = () => {
   const stats = useMemo(
     () => [
       {
+        key: 'total',
         label: t('userManagement.stats.total'),
         value: users.length,
-        color: 'text-yellow-500'
       },
       {
+        key: 'active',
         label: t('userManagement.stats.active'),
         value: users.filter(u => u.status === 'active').length,
-        color: 'text-green-500'
       },
       {
+        key: 'admins',
         label: t('userManagement.stats.admins'),
         value: users.filter(u => u.role === 'admin').length,
-        color: 'text-blue-500',
         description: t('userManagement.roleInfo.admin')
       },
       {
+        key: 'operator',
         label: t('userManagement.stats.operator'),
         value: users.filter(u => u.role === 'operator').length,
-        color: 'text-purple-500',
         description: t('userManagement.roleInfo.operator')
       },
       {
+        key: 'viewers',
         label: t('userManagement.stats.viewers'),
         value: users.filter(u => u.role === 'viewer').length,
-        color: 'text-gray-400',
         description: t('userManagement.roleInfo.viewer')
       }
     ],
@@ -164,13 +173,13 @@ const UserManagement = () => {
 
   const getRoleStyle = role =>
     role === 'admin'
-      ? 'bg-blue-600/20 text-blue-400 border border-blue-500/30'
+      ? `${bgcolors.accentLight} ${textcolors.accentText} ${borderstyles.accentSoft}`
       : role === 'operator'
-      ? 'bg-purple-600/20 text-purple-400 border border-purple-500/30'
-      : 'bg-gray-600/20 text-gray-400 border border-gray-500/30'
+      ? `${bgcolors.purpleLight} ${textcolors.purpleDark} ${borderstyles.purpleBorder}`
+      : `${bgcolors.grayLight} ${textcolors.dim} ${borderstyles.light}`
 
   return (
-    <div className={` ${bgcolors.white}  min-h-screen p-8 relative font-sans` }>
+    <div className={`${bgcolors.surface} min-h-screen p-4 sm:p-6 lg:p-8 relative font-sans`}>
       {/* MODALS */}
       {isAddModalOpen && (
         <AddUserModal
@@ -194,8 +203,8 @@ const UserManagement = () => {
       )}
 
       {inviteModal.isOpen && (
-        <div className='fixed inset-0 z-[110] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4'>
-          <div className='bg-[#2c2d3a] w-full max-w-md rounded-2xl border border-gray-700 shadow-2xl'>
+        <div className={`fixed inset-0 z-[110] flex items-center justify-center ${bgcolors.backdropMid} backdrop-blur-sm p-4`}>
+          <div className={`${bgcolors.white} w-full max-w-md rounded-2xl ${borderstyles.light} shadow-2xl`}>
             <SendInvitationConfirm
               title={t('userManagement.modals.sendInvitation')}
               fullName={inviteModal.user.full_name}
@@ -209,25 +218,27 @@ const UserManagement = () => {
       )}
 
       {deleteModal.isOpen && (
-        <div className='fixed inset-0 z-[110] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4'>
-          <div className='bg-[#2c2d3a] text-white w-full max-w-sm rounded-2xl p-6 border border-gray-700 text-center'>
-            <IoAlertCircleOutline className='text-red-500 text-5xl mx-auto mb-4' />
-            <h3 className='text-xl font-bold mb-2 text-white '>
+        <div className={`fixed inset-0 z-[110] flex items-center justify-center ${bgcolors.overlay} backdrop-blur-sm p-4`}>
+          <div className={`${bgcolors.white} ${textcolors.normaltext} w-full max-w-sm rounded-2xl p-6 ${borderstyles.light} shadow-2xl text-center`}>
+            <div className='flex justify-center mb-4'>
+              <AlertCircleIcon size={48} color={colors.danger} />
+            </div>
+            <h3 className={`text-xl font-bold mb-2 ${textcolors.normaltext}`}>
               {t('userManagement.modals.deleteTitle')}
             </h3>
-            <p className='text-white text-sm mb-6'>
+            <p className={`${textcolors.dim} text-sm mb-6`}>
               {t('userManagement.modals.deleteText')}
             </p>
             <div className='flex gap-3'>
               <button
                 onClick={() => setDeleteModal({ isOpen: false, userId: null })}
-                className='flex-1 py-2.5 rounded-xl bg-gray-800'
+                className={`flex-1 py-2.5 rounded-xl ${buttons.secondary}`}
               >
                 {t('userManagement.modals.cancel')}
               </button>
               <button
                 onClick={confirmDelete}
-                className='flex-1 py-2.5 rounded-xl bg-red-600 font-bold'
+                className={`flex-1 py-2.5 rounded-xl ${buttons.danger}`}
               >
                 {t('userManagement.modals.delete')}
               </button>
@@ -237,128 +248,156 @@ const UserManagement = () => {
       )}
 
       {/* HEADER */}
-      <div className='flex justify-between items-center mb-8'>
+      <div className='flex flex-wrap justify-between items-start gap-3 mb-4'>
         <div>
-          <h1 className='text-2xl font-bold tracking-tight'>
+          <h1 className={`text-2xl font-bold tracking-tight ${textcolors.normaltext}`}>
             {t('userManagement.title')}
           </h1>
-          <p className='text-sm'>
+          <p className={`${textSizes.subtitle} ${textcolors.dim} mt-1.5`}>
             {t('userManagement.subtitle')}
           </p>
         </div>
         <button
           onClick={() => setIsAddModalOpen(true)}
-          className='bg-[#3885CC] text-white hover:bg-[#2d6da8] transition-colors px-6 py-2.5 rounded-xl flex items-center gap-2 font-medium shadow-lg shadow-blue-500/20'
+          className={`${buttons.primary} px-4 py-2 text-sm rounded-full flex items-center gap-2 shrink-0`}
         >
-          <IoPersonAddOutline size={18} /> {t('userManagement.addUser')}
+          <AddUserIcon size={18} /> {t('userManagement.addUser')}
         </button>
       </div>
 
       {/* STATS SECTION */}
-      <div className='grid grid-cols-5 gap-4 mb-8'>
+      <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 mb-4'>
         {stats.map((s, i) => (
           <div
             key={i}
-            className='bg-[#2c2d3a] p-5 rounded-2xl border border-gray-800/50 shadow-sm'
+            className={`relative ${bgcolors.white} p-5 pl-6 rounded-xl ${borderstyles.light} shadow-sm overflow-hidden hover-shake`}
           >
-            <div className='flex items-center gap-2 mb-1'>
-              <p className='text-gray-400 text-[10px] uppercase font-bold tracking-wider'>
+            {/* Colored left accent strip */}
+            <div className={`absolute left-0 top-3 bottom-3 w-1 rounded-r-full ${kpiAccents[s.key].accent}`} />
+
+            <div className='flex items-center gap-2 mb-2'>
+              <p className={`${textcolors.muted} text-[10px] uppercase font-bold tracking-wider`}>
                 {s.label}
               </p>
               {s.description && (
-                <div className='group relative cursor-help'>
-                  <IoInformationCircleOutline
-                    className='text-gray-500 hover:text-blue-400 transition-colors'
-                    size={14}
-                  />
-                  <div className='absolute left-0 top-6 hidden group-hover:block z-50 w-48 p-3 bg-[#3a3b4a] border border-gray-700 rounded-lg shadow-2xl'>
-                    <div className='absolute -top-1 left-1 w-2 h-2 bg-[#3a3b4a] border-t border-l border-gray-700 transform rotate-45'></div>
-                    <p className='text-[10px] normal-case tracking-normal text-gray-200 leading-relaxed'>
+                <div className='group relative cursor-default'>
+                  <InfoIcon size={14} className={`${textcolors.muted} transition-colors`} />
+                  <div className={`absolute left-0 top-6 hidden group-hover:block z-50 w-48 p-3 ${bgcolors.white} ${borderstyles.light} rounded-lg shadow-xl`}>
+                    <div className={`absolute -top-1 left-1 w-2 h-2 ${bgcolors.white} border-t border-l transform rotate-45`} style={{ borderColor: colors.border }}></div>
+                    <p className={`text-[10px] normal-case tracking-normal ${textcolors.bodyMedium} leading-relaxed`}>
                       {s.description}
                     </p>
                   </div>
                 </div>
               )}
             </div>
-            <p className={`text-3xl font-bold ${s.color}`}>{s.value}</p>
+            <p className={`text-3xl font-extrabold ${kpiAccents[s.key].value}`}>{s.value}</p>
           </div>
         ))}
       </div>
 
       {/* SEARCH AND FILTER BAR */}
-      <div className='bg-[#2c2d3a] p-4 rounded-xl mb-6 flex items-center gap-4 border border-gray-800/50 relative z-10'>
-        <div className='relative flex-1'>
+      <div className={`${bgcolors.white} mb-4 flex flex-col sm:flex-row items-stretch sm:items-center gap-3 p-3 ${borderstyles.light} rounded-xl shadow-sm relative z-10`}>
+        {/* Search input box */}
+        <div className={`w-full sm:flex-1 flex items-center gap-2 px-3 py-2 ${bgcolors.surface} ${borderstyles.light} rounded-lg`}>
+          <span className={textcolors.dim}>
+            <SearchIcon size={16} />
+          </span>
           <input
             type='text'
             placeholder={t('userManagement.searchPlaceholder')}
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
-            className='w-full bg-[#3a3b4a] text-gray-400  border-none rounded-lg py-3 px-4 text-sm focus:ring-1 focus:ring-blue-500 outline-none transition-all'
+            className={`flex-1 bg-transparent ${textcolors.normaltext} ${textcolors.placeholder} border-none ${textSizes.subtitle} focus:ring-0 outline-none`}
           />
         </div>
-        <div className='flex items-center gap-4'>
-          {/* <IoFilterOutline className='text-gray-400' size={20} /> */}
-          <div className='relative min-w-[160px]'>
-            <select
-              value={roleFilter}
-              onChange={e => setRoleFilter(e.target.value)}
-              className='w-full appearance-none bg-[#3a3b4a] text-white border-none rounded-lg py-3 px-4 text-sm focus:ring-1 focus:ring-blue-500 outline-none cursor-pointer pr-10'
-            >
-              <option value='all'>{t('userManagement.allRoles')}</option>
-              <option value='admin'>Admin</option>
-              <option value='operator'>Operator</option>
-              <option value='viewer'>Viewer</option>
-            </select>
-            <IoChevronDownOutline className='absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none' />
-          </div>
-          <button
-            onClick={() => {
-              setSearchQuery('')
-              setRoleFilter('all')
-            }}
-            className='px-6 py-3 rounded-lg bg-[#3a3b4a] text-white hover:bg-gray-700 text-sm font-medium transition-colors'
+
+        {/* All Roles custom dropdown */}
+        <div className='relative w-full sm:w-[160px]'>
+          <div
+            className={`flex items-center justify-between gap-2 ${bgcolors.surface} ${borderstyles.light} rounded-lg py-2 pl-3 pr-3 cursor-pointer select-none ${textcolors.normaltext} ${textSizes.subtitle}`}
+            onClick={(e) => { e.stopPropagation(); setIsRoleDropdownOpen(prev => !prev) }}
           >
-            {t('userManagement.clear')}
-          </button>
+            <span>
+              {roleFilter === 'all' ? t('userManagement.allRoles')
+                : roleFilter === 'admin' ? 'Admin'
+                : roleFilter === 'operator' ? 'Operator'
+                : 'Viewer'}
+            </span>
+            <span style={{ display: 'inline-flex', transition: 'transform 0.2s', transform: isRoleDropdownOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}>
+              <ChevronDownIcon size={14} />
+            </span>
+          </div>
+          {isRoleDropdownOpen && (
+            <div
+              className={`absolute z-20 top-full mt-1 w-full ${bgcolors.white} ${borderstyles.light} rounded-xl shadow-lg overflow-hidden`}
+              onClick={(e) => e.stopPropagation()}
+            >
+              {[
+                { value: 'all', label: t('userManagement.allRoles') },
+                { value: 'admin', label: 'Admin' },
+                { value: 'operator', label: 'Operator' },
+                { value: 'viewer', label: 'Viewer' },
+              ].map(opt => (
+                <div
+                  key={opt.value}
+                  className={`px-4 py-2.5 ${textSizes.subtitle} cursor-pointer transition-colors ${
+                    roleFilter === opt.value
+                      ? `${bgcolors.accentLight} ${textcolors.accentText} font-medium`
+                      : `${textcolors.normaltext} ${bgcolors.accentHover} ${textcolors.accentHover}`
+                  }`}
+                  onClick={() => { setRoleFilter(opt.value); setIsRoleDropdownOpen(false) }}
+                >
+                  {opt.label}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
+
+        {/* Clear button */}
+        <button
+          onClick={() => {
+            setSearchQuery('')
+            setRoleFilter('all')
+          }}
+          className={`${buttons.primary} px-5 py-2 rounded-lg ${textSizes.subtitle} w-full sm:w-auto`}
+        >
+          {t('userManagement.clear')}
+        </button>
       </div>
 
       {/* TABLE */}
-      <div className='bg-[#2c2d3a] rounded-2xl border border-gray-800/50 overflow-hidden shadow-xl'>
+      <div className={`${bgcolors.white} rounded-xl ${borderstyles.light} overflow-hidden shadow-sm overflow-x-auto`}>
         {isLoading ? (
-          <div className='p-20 text-center text-gray-500 flex flex-col items-center gap-4'>
-            <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500'></div>
+          <div className={`p-20 text-center ${textcolors.muted} flex flex-col items-center gap-4`}>
+            <div className={`animate-spin rounded-full h-8 w-8 border-b-2 ${borderstyles.primaryBorder}`}></div>
             {t('userManagement.loading')}
           </div>
         ) : (
-          <table className='w-full text-left border-collapse'>
+          <table className='w-full min-w-[640px] text-left border-collapse'>
             <thead>
-              <tr className='text-gray-400 text-[11px] uppercase tracking-widest border-b border-gray-800/50'>
-                <th className='p-5 font-semibold'>
+              <tr className={`${textcolors.dim} text-[11px] uppercase tracking-widest ${borderstyles.tableHeader} ${bgcolors.tableHeaderFaint}`}>
+                <th className='px-5 py-4 font-semibold'>
                   {t('userManagement.table.user')}
                 </th>
-                <th className='p-5 font-semibold'>
+                <th className='px-5 py-4 font-semibold'>
                   <div className='flex items-center gap-1.5'>
                     {t('userManagement.table.role')}
-                    <div className='group relative cursor-help'>
-                      <IoInformationCircleOutline
-                        className='text-gray-500 hover:text-blue-400 transition-colors'
-                        size={16}
-                      />
-                      <div className='absolute left-0 top-6 hidden group-hover:block z-50 w-64 p-3 bg-[#3a3b4a] border border-gray-700 rounded-lg shadow-2xl text-[12px] normal-case tracking-normal'>
-                        <div className='space-y-2 text-gray-200'>
+                    <div className='group relative cursor-default'>
+                      <InfoIcon size={16} className={`${textcolors.muted} transition-colors`} />
+                      <div className={`absolute left-0 top-6 hidden group-hover:block z-50 w-64 p-3 ${bgcolors.white} ${borderstyles.light} rounded-lg shadow-xl text-[12px] normal-case tracking-normal`}>
+                        <div className={`space-y-2 ${textcolors.bodyMedium}`}>
                           <p>
-                            <strong className='text-blue-400'>Admin:</strong>{' '}
+                            <strong className={textcolors.primary}>Admin:</strong>{' '}
                             {t('userManagement.roleInfo.admin')}
                           </p>
                           <p>
-                            <strong className='text-purple-400'>
-                              Operator:
-                            </strong>{' '}
+                            <strong className={textcolors.purple}>Operator:</strong>{' '}
                             {t('userManagement.roleInfo.operator')}
                           </p>
                           <p>
-                            <strong className='text-gray-400'>Viewer:</strong>{' '}
+                            <strong className={textcolors.dim}>Viewer:</strong>{' '}
                             {t('userManagement.roleInfo.viewer')}
                           </p>
                         </div>
@@ -366,18 +405,18 @@ const UserManagement = () => {
                     </div>
                   </div>
                 </th>
-                <th className='p-5 font-semibold'>
+                <th className='px-5 py-4 font-semibold'>
                   {t('userManagement.table.locations')}
                 </th>
-                <th className='p-5 font-semibold'>
+                <th className='px-5 py-4 font-semibold'>
                   {t('userManagement.table.status')}
                 </th>
-                <th className='p-5 text-center font-semibold'>
+                <th className='px-5 py-4 text-right font-semibold'>
                   {t('userManagement.table.action')}
                 </th>
               </tr>
             </thead>
-            <tbody className='divide-y divide-gray-800/30'>
+            <tbody className={borderstyles.divider}>
               {filteredUsers.length > 0 ? (
                 filteredUsers.map(u => {
                   // --- PERMISSION CHECK ---
@@ -389,53 +428,55 @@ const UserManagement = () => {
                   return (
                     <tr
                       key={u.id}
-                      className='hover:bg-gray-800/30 transition-colors group'
+                      className='transition-colors duration-150 group cursor-default'
+                      style={{ backgroundColor: 'transparent' }}
+                      onMouseEnter={e => e.currentTarget.style.backgroundColor = colors.priorityLowBg}
+                      onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
                     >
-                      <td className='p-5'>
-                        <p className='font-semibold text-gray-200'>
+                      <td className='px-5 py-4'>
+                        <p className={`font-bold ${textcolors.normaltext} ${textSizes.subtitle}`}>
                           {u.full_name}
                         </p>
-                        <p className='text-xs text-gray-500'>{u.email}</p>
+                        <p className={`text-xs ${textcolors.dim} mt-0.5`}>{u.email}</p>
                       </td>
-                      <td className='p-5'>
+                      <td className='px-5 py-4'>
                         <span
-                          className={`px-2.5 py-1 text-[10px] font-bold uppercase rounded ${getRoleStyle(
-                            u.role
-                          )}`}
+                          className={`px-3 py-1 text-[10px] font-bold uppercase rounded-full ${getRoleStyle(u.role)}`}
                         >
                           {u.role}
                         </span>
                       </td>
-                      <td className='p-5 max-w-52 text-xs text-gray-400'>
+                      <td className={`px-5 py-4 max-w-52 ${textSizes.subtitle} ${textcolors.dim}`}>
                         {getLocationLabel(u.meta?.assign_locations) ||
                           t('userManagement.table.global')}
                       </td>
-                      <td className='p-5'>
+                      <td className='px-5 py-4'>
                         <button
                           type='button'
-                          className={`text-[10px] font-bold uppercase px-4 py-1.5 rounded-full transition-all border ${
+                          className={`text-[10px] font-bold uppercase px-4 py-1.5 rounded-full transition-all ${
                             u.status === 'active'
-                              ? 'bg-green-500/10 text-green-400 border-green-500/20'
+                              ? `${bgcolors.successLight} ${textcolors.successDark} ${borderstyles.successBorder}`
                               : u.status === 'invite'
-                              ? 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20'
-                              : 'bg-red-500/10 text-red-400 border-red-500/20'
+                              ? `${bgcolors.warningFaint} ${textcolors.warningText} ${borderstyles.warningBorder}`
+                              : `${bgcolors.dangerFaint} ${textcolors.danger} ${borderstyles.dangerBorder}`
                           }`}
                         >
                           {u.status}
                         </button>
                       </td>
-                      <td className='p-5'>
-                        <div className='flex justify-center gap-4 text-gray-400'>
+                      <td className='px-5 py-4'>
+                        <div className={`flex justify-end gap-3 ${textcolors.dim}`}>
                           {u.status !== 'active' && !isRestricted && (
                             <button
                               type='button'
                               title={t('userManagement.modals.sendInvitation')}
-                              onClick={() =>
-                                setInviteModal({ isOpen: true, user: u })
-                              }
-                              className='hover:text-green-400 transition-colors'
+                              onClick={() => setInviteModal({ isOpen: true, user: u })}
+                              className='w-8 h-8 flex items-center justify-center rounded-lg transition-all'
+                              style={{ color: colors.textMute }}
+                              onMouseEnter={e => { e.currentTarget.style.color = colors.successDark; e.currentTarget.style.backgroundColor = colors.successFaintBg; }}
+                              onMouseLeave={e => { e.currentTarget.style.color = colors.textMute; e.currentTarget.style.backgroundColor = 'transparent'; }}
                             >
-                              <IoMailOpenOutline size={20} />
+                              <MailOpenIcon size={17} />
                             </button>
                           )}
 
@@ -445,30 +486,32 @@ const UserManagement = () => {
                               <button
                                 type='button'
                                 title='Edit'
-                                onClick={() =>
-                                  setUpdateModal({ isOpen: true, user: u })
-                                }
-                                className='hover:text-blue-400 transition-colors'
+                                onClick={() => setUpdateModal({ isOpen: true, user: u })}
+                                className='w-8 h-8 flex items-center justify-center rounded-lg transition-all'
+                                style={{ color: colors.textMute }}
+                                onMouseEnter={e => { e.currentTarget.style.color = colors.primary; e.currentTarget.style.backgroundColor = colors.priorityLowBg; }}
+                                onMouseLeave={e => { e.currentTarget.style.color = colors.textMute; e.currentTarget.style.backgroundColor = 'transparent'; }}
                               >
-                                <IoPencilOutline size={20} />
+                                <EditIcon size={17} />
                               </button>
                               <button
                                 type='button'
                                 title='Delete'
-                                onClick={() =>
-                                  setDeleteModal({ isOpen: true, userId: u.id })
-                                }
-                                className='hover:text-red-500 transition-colors'
+                                onClick={() => setDeleteModal({ isOpen: true, userId: u.id })}
+                                className='w-8 h-8 flex items-center justify-center rounded-lg transition-all'
+                                style={{ color: colors.textMute }}
+                                onMouseEnter={e => { e.currentTarget.style.color = colors.danger; e.currentTarget.style.backgroundColor = colors.priorityHighBg; }}
+                                onMouseLeave={e => { e.currentTarget.style.color = colors.textMute; e.currentTarget.style.backgroundColor = 'transparent'; }}
                               >
-                                <IoTrashOutline size={20} />
+                                <TrashIcon size={17} />
                               </button>
                             </>
                           ) : (
                             <div
                               title='Permission restricted'
-                              className='cursor-not-allowed opacity-30'
+                              className='w-8 h-8 flex items-center justify-center cursor-not-allowed opacity-30'
                             >
-                              <IoLockClosedOutline size={20} />
+                              <LockIcon size={17} />
                             </div>
                           )}
                         </div>
@@ -480,7 +523,7 @@ const UserManagement = () => {
                 <tr>
                   <td
                     colSpan='5'
-                    className='p-10 text-center text-gray-500 italic'
+                    className={`p-10 text-center ${textcolors.muted} italic`}
                   >
                     {t('userManagement.noUsers')}
                   </td>

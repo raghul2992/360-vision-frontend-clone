@@ -4,15 +4,8 @@ import Select, { components } from "react-select";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { useTranslation } from "react-i18next";
-import {
-  FiFilter,
-  FiSearch,
-  FiCalendar,
-  FiMapPin,
-  FiVideo,
-  FiX,
-} from "react-icons/fi";
-import { MdOutlineDirectionsCar } from "react-icons/md";
+import { bgcolors, textcolors, borderstyles, shadows, colors, iconSizes } from "../theme";
+import { FilterIcon, CalendarIcon, MapPinIcon, VideoIcon, CloseIcon, ChevronDownIcon } from "../icons";
 // --- 1. Custom Checkbox Option ---
 const CheckboxOption = (props) => {
   return (
@@ -22,7 +15,7 @@ const CheckboxOption = (props) => {
           type="checkbox"
           checked={props.isSelected}
           onChange={() => null}
-          className="w-3 h-3 rounded border-gray-500 text-[#6366F1] focus:ring-0 focus:ring-offset-0 bg-transparent"
+          className={`w-3 h-3 rounded ${borderstyles.checkboxBorder} ${textcolors.indigo} focus:ring-0 focus:ring-offset-0 bg-transparent`}
         />
         <label>{props.label}</label>
       </div>
@@ -55,7 +48,7 @@ const CustomValueContainer = ({ children, ...props }) => {
         {values.slice(0, MAX_DISPLAY_TAGS)}
 
         {/* Render the "+N" Badge */}
-        <div className="flex items-center justify-center px-1.5 py-0.5 ml-1 text-[10px] font-medium text-white bg-[#4F46E5] rounded">
+        <div className={`flex items-center justify-center px-1.5 py-0.5 ml-1 text-[10px] font-medium text-white ${bgcolors.primary} rounded`}>
           +{selectedCount - MAX_DISPLAY_TAGS}
         </div>
 
@@ -71,67 +64,76 @@ const CustomValueContainer = ({ children, ...props }) => {
   );
 };
 
-// --- 3. React Select Custom Styles ---
+// --- 3. Custom Dropdown Indicator with rotation ---
+const DropdownIndicator = (props) => (
+  <components.DropdownIndicator {...props}>
+    <ChevronDownIcon
+      size={iconSizes.info}
+      style={{
+        color: colors.textDim,
+        transform: props.selectProps.menuIsOpen ? "rotate(180deg)" : "rotate(0deg)",
+        transition: "transform 0.25s ease",
+      }}
+    />
+  </components.DropdownIndicator>
+);
+
+// --- 4. React Select Custom Styles ---
 const customStyles = {
   control: (base, state) => ({
     ...base,
-    backgroundColor: "#393A4A",
+    backgroundColor: colors.panel,
     borderRadius: "8px",
-    border: state.isFocused ? "1px solid #6366F1" : "1px solid #4B5563",
-    boxShadow: "none",
-    color: "#E0E0E0",
+    border: state.isFocused ? `1px solid ${colors.primary}` : `1px solid ${colors.border}`,
+    boxShadow: state.isFocused ? shadows.selectFocus : "none",
+    color: colors.text,
     padding: "0px 2px",
     cursor: "pointer",
     minHeight: "32px",
     fontSize: "12px",
-    flexWrap: "nowrap", // Prevents wrapping to new line
+    flexWrap: "nowrap",
   }),
   menu: (base) => ({
     ...base,
-    backgroundColor: "#2a2f45",
-    color: "#FFFFFF",
+    backgroundColor: colors.panel,
+    color: colors.text,
     borderRadius: "8px",
     marginTop: "4px",
-    border: "1px solid #4B5563",
+    border: `1px solid ${colors.border}`,
+    boxShadow: shadows.menu,
     zIndex: 9999,
   }),
-  menuList: (base) => ({ ...base, color: "#E0E0E0" }),
+  menuList: (base) => ({ ...base, color: colors.text }),
   option: (base, { isFocused }) => ({
     ...base,
-    backgroundColor: isFocused ? "#3B3F58" : "transparent",
-    color: "#E0E0E0",
+    backgroundColor: isFocused ? colors.bg2 : "transparent",
+    color: colors.text,
     cursor: "pointer",
     fontSize: "12px",
-    ":active": {
-      backgroundColor: "#3B3F58",
-    },
+    ":active": { backgroundColor: colors.border },
   }),
   multiValue: (base) => ({
     ...base,
-    backgroundColor: "#6366F1",
+    backgroundColor: colors.primary,
     borderRadius: "4px",
-    maxWidth: "100px", // Limit width of individual tags
+    maxWidth: "100px",
   }),
   multiValueLabel: (base) => ({
     ...base,
-    color: "#FFFFFF",
+    color: colors.panel,
     whiteSpace: "nowrap",
     overflow: "hidden",
     textOverflow: "ellipsis",
   }),
   multiValueRemove: (base) => ({
     ...base,
-    color: "#FFFFFF",
-    ":hover": {
-      backgroundColor: "#4F46E5",
-      color: "#FFFFFF",
-    },
+    color: colors.panel,
+    ":hover": { backgroundColor: colors.accentDark, color: colors.panel },
   }),
-  singleValue: (base) => ({ ...base, color: "#FFFFFF", fontWeight: 500 }),
-  placeholder: (base) => ({ ...base, color: "#A5ADC9", fontWeight: 400 }),
-  input: (base) => ({ ...base, color: "#FFFFFF" }),
+  singleValue: (base) => ({ ...base, color: colors.text, fontWeight: 500 }),
+  placeholder: (base) => ({ ...base, color: colors.textMute, fontWeight: 400 }),
+  input: (base) => ({ ...base, color: colors.text }),
   menuPortal: (base) => ({ ...base, zIndex: 9999 }),
-  // Ensure the value container doesn't wrap
   valueContainer: (base) => ({
     ...base,
     flexWrap: "nowrap",
@@ -219,16 +221,16 @@ const FilterDropdown = ({
         }}
         className={`transition-colors duration-200 flex items-center justify-center ${
           isMinimal
-            ? "text-gray-400 hover:text-[#6366F1] p-1 rounded-md hover:bg-[#393A4A]"
+            ? `${textcolors.muted} ${textcolors.hoverDark} p-1 rounded-md ${bgcolors.hoverLight}`
             : `p-2 rounded-lg ${
                 isOpen
-                  ? "bg-[#6366F1] text-white"
-                  : "bg-[#393A4A] text-gray-300 hover:bg-[#4B4D63]"
+                  ? `${bgcolors.accentLight} ${textcolors.primary}`
+                  : `${textcolors.muted} ${bgcolors.accentHover} ${textcolors.hoverPrimary}`
               }`
         }`}
         title="Filter"
       >
-        <FiFilter size={isMinimal ? 14 : 18} />
+        <FilterIcon size={isMinimal ? iconSizes.info : iconSizes.sidebar} />
       </button>
 
       {isOpen &&
@@ -241,23 +243,23 @@ const FilterDropdown = ({
               left: coords.left,
               zIndex: 9999,
             }}
-            className="w-[280px] bg-[#1a1c23] border border-[#4B5563] rounded-xl shadow-2xl p-4 cursor-default"
+            className={`w-[280px] ${bgcolors.white} ${borderstyles.light} rounded-xl shadow-lg p-4 cursor-default`}
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex justify-end items-center mb-3 pb-2 border-b border-gray-700">
+            <div className={`flex justify-end items-center mb-3 pb-2 ${borderstyles.bottomLight}`}>
               <button
                 onClick={() => setIsOpen(false)}
-                className="text-gray-500 hover:text-white"
+                className={`${textcolors.muted} ${textcolors.hoverDark} ${bgcolors.hoverLight} p-1 rounded-md transition-colors`}
               >
-                <FiX size={14} />
+                <CloseIcon size={iconSizes.info} />
               </button>
             </div>
 
             <div className="space-y-3">
               {/* Location */}
               <div className="space-y-1">
-                <label className="text-[10px] uppercase text-gray-400 flex items-center gap-2 font-bold">
-                  <FiMapPin size={10} /> {t("dashboard.location") || "Location"}
+                <label className={`text-[10px] uppercase ${textcolors.dim} flex items-center gap-2 font-bold tracking-wider`}>
+                  <MapPinIcon size={10} className={textcolors.primary} /> {t("dashboard.location") || "Location"}
                 </label>
                 <Select
                   options={locationOptions}
@@ -271,6 +273,7 @@ const FilterDropdown = ({
                   components={{
                     Option: CheckboxOption,
                     ValueContainer: CustomValueContainer,
+                    DropdownIndicator,
                   }}
                   styles={customStyles}
                   menuPortalTarget={document.body}
@@ -280,8 +283,8 @@ const FilterDropdown = ({
               </div>
               {!hideCamera && (
                 <div className="space-y-1">
-                  <label className="text-[10px] uppercase text-gray-400 flex items-center gap-2 font-bold">
-                    <FiVideo size={10} /> {t("dashboard.camera") || "Camera"}
+                  <label className={`text-[10px] uppercase ${textcolors.dim} flex items-center gap-2 font-bold tracking-wider`}>
+                    <VideoIcon size={10} className={textcolors.primary} /> {t("dashboard.camera") || "Camera"}
                   </label>
                   <Select
                     isDisabled={
@@ -298,6 +301,7 @@ const FilterDropdown = ({
                         : "Select Location First"
                     }
                     isClearable
+                    components={{ DropdownIndicator }}
                     styles={customStyles}
                     menuPortalTarget={document.body}
                     menuPosition="fixed"
@@ -308,8 +312,8 @@ const FilterDropdown = ({
 
               {!hideDateRange && (
                 <div className="space-y-1">
-                  <label className="text-[10px] uppercase text-gray-400 flex items-center gap-2 font-bold">
-                    <FiCalendar size={10} />{" "}
+                  <label className={`text-[10px] uppercase ${textcolors.dim} flex items-center gap-2 font-bold tracking-wider`}>
+                    <CalendarIcon size={10} className={textcolors.primary} />{" "}
                     {t("alerts.date_range") || "Date Range"}
                   </label>
                   <DatePicker
@@ -319,7 +323,7 @@ const FilterDropdown = ({
                     onChange={setDateRange}
                     isClearable
                     placeholderText="Select Date Range"
-                    className="w-full px-3 py-1.5 text-xs rounded-lg bg-[#393A4A] text-white border border-[#4B5563] focus:outline-none focus:border-[#6366F1]"
+                    className={`w-full px-3 py-1.5 text-xs rounded-lg ${bgcolors.white} ${borderstyles.light} focus:outline-none ${borderstyles.focusSelect}`}
                     wrapperClassName="w-full"
                     popperPlacement="bottom-end"
                     popperClassName="!z-[10000]"

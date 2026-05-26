@@ -1,12 +1,10 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap');
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 
 body {
-  font-family: 'Inter', sans-serif;
+  font-family: 'Plus Jakarta Sans', sans-serif;
 }
 
 /* Apply thin scrollbar to the entire body */
@@ -66,4 +64,13 @@ body::-webkit-scrollbar-thumb:hover {
 
 .react-grid-layout {
   margin: 0 -20px;
+}
+
+.hover-shake {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.hover-shake:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px -4px rgba(15, 23, 42, 0.12);
 }

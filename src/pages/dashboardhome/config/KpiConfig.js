@@ -1,5 +1,6 @@
 import React from "react";
-import { FiCircle } from "react-icons/fi";
+import { colors, textcolors } from "../../../theme";
+import { DotIcon } from "../../../icons";
 
 export const KPI_WIDGETS_CONFIG = [
   {
@@ -9,9 +10,10 @@ export const KPI_WIDGETS_CONFIG = [
     // Function to extract data
     getValue: (data) => data?.alertsCount ?? 0,
     getSubText: (data, t) => t("dashboard.kpi.last_7_days"),
-    subClass: "text-gray-400",
+    subClass: textcolors.dim,
     badge: "dashboard.kpi.badge",
     infoKey: "dashboard.kpi.total_alerts_info_desc",
+    accentColor: colors.success,
   },
   {
     id: "most_frequent",
@@ -19,9 +21,10 @@ export const KPI_WIDGETS_CONFIG = [
     descriptionKey: "dashboard.kpi.most_frequent_desc",
     getValue: (data) => data?.mostFrequent?.detection_type || "N/A",
     getSubText: (data, t) => t("dashboard.kpi.last_7_days"),
-    subClass: "text-gray-400",
+    subClass: textcolors.dim,
     badge: "dashboard.kpi.badge",
     infoKey: "dashboard.kpi.most_frequent_info_desc",
+    accentColor: colors.violet,
   },
   {
     id: "busiest_hour",
@@ -35,9 +38,10 @@ export const KPI_WIDGETS_CONFIG = [
     return busiest.time_start_utc.slice(11, 16);
   },
     getSubText: (data, t) => t("dashboard.kpi.last_7_days"),
-    subClass: "text-gray-400",
+    subClass: textcolors.dim,
     badge: "dashboard.kpi.badge",
     infoKey: "dashboard.kpi.busiest_hour_info_desc",
+    accentColor: colors.warning,
   },
   // {
   //   id: "dwell_time",
@@ -57,16 +61,18 @@ export const KPI_WIDGETS_CONFIG = [
       `${data?.activeCameras ?? 0}/${data?.totalCameras ?? 0}`,
     getSubText: (data, t) => t("dashboard.kpi.live"),
     subIcon: (
-      <FiCircle
+      <DotIcon
         size={10}
-        className="fill-green-500 text-green-500 animate-pulse"
+        color={colors.success}
+        className="animate-pulse"
       />
     ),
-    subClass: "text-green-500",
+    subClass: textcolors.success,
     badge: "dashboard.kpi.badge",
-     infoKey: "dashboard.kpi.camera_status_info_desc",
+    infoKey: "dashboard.kpi.camera_status_info_desc",
     hideDateRangeFilter: true,
-     hideCameraFilter: true,
+    hideCameraFilter: true,
+    accentColor: colors.indigo,
   },
 //   {
 //   id: "avg_customer_queue_time",
